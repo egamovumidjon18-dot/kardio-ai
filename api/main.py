@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
@@ -99,6 +99,15 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
         ep = Episode(patient_ref=body.patient_ref, population=body.population)
         store.save(ep, body.actor, "episode.create")
         return episode_to_dict(ep)
+
+    @app.get("/episodes")
+    def list_episodes(stage: Optional[str] = None, q: Optional[str] = Query(None, max_length=64),
+                      limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0)) -> dict:
+        """Bemorlar (epizodlar) ro'yxati: yangisi birinchi; `stage` bo'yicha filtr, `q` — bemor kodidan qidiruv."""
+        if stage is not None and stage not in {s.value for s in Stage}:
+            raise HTTPException(422, f"noma'lum bosqich: {stage}")
+        total, items = store.summaries(stage=stage, q=q.strip() if q else None, limit=limit, offset=offset)
+        return {"total": total, "limit": limit, "offset": offset, "items": items}
 
     @app.get("/episodes/{eid}")
     def get_episode(eid: str) -> dict:

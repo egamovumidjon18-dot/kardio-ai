@@ -1,6 +1,6 @@
 # CardioPath AI — loyiha tavsifi (dizayner AI uchun texnik va funksional hujjat)
 
-Holat: 2026-yil 30-oktabr. Manba: loyiha kodi (`main` branch, 146 ta test; `feat/ai-models` branch'i 2026-10-30 da `main` bilan birlashtirildi), muallifning o'z maqsad hujjati va o'qitish/baholash hisobotlari.
+Holat: 2026-yil 30-oktabr. Manba: loyiha kodi (`main` branch, 154 ta test; `feat/ai-models` branch'i 2026-10-30 da `main` bilan birlashtirildi), muallifning o'z maqsad hujjati va o'qitish/baholash hisobotlari.
 
 ## 0. Bu hujjatni qanday o'qish kerak
 
@@ -173,6 +173,7 @@ Server manzili: `http://localhost:8010` (faqat shu kompyuter).
 | `GET /` | Skrining sahifasi (HTML) | MAVJUD |
 | `GET /health` | Server holati, rejim (`research`/`product`), ulangan modellar kartalari | MAVJUD |
 | `POST /episodes` | Yangi epizod: `patient_ref` (1–64 belgi), `population`, `actor` | MAVJUD |
+| `GET /episodes?stage=&q=&limit=&offset=` | Bemorlar ro'yxati, yangisi birinchi. `stage` bo'yicha filtr, `q` — bemor kodidan qidiruv (katta-kichik harf farqsiz), `limit` 1–200 (standart 50). Javob: `total`, `limit`, `offset`, `items[]`, har birida `id`, `patient_ref`, `population`, `stage`, `created_at`, `updated_at`, `n_evidence`, `n_handoffs`, `screening_risk` (oxirgi skrining xavfi yoki `null`). To'liq hujjatsiz | MAVJUD (ekransiz) |
 | `GET /episodes/{id}` | Epizodning to'liq yozuvi (bosqich, barcha Evidence, Handoff'lar) | MAVJUD |
 | `GET /episodes/{id}/audit` | Audit jurnali | MAVJUD |
 | `POST /episodes/{id}/transition` | Bosqichdan bosqichga o'tkazish (Handoff) | MAVJUD (ekransiz) |
@@ -189,7 +190,7 @@ Server manzili: `http://localhost:8010` (faqat shu kompyuter).
 | `POST /episodes/{id}/guardian/inr-image` | MNO qog'ozi rasmi | MAVJUD (ekransiz) |
 | `POST /episodes/{id}/echo-ef` | ExoKG videosidan EF | MAVJUD (ekransiz) |
 
-**Mavjud EMAS (ekran uchun yangi API kerak bo'ladi):** epizodlar ro'yxati va qidiruv, epizodni o'chirish yoki tahrirlash, foydalanuvchi kirishi, bildirishnomalar ro'yxati, hisobot eksporti.
+**Mavjud EMAS (ekran uchun yangi API kerak bo'ladi):** epizodni o'chirish yoki tahrirlash, foydalanuvchi kirishi, bildirishnomalar ro'yxati, hisobot eksporti. Ro'yxatda hali yo'q ma'lumotlar: oxirgi Guardian signali (qizil/sariq), «ochiq savollar bor» belgisi, bemor yoshi, `actor` bo'yicha filtr; ularni ro'yxatga qo'shish uchun kichik kengaytma kerak.
 
 ### 2.7. Ma'lumot oqimi (asosiy zanjir)
 
@@ -445,7 +446,7 @@ Quyidagi ro'yxat **mahsulot uchun zarur bo'lgan ekranlar**ning to'liq majmuasi. 
 | E2 | Natija ekrani | MAVJUD |
 | E3 | ExoKG tashxisini kiritish (E2 ichidagi blok) | MAVJUD |
 | E4 | Umumiy funksiyalar: til, mavzu, chop etish | MAVJUD |
-| E5 | Bemorlar (epizodlar) ro'yxati va qidiruv | REJADA (API ham yo'q) |
+| E5 | Bemorlar (epizodlar) ro'yxati va qidiruv | FAQAT API |
 | E6 | Epizod tafsiloti va vaqt chizig'i | FAQAT API |
 | E7 | Bosqichdan bosqichga o'tkazish (Handoff) | FAQAT API |
 | E8 | Operatsiya oldi xavf kiritish | FAQAT API |
@@ -487,10 +488,11 @@ Quyidagi ro'yxat **mahsulot uchun zarur bo'lgan ekranlar**ning to'liq majmuasi. 
 ### E4. Umumiy funksiyalar [MAVJUD]
 Til almashtirgich (UZ/RU/EN, butun interfeys, natija matni va klinik belgilar nomlari tarjima qilinadi, natija ekranida qayta so'rovsiz almashadi); yorug'/qorong'i rejim almashtirgichi; chop etish (faqat natija chop etiladi). Til va mavzu tanlovi eslab qolinadi.
 
-### E5. Bemorlar (epizodlar) ro'yxati [REJADA]
+### E5. Bemorlar (epizodlar) ro'yxati [FAQAT API]
 - **Vazifa:** shifokor o'z bemorlarini topishi va davom ettirishi.
-- **Kerak bo'ladigan ma'lumot:** kod, bosqich, oxirgi xulosa darajasi, oxirgi yangilanish vaqti, ochiq savollar bor-yo'qligi, qizil yoki sariq signal bor-yo'qligi.
-- **Hozir:** bu ekran uchun **API yo'q** (`store.ids()` ichki funksiyasi bor, endpoint yo'q).
+- **Hozir mavjud (`GET /episodes`):** bemor kodi, bosqich, populyatsiya, yaratilgan va oxirgi yangilangan vaqt, Evidence va yo'llanmalar soni, oxirgi skrining xavfi. Bosqich bo'yicha filtr, bemor kodi bo'yicha qidiruv, sahifalash. 5 000 ta bemorda 0.07–0.3 soniya (o'lchangan).
+- **Hali yo'q (ekran uchun kerak bo'lishi mumkin):** oxirgi qizil/sariq Guardian signali, ochiq savollar belgisi, yosh, shifokor bo'yicha filtr. Foydalanuvchi kirishi bo'lmagani uchun «mening bemorlarim» ko'rinishi ham yo'q: ro'yxat hamma epizodni ko'rsatadi.
+- **Masshtab:** SQLite va JSON hujjat tufayli bir klinika uchun yetarli; bir necha ming bemordan oshsa, PostgreSQL'ga o'tish kerak.
 
 ### E6. Epizod tafsiloti va vaqt chizig'i [FAQAT API]
 - **Vazifa:** bemorning butun yo'lini ko'rish.
@@ -580,7 +582,7 @@ Asosiy foydalanuvchi: **tuman va viloyatdagi shifokor** (ExoKG imkoniyati chekla
 | Bildirishnoma | Telegram Bot API (`httpx`), muhit o'zgaruvchilari orqali | Kod bor, haqiqiy bot bilan **sinalmagan** |
 | Tashqi OCR | `rapidocr-onnxruntime` (ixtiyoriy) | MAVJUD |
 | Tilda xulosa | Deterministik shablonlar, LLM yo'q | MAVJUD |
-| Testlar | pytest: 146 | MAVJUD |
+| Testlar | pytest: 154 | MAVJUD |
 | Ishga tushirish | `Start.bat` (Windows) | MAVJUD |
 | Frontend freymvork (Next.js), PostgreSQL | Dastlabki rejada bor edi | **REJADA**, qurilmagan |
 
@@ -603,7 +605,7 @@ Asosiy foydalanuvchi: **tuman va viloyatdagi shifokor** (ExoKG imkoniyati chekla
 - Telegram bot haqiqiy hisob bilan sinalmagan.
 
 **Mahsulot**
-- Epizodlar ro'yxati, qidiruv, tahrir/o'chirish yo'q.
+- Epizodlarni tahrirlash/o'chirish yo'q; ro'yxat API'si bor (`GET /episodes`), lekin ekrani yo'q.
 - Heart Team, Guardian va xavf baholash uchun ekran yo'q.
 - Heart Team protokoli, Guardian bemor xabarlari va Telegram xabari faqat o'zbekcha.
 - Epizod har doim `pediatric` populyatsiyasi bilan yaratiladi (UI kattalar variantini bermaydi).

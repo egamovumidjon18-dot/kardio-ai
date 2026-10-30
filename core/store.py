@@ -50,6 +50,27 @@ class EpisodeStore(ABC):
     @abstractmethod
     def ids(self) -> list[str]: ...
 
+    @abstractmethod
+    def summaries(self, stage: Optional[str] = None, q: Optional[str] = None,
+                  limit: int = 50, offset: int = 0) -> tuple[int, list[dict]]:
+        """Epizodlar qisqa ro'yxati (yangisi birinchi): (jami soni, sahifa)."""
+
+
+def episode_summary(doc: dict, updated_at: Optional[str]) -> dict:
+    """Ro'yxat qatori: to'liq hujjatsiz, faqat tanlash va ustuvorlik uchun kerakli ma'lumot."""
+    triage = next((e for e in reversed(doc["evidence"]) if e["kind"] == "screening.triage"), None)
+    return {
+        "id": doc["id"], "patient_ref": doc["patient_ref"], "population": doc["population"],
+        "stage": doc["stage"], "created_at": doc["created_at"], "updated_at": updated_at,
+        "n_evidence": len(doc["evidence"]), "n_handoffs": len(doc["handoffs"]),
+        "screening_risk": triage["risk"] if triage else None,
+    }
+
+
+def _like(term: str) -> str:
+    """LIKE uchun maxsus belgilarni (%, _, \\) oddiy matn qilish."""
+    return "%" + term.lower().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+
 
 class SqliteEpisodeStore(EpisodeStore):
     def __init__(self, path: str = "cardiopath.db") -> None:
@@ -88,3 +109,20 @@ class SqliteEpisodeStore(EpisodeStore):
     def ids(self) -> list[str]:
         with self._lock:
             return [r[0] for r in self._conn.execute("SELECT id FROM episodes ORDER BY updated_at")]
+
+    def summaries(self, stage: Optional[str] = None, q: Optional[str] = None,
+                  limit: int = 50, offset: int = 0) -> tuple[int, list[dict]]:
+        where, args = [], []
+        if stage:
+            where.append("json_extract(doc, '$.stage') = ?")
+            args.append(stage)
+        if q:
+            where.append("lower(json_extract(doc, '$.patient_ref')) LIKE ? ESCAPE '\\'")
+            args.append(_like(q))
+        clause = ("WHERE " + " AND ".join(where)) if where else ""
+        with self._lock:
+            total = self._conn.execute(f"SELECT count(*) FROM episodes {clause}", args).fetchone()[0]
+            rows = self._conn.execute(
+                f"SELECT doc, updated_at FROM episodes {clause} ORDER BY updated_at DESC, id LIMIT ? OFFSET ?",
+                [*args, limit, offset]).fetchall()
+        return total, [episode_summary(json.loads(doc), upd) for doc, upd in rows]
