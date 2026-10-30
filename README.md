@@ -125,7 +125,7 @@ python -m learning.promote --rollback --approved-by "Ismingiz" --note "sabab"
 - **Ma'lumot darvozasi** (o'qitishdan oldin): yetarli bola, har sinfdan yetarli, yig'ish tartibi va qurilma tashxis bilan aralashib ketmagan. O'tmasa, o'qitish boshlanmaydi.
 - **Model darvozalari:** mahalliy testda ishonchli yaxshilanish, CirCor'da yomonlashmaslik, sezgirlik va «javob bermadi» ulushi yomonlashmasligi, aralashtirilgan belgilar bilan salbiy nazorat.
 - Holat: `GET /learning/status`. Tasdiqlangan versiya dastur qayta ishga tushirilgach yuklanadi.
-- Tasdiqlash ataylab veb-API'da yo'q: kirish tizimi endi bor, lekin tasdiqlash ekrani hali qurilmagan (hozir faqat `python -m learning.promote`). Batafsil: [docs/CardioPath-AI-loyiha-tavsifi.md](docs/CardioPath-AI-loyiha-tavsifi.md), 3.4.1-bo'lim.
+- Tasdiqlash: `/models-ui` sahifasi (asosiy sahifadagi «Modellar» havolasi) yoki `POST /learning/promote` / `/learning/rollback`. **Faqat kirish yoqilganda** (`CARDIOPATH_AUTH=on`) va faqat `cardiologist`/`surgeon` roli bilan; tasdiqlovchi ismi so'rovdan emas, kirgan foydalanuvchidan olinadi. Kirishsiz rejimda API 403 beradi, buyruq satri (`python -m learning.promote`) saqlangan. Batafsil: [docs/CardioPath-AI-loyiha-tavsifi.md](docs/CardioPath-AI-loyiha-tavsifi.md), 3.4.1-bo'lim.
 - Haqiqiy mahalliy bemor ma'lumotida hali sinalmagan: faqat mexanika tekshirilgan.
 
 ## 2-modul: operatsiya oldi xavf (`risk/`)
@@ -277,7 +277,7 @@ NeuroSon-AI (`uttai/heart`, EchoNet-Dynamic, R(2+1)D-18) ONNX og'irligi `Evidenc
 ## Keyingi qadamlar
 - PCG modelini haqiqiy CirCor ma'lumotida o'qitish (`research/train_pcg.py`)
 - CSA-AKI modeli: MIMIC-IV kogortasi + `weights/aki` (PhysioNet credentialing kerak)
-- Nomzod modelni tasdiqlash ekrani (kirish tizimi tayyor), Telegram Mini App (bemor) va Next.js shifokor paneli
+- Telegram Mini App (bemor) va Next.js shifokor paneli
 - MNO OCR'ni haqiqiy laboratoriya qog'ozlarida baholash; EKG/angio tashqi validatsiyasi
 - Postgres adapteri (`EpisodeStore` interfeysi orqali)
 

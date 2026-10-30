@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CardioPath AI — Models</title>
+<style>
+  :root { --bg:#f4f8fc; --card:#fff; --text:#13223a; --muted:#5b6b82; --border:#d9e3ef; --accent:#1769e0; --green:#1b8a4a; --green-bg:#e4f6ec;
+          --red:#c62828; --red-bg:#fdeaea; --yellow-bg:#fff6dc; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0c1524; --card:#142038; --text:#e8eef8; --muted:#9db0c9; --border:#26395a;
+          --accent:#4c9bff; --green:#55c777; --green-bg:#11291d; --red:#ff7b7b; --red-bg:#321719; --yellow-bg:#2d2713; } }
+  :root[data-theme="dark"] { --bg:#0c1524; --card:#142038; --text:#e8eef8; --muted:#9db0c9; --border:#26395a; --accent:#4c9bff; --green:#55c777;
+          --green-bg:#11291d; --red:#ff7b7b; --red-bg:#321719; --yellow-bg:#2d2713; }
+  * { box-sizing: border-box; } [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 system-ui, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 880px; margin: 0 auto; padding: 14px 16px 64px; }
+  header { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 6px 0 14px; }
+  header a.back { color: var(--accent); text-decoration: none; font-weight: 700; }
+  .tools { display: flex; gap: 6px; }
+  .tools button { border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 8px; min-height: 40px; min-width: 44px; padding: 0 10px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .tools button[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+  h1 { font-size: 26px; margin: 4px 0 4px; } .sub { color: var(--muted); margin: 0 0 16px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }
+  .card h2 { font-size: 17px; margin: 0 0 10px; }
+  .kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+  .kv div { background: var(--bg); border-radius: 10px; padding: 8px 12px; } .kv small { display: block; color: var(--muted); font-size: 12.5px; } .kv b { word-break: break-all; }
+  .gate { display: flex; gap: 10px; padding: 8px 0; border-top: 1px solid var(--border); } .gate:first-of-type { border-top: 0; }
+  .mark { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+  .mark.ok { background: var(--green-bg); color: var(--green); } .mark.no { background: var(--red-bg); color: var(--red); }
+  .gate small { display: block; color: var(--muted); }
+  .note { padding: 10px 12px; border-radius: 10px; background: var(--yellow-bg); font-size: 14px; margin-top: 10px; }
+  textarea, input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); font: inherit; margin: 6px 0 10px; }
+  .btn { border: 0; border-radius: 10px; padding: 11px 20px; font: inherit; font-weight: 700; cursor: pointer; background: var(--accent); color: #fff; min-height: 44px; }
+  .btn.warn { background: var(--red); } .btn:disabled { opacity: .6; cursor: wait; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; } td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .msg { margin-top: 8px; font-weight: 600; } .msg.err { color: var(--red); } .msg.ok { color: var(--green); }
+  code { background: var(--bg); padding: 2px 6px; border-radius: 6px; word-break: break-all; }
+  @media (max-width: 520px) { h1 { font-size: 22px; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <a class="back" href="/" data-i="back"></a>
+    <div class="tools" id="langs"><button type="button" data-lang="uz">UZ</button><button type="button" data-lang="ru">RU</button><button type="button" data-lang="en">EN</button></div>
+  </header>
+  <h1 data-i="title"></h1>
+  <p class="sub" data-i="sub"></p>
+
+  <div class="card" id="needLogin" hidden><span data-i="needLogin"></span> <a href="/" data-i="signInLink"></a></div>
+  <div id="content" hidden>
+    <section class="card"><h2 data-i="current"></h2><div class="kv" id="curKv"></div><div class="note" id="restart" hidden data-i="restart"></div></section>
+    <section class="card"><h2 data-i="data"></h2><div class="kv" id="dataKv"></div><div id="dataGate"></div></section>
+    <section class="card"><h2 data-i="cand"></h2><div id="candBox"></div></section>
+    <section class="card" id="rbCard" hidden><h2 data-i="rollback"></h2><p class="sub" data-i="rollbackHelp"></p>
+      <label for="rbNote" data-i="reason"></label><input id="rbNote" maxlength="300">
+      <button class="btn warn" id="rbGo" type="button" data-i="rollbackBtn"></button><div class="msg" id="rbMsg" role="status"></div></section>
+    <section class="card"><h2 data-i="history"></h2><div id="hist"></div></section>
+  </div>
+</main>
+<script>
+const I = {
+  uz: { back: "← Skriningga qaytish", title: "Model versiyalari", sub: "Dastur yangi modelni o'zi tayyorlaydi, lekin joriy qilishni faqat shifokor tasdiqlaydi.",
+    needLogin: "Bu sahifa uchun tizimga kiring.", signInLink: "Kirish", current: "Joriy holat", running: "Ishlayotgan model", active: "Tasdiqlangan joriy",
+    restart: "Tasdiqlangan model dastur qayta ishga tushirilgach yuklanadi.", data: "Ma'lumot", confirmed: "Tasdiqlangan bolalar", fresh: "Yangi (oxirgi nomzoddan beri)",
+    needed: "Yangi nomzod uchun kerak", gateOk: "Ma'lumot darvozasi: o'tdi", gateNo: "Ma'lumot darvozasi: o'tmadi", cand: "Nomzod model",
+    none: "Hozircha nomzod yo'q. Dastur yetarli yangi tasdiqlangan holat to'plangach tayyorlaydi.", version: "Versiya", created: "Yaratilgan", gatesPass: "Barcha darvozalardan o'tdi",
+    gatesFail: "Darvozalardan o'tmadi, tasdiqlab bo'lmaydi", approve: "Tasdiqlash va joriy qilish", reason: "Izoh / sabab", note: "Izoh (ixtiyoriy)",
+    confirm: "Bu nomzodni joriy qilishni tasdiqlaysizmi? Tasdiqlovchi sifatida sizning ismingiz yoziladi.", done: "Tasdiqlandi. Dasturni qayta ishga tushiring.",
+    noRight: "Tasdiqlash uchun kardiolog yoki kardioxirurg roli kerak.", authOff: "Tasdiqlash kirish tizimi yoqilganda ishlaydi (CARDIOPATH_AUTH=on). Hozircha buyruq satri:",
+    rollback: "Orqaga qaytarish", rollbackHelp: "Oxirgi tasdiqlangan versiyani bekor qiladi (oldingisiga yoki bazaviy modelga).", rollbackBtn: "Orqaga qaytarish",
+    rollbackConfirm: "Oxirgi tasdiqlangan versiyani bekor qilasizmi?", rolledBack: "Qaytarildi. Dasturni qayta ishga tushiring.", history: "Tarix",
+    at: "Vaqt", event: "Hodisa", ver: "Versiya", by: "Kim", noteCol: "Izoh", empty: "Tarix bo'sh", failed: "Xato", needReason: "Sababni yozing (kamida 5 belgi)" },
+  ru: { back: "← К скринингу", title: "Версии моделей", sub: "Программа сама готовит новую модель, но вводит её в работу только врач.",
+    needLogin: "Для этой страницы войдите в систему.", signInLink: "Войти", current: "Текущее состояние", running: "Работающая модель", active: "Утверждённая текущая",
+    restart: "Утверждённая модель загрузится после перезапуска программы.", data: "Данные", confirmed: "Подтверждённые дети", fresh: "Новые (с прошлого кандидата)",
+    needed: "Нужно для нового кандидата", gateOk: "Барьер данных: пройден", gateNo: "Барьер данных: не пройден", cand: "Модель-кандидат",
+    none: "Кандидата пока нет. Программа подготовит его, когда наберётся достаточно новых подтверждённых случаев.", version: "Версия", created: "Создана", gatesPass: "Все барьеры пройдены",
+    gatesFail: "Барьеры не пройдены, утвердить нельзя", approve: "Утвердить и ввести в работу", reason: "Комментарий / причина", note: "Комментарий (необязательно)",
+    confirm: "Подтверждаете ввод этого кандидата в работу? Ваше имя будет записано как утвердившего.", done: "Утверждено. Перезапустите программу.",
+    noRight: "Для утверждения нужна роль кардиолога или кардиохирурга.", authOff: "Утверждение работает при включённом входе (CARDIOPATH_AUTH=on). Пока через командную строку:",
+    rollback: "Откат", rollbackHelp: "Отменяет последнюю утверждённую версию (возврат к предыдущей или к базовой модели).", rollbackBtn: "Откатить",
+    rollbackConfirm: "Отменить последнюю утверждённую версию?", rolledBack: "Откат выполнен. Перезапустите программу.", history: "История",
+    at: "Время", event: "Событие", ver: "Версия", by: "Кто", noteCol: "Комментарий", empty: "История пуста", failed: "Ошибка", needReason: "Укажите причину (не менее 5 символов)" },
+  en: { back: "← Back to screening", title: "Model versions", sub: "The program prepares new models by itself, but only a clinician approves putting one into use.",
+    needLogin: "Please sign in to use this page.", signInLink: "Sign in", current: "Current state", running: "Running model", active: "Approved current",
+    restart: "The approved model will load after the program restarts.", data: "Data", confirmed: "Confirmed children", fresh: "New (since last candidate)",
+    needed: "Needed for a new candidate", gateOk: "Data gate: passed", gateNo: "Data gate: not passed", cand: "Candidate model",
+    none: "No candidate yet. The program prepares one once enough new confirmed cases accumulate.", version: "Version", created: "Created", gatesPass: "All gates passed",
+    gatesFail: "Gates not passed, cannot be approved", approve: "Approve and put into use", reason: "Note / reason", note: "Note (optional)",
+    confirm: "Approve putting this candidate into use? Your name will be recorded as the approver.", done: "Approved. Restart the program.",
+    noRight: "Approving requires the cardiologist or surgeon role.", authOff: "Approval works when sign-in is enabled (CARDIOPATH_AUTH=on). For now use the command line:",
+    rollback: "Roll back", rollbackHelp: "Cancels the last approved version (back to the previous one or the baseline model).", rollbackBtn: "Roll back",
+    rollbackConfirm: "Cancel the last approved version?", rolledBack: "Rolled back. Restart the program.", history: "History",
+    at: "Time", event: "Event", ver: "Version", by: "By", noteCol: "Note", empty: "No history", failed: "Error", needReason: "Enter a reason (at least 5 characters)" },
+};
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+let lang = store.get("lang") in I ? store.get("lang") : "uz";
+const t = (k) => I[lang][k] ?? I.uz[k] ?? k;
+let session = null, authOn = false, status = null;
+try { session = JSON.parse(sessionStorage.getItem("auth") || "null"); } catch (e) {}
+const th = store.get("theme"); if (th === "light" || th === "dark") document.documentElement.dataset.theme = th;
+const can = (p) => !!session && session.permissions.includes(p);
+const api = (url, opts = {}) => fetch(url, { ...opts, headers: { "Content-Type": "application/json", ...(session ? { Authorization: "Bearer " + session.token } : {}) } });
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-i]").forEach((el) => { el.textContent = t(el.dataset.i); });
+  document.querySelectorAll("#langs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+  if (status) paint();
+}
+document.querySelectorAll("#langs button").forEach((b) => b.addEventListener("click", () => { lang = b.dataset.lang; store.set("lang", lang); applyLang(); }));
+
+function paint() {
+  const s = status;
+  $("curKv").innerHTML = `<div><small>${esc(t("running"))}</small><b>${esc(s.running_version)}</b></div><div><small>${esc(t("active"))}</small><b>${esc(s.current_version)}</b></div>`;
+  $("restart").hidden = !s.restart_needed;
+  const d = s.data;
+  $("dataKv").innerHTML = d ? `<div><small>${esc(t("confirmed"))}</small><b>${d.confirmed_children}</b></div><div><small>${esc(t("fresh"))}</small><b>${d.new_since_last_candidate}</b></div><div><small>${esc(t("needed"))}</small><b>${d.needed_new}</b></div>` : "";
+  $("dataGate").innerHTML = d ? `<div class="gate"><span class="mark ${d.dataset_gate.passed ? "ok" : "no"}">${d.dataset_gate.passed ? "✓" : "✕"}</span><div>${esc(t(d.dataset_gate.passed ? "gateOk" : "gateNo"))}</div></div>` : "";
+  const c = s.latest_candidate, box = $("candBox");
+  if (!c) { box.innerHTML = `<p class="sub">${esc(t("none"))}</p>`; }
+  else {
+    const gates = c.gates.map((g) => `<div class="gate"><span class="mark ${g.passed ? "ok" : "no"}">${g.passed ? "✓" : "✕"}</span><div>${esc(g.name)}<small>${esc(g.detail)}</small></div></div>`).join("");
+    let act;
+    if (!c.passed) act = `<div class="note">${esc(t("gatesFail"))}</div>`;
+    else if (!authOn) act = `<div class="note">${esc(t("authOff"))}<br><code>${esc(c.promote_command || "")}</code></div>`;
+    else if (!can("learning.approve")) act = `<div class="note">${esc(t("noRight"))}</div>`;
+    else act = `<label for="pNote">${esc(t("note"))}</label><input id="pNote" maxlength="300"><button class="btn" id="pGo" type="button">${esc(t("approve"))}</button><div class="msg" id="pMsg" role="status"></div>`;
+    box.innerHTML = `<div class="kv"><div><small>${esc(t("version"))}</small><b>${esc(c.version)}</b></div><div><small>${esc(t("created"))}</small><b>${esc(c.created_at || "—")}</b></div></div>
+      <div style="margin-top:8px">${gates}</div><p class="msg ${c.passed ? "ok" : "err"}">${esc(t(c.passed ? "gatesPass" : "gatesFail"))}</p>${act}`;
+    if ($("pGo")) $("pGo").addEventListener("click", () => act_(`/learning/promote`, { version: c.version, note: $("pNote").value }, "pMsg", "pGo", "confirm", "done"));
+  }
+  $("rbCard").hidden = !(authOn && can("learning.approve"));
+  $("hist").innerHTML = s.history.length ? `<table><tr><th>${esc(t("at"))}</th><th>${esc(t("event"))}</th><th>${esc(t("ver"))}</th><th>${esc(t("by"))}</th><th>${esc(t("noteCol"))}</th></tr>${[...s.history].reverse().map((h) =>
+    `<tr><td>${esc(String(h.at).slice(0, 19).replace("T", " "))}</td><td>${esc(h.event)}</td><td>${esc(h.version)}</td><td>${esc(h.by)}</td><td>${esc(h.note || "")}</td></tr>`).join("")}</table>` : `<p class="sub">${esc(t("empty"))}</p>`;
+}
+async function act_(url, body, msgId, btnId, confirmKey, doneKey) {
+  const msg = $(msgId); msg.className = "msg"; msg.textContent = "";
+  if (!confirm(t(confirmKey))) return;
+  $(btnId).disabled = true;
+  try {
+    const r = await api(url, { method: "POST", body: JSON.stringify(body) });
+    if (r.ok) { msg.className = "msg ok"; msg.textContent = t(doneKey); await load(true); $(msgId) && ($(msgId).className = "msg ok", $(msgId).textContent = t(doneKey)); return; }
+    let d = ""; try { d = (await r.json()).detail; } catch (e) {}
+    msg.className = "msg err"; msg.textContent = `${t("failed")}: ${typeof d === "string" ? d : JSON.stringify(d)}`;
+  } catch (e) { msg.className = "msg err"; msg.textContent = t("failed"); }
+  $(btnId) && ($(btnId).disabled = false);
+}
+$("rbGo").addEventListener("click", () => {
+  if ($("rbNote").value.trim().length < 5) { $("rbMsg").className = "msg err"; $("rbMsg").textContent = t("needReason"); return; }
+  act_("/learning/rollback", { note: $("rbNote").value }, "rbMsg", "rbGo", "rollbackConfirm", "rolledBack");
+});
+async function load(keep) {
+  const r = await api("/learning/status");
+  if (r.status === 401) { session = null; try { sessionStorage.removeItem("auth"); } catch (e) {} $("content").hidden = true; $("needLogin").hidden = false; return; }
+  if (!r.ok) { $("content").hidden = true; return; }
+  status = await r.json(); $("needLogin").hidden = true; $("content").hidden = false; paint();
+}
+(async () => {
+  applyLang();
+  try { authOn = (await (await fetch("/auth/status")).json()).enabled; } catch (e) {}
+  if (authOn && !session) { $("needLogin").hidden = false; return; }
+  await load();
+})();
+</script>
+</body>
+</html>

@@ -92,6 +92,10 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
             raise HTTPException(404, "epizod topilmadi")
         return ep
 
+    @app.get("/models-ui", response_class=HTMLResponse, include_in_schema=False)
+    def models_page() -> str:
+        return (Path(__file__).parent / "static" / "models.html").read_text(encoding="utf-8")
+
     @app.get("/", response_class=HTMLResponse, include_in_schema=False)
     def screening_page() -> str:
         return (Path(__file__).parent / "static" / "screening.html").read_text(encoding="utf-8")
@@ -105,7 +109,7 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
     if auth is not None:
         auth_routes.register(app, auth, store)
     if models_dir is not None:
-        learning_routes.register(app, store, models_dir, recordings_dir, running_version)
+        learning_routes.register(app, store, models_dir, recordings_dir, running_version, auth_enabled=auth is not None)
 
     @app.get("/health")
     def health() -> dict:

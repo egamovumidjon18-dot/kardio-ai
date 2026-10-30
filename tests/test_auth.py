@@ -360,3 +360,64 @@ def test_auth_cli_creates_admin_then_default_app_starts(tmp_path, monkeypatch, c
     monkeypatch.setenv("CARDIOPATH_MODELS", str(tmp_path / "m"))
     app = default_app()
     assert TestClient(app).get("/auth/status").json() == {"enabled": True}
+
+
+# ---------- model tasdiqlash ekrani (E18)
+def _candidate(tmp_path, passed=True, name="c1"):
+    from learning.versions import ModelVersions
+    from tests.test_learning import make_files, report
+    return ModelVersions(tmp_path / "models").add_candidate(make_files(tmp_path, name), report(passed))
+
+
+def test_promote_requires_cardiologist_or_surgeon_and_records_real_name(env, tmp_path):
+    client = env[0]
+    vid = _candidate(tmp_path)
+    body = {"version": vid, "note": "yaxshi natija"}
+    for role in ("clinician", "icu", "admin", "patient"):
+        extra = {"episode_id": "e1"} if role == "patient" else {}
+        h = hdr(env, "u-" + role, role, **extra)
+        assert client.post("/learning/promote", json=body, headers=h).status_code == 403, role
+    assert client.post("/learning/promote", json=body).status_code == 401
+    h = hdr(env, "dr.tasdiq", "cardiologist")
+    r = client.post("/learning/promote", json=body, headers=h)
+    assert r.status_code == 200 and r.json()["approved_by"] == "dr.tasdiq" and r.json()["restart_needed"] is True
+    st = client.get("/learning/status", headers=h).json()
+    assert st["current_version"] == vid and any(x["event"] == "promoted" and x["by"] == "dr.tasdiq" for x in st["history"])
+    assert any(e["action"] == "model.promote" and e["actor"] == "dr.tasdiq"
+               for e in client.get("/audit/security", headers=login(client, "admin1")).json())
+    assert client.post("/learning/promote", json=body, headers=h).status_code == 409           # allaqachon joriy
+
+
+def test_failed_or_unknown_candidate_cannot_be_promoted(env, tmp_path):
+    client = env[0]
+    h = hdr(env, "jarroh2", "surgeon")
+    bad = _candidate(tmp_path, passed=False, name="bad")
+    assert client.post("/learning/promote", json={"version": bad}, headers=h).status_code == 409
+    assert client.post("/learning/promote", json={"version": "v-yoq"}, headers=h).status_code == 409
+    assert client.post("/learning/promote", json={"version": "../.."}, headers=h).status_code == 422
+
+
+def test_rollback_needs_reason_and_restores_previous(env, tmp_path):
+    client = env[0]
+    h = hdr(env, "dr.qaytar", "cardiologist")
+    v1 = _candidate(tmp_path, name="r1")
+    assert client.post("/learning/rollback", json={"note": "sabab bor"}, headers=h).status_code == 409   # qaytariladigan narsa yo'q
+    client.post("/learning/promote", json={"version": v1}, headers=h)
+    assert client.post("/learning/rollback", json={"note": "x"}, headers=h).status_code == 422
+    r = client.post("/learning/rollback", json={"note": "sifat tushdi"}, headers=h)
+    assert r.status_code == 200 and r.json()["restored"] == "baseline" and r.json()["approved_by"] == "dr.qaytar"
+    assert client.get("/learning/status", headers=h).json()["current_version"] == "baseline"
+
+
+def test_promote_refused_when_auth_is_off(tmp_path):
+    model = PCGModel(CARD, lambda x: (np.full(len(x), 0.9, np.float32), np.full(len(x), 0.1, np.float32)))
+    c = TestClient(create_app(SqliteEpisodeStore(str(tmp_path / "off.db")), model, models_dir=tmp_path / "models"))
+    vid = _candidate(tmp_path)
+    r = c.post("/learning/promote", json={"version": vid})
+    assert r.status_code == 403 and "CARDIOPATH_AUTH" in r.json()["detail"]
+    assert c.get("/learning/status").json()["current_version"] == "baseline"
+
+
+def test_models_page_is_served(env):
+    r = env[0].get("/models-ui")
+    assert r.status_code == 200 and "learning/promote" in r.text and "uz" in r.text

@@ -1,6 +1,6 @@
 # CardioPath AI — loyiha tavsifi (dizayner AI uchun texnik va funksional hujjat)
 
-Holat: 2026-yil 30-oktabr. Manba: loyiha kodi (`main` branch, 240 ta test; `feat/ai-models` branch'i 2026-10-30 da `main` bilan birlashtirildi), muallifning o'z maqsad hujjati va o'qitish/baholash hisobotlari.
+Holat: 2026-yil 30-oktabr. Manba: loyiha kodi (`main` branch, 245 ta test; `feat/ai-models` branch'i 2026-10-30 da `main` bilan birlashtirildi), muallifning o'z maqsad hujjati va o'qitish/baholash hisobotlari.
 
 ## 0. Bu hujjatni qanday o'qish kerak
 
@@ -283,7 +283,7 @@ Maqsad: model yangi klinika va stetoskopga moslashishi uchun ExoKG bilan tasdiql
 7. Dastur qayta ishga tushirilgach, tasdiqlangan joriy versiyani yuklaydi (aniq `CARDIOPATH_WEIGHTS` ko'rsatilgan bo'lsa, o'sha ustun). `GET /learning/status` ishlayotgan va joriy versiya farq qilsa, `restart_needed: true` deydi.
 
 **Ataylab qilingan cheklovlar:**
-- Tasdiqlash **veb-API'da yo'q**: kirish tizimi (autentifikatsiya) yo'qligi sababli API orqali tasdiqlansa, istalgan odam modelni almashtira olardi. Kirish tizimi endi bor (E16), shuning uchun tasdiqlash ekrani qurilishi mumkin [REJADA]; hozircha tasdiqlash faqat buyruq satrida.
+- Tasdiqlash veb-API va ekranda [MAVJUD, faqat kirish yoqilganda]: `POST /learning/promote`, `POST /learning/rollback` (huquq `learning.approve`: `cardiologist`, `surgeon`) va `/models-ui` sahifasi (3 til; joriy holat, ma'lumot, nomzod darvozalari, tasdiqlash, qaytarish sababi bilan, tarix). Kirishsiz rejimda bu API 403 beradi (aks holda istalgan odam modelni almashtira olardi). Tasdiqlovchi — kirgan foydalanuvchi, hodisa `model.promote`/`model.rollback` sifatida xavfsizlik jurnaliga ham yoziladi. Darvozalardan o'tmagan nomzod tasdiqlanmaydi. Yangi model qayta ishga tushirishdan keyin yuklanadi.
 - Qayta o'qitilgan model dataseti «CirCor + mahalliy ma'lumot» deb yoziladi va **mahsulot rejimida bloklanadi**, chunki mahalliy ma'lumotning tijorat huquqi tasdiqlanmagan (rozilik tadqiqot uchun).
 
 **Cheklovlar (halol):**
@@ -586,7 +586,7 @@ Eksport va moslashtirish buyruqlari (3.4). Foydalanuvchi ekrani yo'q.
 ### E19. O'rganish holati va nomzod modelni tasdiqlash [FAQAT API; tasdiqlash — buyruq satri]
 - **Vazifa:** shifokor/tadqiqotchi dastur o'zi o'qitgan yangi nomzodni ko'radi, darvozalar natijasini tushunadi va tasdiqlash yoki rad etish haqida qaror qiladi.
 - **Mavjud ma'lumot (`GET /learning/status`):** ishlayotgan versiya, joriy versiya, qayta ishga tushirish kerakmi; oxirgi nomzod (yaratilgan vaqt, har bir darvoza: nomi, o'tdi/o'tmadi, tushuntirish; mahalliy testdagi AUROC farqi va ishonch oralig'i; tasdiqlash buyrug'i); to'plangan tasdiqlangan bolalar soni, oxirgi nomzoddan beri yangilari va keraklisi; ma'lumot darvozasi natijasi; oxirgi sikl holati; tarix (kim, qachon tasdiqlagan yoki qaytargan).
-- **Amallar:** ekranda faqat ko'rish. Tasdiqlash va qaytarish hozir faqat `python -m learning.promote` (kirish tizimi bo'lgach, ekranga chiqarilishi mumkin) [REJADA].
+- **Amallar:** tasdiqlash va qaytarish kirish yoqilganda ekranda ham mumkin; kirishsiz `python -m learning.promote` (kirish tizimi bo'lgach, ekranga chiqarilishi mumkin) [REJADA].
 - **Muhim:** darvozadan o'tmagan nomzod tasdiqlanmaydi (server rad etadi); tasdiqlovchining ismi majburiy.
 
 ---
@@ -634,7 +634,7 @@ Asosiy foydalanuvchi: **tuman va viloyatdagi shifokor** (ExoKG imkoniyati chekla
 | Bildirishnoma | Telegram Bot API (`httpx`), muhit o'zgaruvchilari orqali | Kod bor, haqiqiy bot bilan **sinalmagan** |
 | Tashqi OCR | `rapidocr-onnxruntime` (ixtiyoriy) | MAVJUD |
 | Tilda xulosa | Deterministik shablonlar, LLM yo'q | MAVJUD |
-| Testlar | pytest: 240 | MAVJUD |
+| Testlar | pytest: 245 | MAVJUD |
 | Ishga tushirish | `Start.bat` (Windows) | MAVJUD |
 | Frontend freymvork (Next.js), PostgreSQL | Dastlabki rejada bor edi | **REJADA**, qurilmagan |
 
@@ -685,7 +685,7 @@ Quyidagilar muallifning maqsad hujjati va kelishilgan rejadan olingan. Hammasi *
 **O'rta muddat**
 4. Ekranlar: bemorlar ro'yxati, epizod tafsiloti va bosqichga o'tkazish, Heart Team kiritish va protokol, jarroh/navbatchi signallari paneli.
 5. Bemor ilovasi (Telegram Mini App yoki PWA): kundalik check-in, MNO qog'ozini rasmga olish, uchala tilda xabarlar.
-6. PostgreSQL ga o'tish (saqlash qatlami shuni ko'zda tutib interfeys orqali yozilgan). Kirish tizimi tayyor: nomzod modelni tasdiqlashni ekranga chiqarish, «soya rejimi» (nomzod joriy model bilan yonma-yon, natijasi ko'rsatilmay sinaladi), sikl rejalashtirgichi.
+6. PostgreSQL ga o'tish (saqlash qatlami shuni ko'zda tutib interfeys orqali yozilgan). «soya rejimi» (nomzod joriy model bilan yonma-yon, natijasi ko'rsatilmay sinaladi), sikl rejalashtirgichi.
 7. RACHS-1 (bolalar xavfi); STS ballini qo'lda kiritish; mexanik klapan bemorlari uchun Guardian qoidalarini kengaytirish.
 8. ExoKG: regional devor harakati (RWMA), klapan regurgitatsiyasi, pediatrik EF; ExoKG foundation modellarini mahalliy apparatda tashqi validatsiya qilish.
 9. Yara rasmi uchun CV modeli (Guardian orqali rozilik bilan yig'ilgan rasm va jarroh yorlig'i bilan).

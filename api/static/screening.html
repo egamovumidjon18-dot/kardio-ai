@@ -215,6 +215,7 @@
         <button type="button" data-lang="ru" aria-pressed="false">RU</button>
         <button type="button" data-lang="en" aria-pressed="false">EN</button>
       </div>
+      <a class="who on" id="modelsLink" href="/models-ui" data-i="modelsLink" style="color:var(--accent);font-weight:700;text-decoration:none"></a>
       <span class="who" id="who"><b id="whoName"></b><button type="button" id="logout" data-i="signOut"></button></span>
       <button type="button" class="theme" id="theme" aria-label="Theme"></button>
     </div>
@@ -327,6 +328,7 @@
 <script>
 const I18N = {
   uz: {
+    modelsLink: "Modellar",
     loginTitle: "Tizimga kirish", loginSub: "Davom etish uchun hisobingiz bilan kiring.", username: "Foydalanuvchi nomi", password: "Parol", signIn: "Kirish", signOut: "Chiqish", loginBad: "Foydalanuvchi nomi yoki parol noto'g'ri.", loginLocked: "Juda ko'p urinish. Bir ozdan keyin qayta urining.", loginNet: "Serverga ulanib bo'lmadi.", sessionEnded: "Seans tugadi. Qaytadan kiring.", noPerm: "Sizning rolingiz skrining o'tkazishga ruxsat bermaydi. Boshqa bo'limlardan foydalaning yoki administratorga murojaat qiling.",
     brandSub: "Bolalar yurak skriningi uchun sun'iy intellekt", tagline: "Har bir bola sog'lom yurakka loyiq",
     heroSub: "Kislorod darajasi, klinik belgilar va yurak tovushi — bir joyda. Dastur tug'ma yurak nuqsoni xavfini baholab, nima qilish kerakligini aytadi.",
@@ -364,6 +366,7 @@ const I18N = {
     disclaimer: "Bu natija sun'iy intellekt va klinik qoidalar yordamchisi tomonidan tayyorlangan va YAKUNIY TASHXIS EMAS. Qaror faqat shifokor tomonidan qabul qilinadi. Tadqiqot rejimi.",
   },
   ru: {
+    modelsLink: "Модели",
     loginTitle: "Вход в систему", loginSub: "Войдите в свою учётную запись, чтобы продолжить.", username: "Имя пользователя", password: "Пароль", signIn: "Войти", signOut: "Выйти", loginBad: "Неверное имя пользователя или пароль.", loginLocked: "Слишком много попыток. Повторите немного позже.", loginNet: "Не удалось подключиться к серверу.", sessionEnded: "Сеанс завершён. Войдите снова.", noPerm: "Ваша роль не позволяет проводить скрининг. Обратитесь к администратору.",
     brandSub: "ИИ для скрининга сердца у детей", tagline: "Каждый ребёнок достоин здорового сердца",
     heroSub: "Насыщение кислородом, клинические признаки и тоны сердца — в одном месте. Программа оценивает риск врождённого порока и подсказывает, что делать.",
@@ -401,6 +404,7 @@ const I18N = {
     disclaimer: "Результат подготовлен помощником на основе ИИ и клинических правил и НЕ ЯВЛЯЕТСЯ ОКОНЧАТЕЛЬНЫМ ДИАГНОЗОМ. Решение принимает только врач. Исследовательский режим.",
   },
   en: {
+    modelsLink: "Models",
     loginTitle: "Sign in", loginSub: "Sign in with your account to continue.", username: "Username", password: "Password", signIn: "Sign in", signOut: "Sign out", loginBad: "Wrong username or password.", loginLocked: "Too many attempts. Please try again in a moment.", loginNet: "Could not reach the server.", sessionEnded: "Your session ended. Please sign in again.", noPerm: "Your role is not allowed to run screening. Please contact an administrator.",
     brandSub: "AI for paediatric heart screening", tagline: "Every child deserves a healthy heart",
     heroSub: "Oxygen saturation, clinical signs and heart sounds in one place. The app estimates the risk of congenital heart disease and tells you what to do next.",
@@ -665,6 +669,7 @@ function paintSession() {
     $("whoName").textContent = `${session.user.display_name || session.user.username} · ${session.user.role}`;
     $("actor").value = session.user.username; $("actor").readOnly = true;      // server baribir haqiqiy foydalanuvchini yozadi
   } else { $("actor").readOnly = false; }
+  $("modelsLink").hidden = !can("learning.read");
   $("permNote").hidden = can("screening.run");
   $("submit").disabled = !can("screening.run");
   if (session) loadFlags();

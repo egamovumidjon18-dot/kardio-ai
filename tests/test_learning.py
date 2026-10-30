@@ -323,7 +323,9 @@ def test_learning_status_api(clinic, tmp_path):
     s = client.get("/learning/status").json()
     assert s["current_version"] == res["version"] and s["restart_needed"] is True and s["running_version"] == "baseline"
     assert any(h["event"] == "promoted" and h["by"] == "Dr. Karimova" for h in s["history"])
-    assert "promote" not in " ".join(r.path for r in client.app.routes if "POST" in getattr(r, "methods", set()) and "learning" in r.path)
+    # kirish tizimisiz tasdiqlash API'si HECH QACHON ishlamaydi (kirish bilan: tests/test_auth.py)
+    assert client.post("/learning/promote", json={"version": res["version"]}).status_code == 403
+    assert client.post("/learning/rollback", json={"note": "sabab yo'q emas"}).status_code == 403
 
 
 def test_health_reports_running_model_version(tmp_path):

@@ -17,7 +17,7 @@ from core.identity import current_user
 from core.store import EpisodeStore
 
 # ochiq yo'llar: kirishsiz ham (sahifaning o'zi, holat, kirish)
-PUBLIC = {("GET", "/"), ("GET", "/health"), ("GET", "/auth/status"), ("POST", "/auth/login")}
+PUBLIC = {("GET", "/"), ("GET", "/models-ui"), ("GET", "/health"), ("GET", "/auth/status"), ("POST", "/auth/login")}
 
 _ANY = "auth.any"          # istalgan kirgan foydalanuvchi
 ROUTE_PERMS: dict[tuple[str, str], str] = {
@@ -36,6 +36,7 @@ ROUTE_PERMS: dict[tuple[str, str], str] = {
     ("POST", "/episodes/{eid}/guardian/inr-image"): "guardian.submit",
     ("GET", "/alerts"): "alerts.read", ("GET", "/episodes/{eid}/alerts"): "alerts.read", ("POST", "/alerts/{alert_id}/ack"): "alerts.ack",
     ("GET", "/learning/status"): "learning.read",
+    ("POST", "/learning/promote"): "learning.approve", ("POST", "/learning/rollback"): "learning.approve",
     ("GET", "/users"): "users.manage", ("POST", "/users"): "users.manage",
     ("POST", "/users/{username}/disable"): "users.manage", ("POST", "/users/{username}/enable"): "users.manage",
     ("POST", "/users/{username}/role"): "users.manage", ("POST", "/users/{username}/password"): "users.manage",
@@ -44,7 +45,7 @@ ROUTE_PERMS: dict[tuple[str, str], str] = {
 
 _CLINICIAN = {"episode.create", "episode.read", "screening.run", "echo.diagnosis", "episode.transition", "ai.upload",
               "guardian.submit", "alerts.read"}
-_CARDIOLOGIST = _CLINICIAN | {"risk.assess", "protocol.read", "episode.audit", "learning.read"}
+_CARDIOLOGIST = _CLINICIAN | {"risk.assess", "protocol.read", "episode.audit", "learning.read", "learning.approve"}
 ROLE_PERMS: dict[str, set[str]] = {
     "admin": {_ANY, "episode.read", "episode.audit", "alerts.read", "learning.read", "users.manage"},
     "clinician": _CLINICIAN | {_ANY},
