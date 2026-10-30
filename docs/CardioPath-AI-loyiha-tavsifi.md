@@ -1,6 +1,6 @@
 # CardioPath AI — loyiha tavsifi (dizayner AI uchun texnik va funksional hujjat)
 
-Holat: 2026-yil 30-oktabr. Manba: loyiha kodi (`main` branch, 85 ta test) va hali birlashtirilmagan `feat/ai-models` branch'i (146 ta test), muallifning o'z maqsad hujjati va o'qitish/baholash hisobotlari.
+Holat: 2026-yil 30-oktabr. Manba: loyiha kodi (`main` branch, 146 ta test; `feat/ai-models` branch'i 2026-10-30 da `main` bilan birlashtirildi), muallifning o'z maqsad hujjati va o'qitish/baholash hisobotlari.
 
 ## 0. Bu hujjatni qanday o'qish kerak
 
@@ -11,7 +11,6 @@ Har bir imkoniyat quyidagi belgilardan biri bilan belgilangan:
 | Belgi | Ma'nosi |
 |---|---|
 | **[MAVJUD]** | `main` branch'da kodi bor, ishlaydi, testlangan. |
-| **[BRANCH]** | Alohida `feat/ai-models` branch'ida yozilgan va testdan o'tgan, lekin `main` bilan **birlashtirilmagan**. |
 | **[FAQAT API]** | Server tomoni (mantiq va endpoint) bor, lekin foydalanuvchi ekrani yo'q. |
 | **[REJADA]** | Muallif rejalashtirgan, kodi yo'q. |
 | **[NOMA'LUM]** | Menda ma'lumot yo'q. Hujjatda o'ylab topilmagan. |
@@ -57,10 +56,10 @@ Tizim bir vaqtda (a) xalqaro jurnal uchun **ilmiy tadqiqot** va (b) amaliyotdagi
 | Bo'g'in | Holat |
 |---|---|
 | 1. Pediatrik skrining | **[MAVJUD]** to'liq ishlaydi: qoidalar + yurak tovushi AI + ekran. |
-| 2. ExoKG | Qo'lda ExoKG tashxisini kiritish **[MAVJUD]**. EF modeli **[BRANCH]** (NeuroSon loyihasidan adapter, tashqi og'irlikka bog'liq). Regional devor harakati va klapan tahlili **[REJADA]**. |
-| 3. Intervension / intraoperatsion | Angiografiya stenoz nomzodlari **[BRANCH]**, model hali o'qitilmoqda. Intraoperatsion video **[REJADA]**, muzlatilgan (ochiq ma'lumot yo'q). |
+| 2. ExoKG | Qo'lda ExoKG tashxisini kiritish **[MAVJUD]**. EF modeli **[FAQAT API]** (NeuroSon loyihasidan adapter, tashqi og'irlikka bog'liq). Regional devor harakati va klapan tahlili **[REJADA]**. |
+| 3. Intervension / intraoperatsion | Angiografiya stenoz nomzodlari **[FAQAT API]**, model o'qitilgan (4.6-bo'lim). Intraoperatsion video **[REJADA]**, muzlatilgan (ochiq ma'lumot yo'q). |
 | 4. Xavf tahlili | EuroSCORE II, Thakar balli, Heart Team protokoli **[FAQAT API]**. AKI uchun ML modeli **[REJADA]** (ma'lumotga ruxsat kerak). RACHS-1 va STS **[REJADA]**. |
-| 5. Post-Op Guardian | Qoidalar, MNO, eskalatsiya **[FAQAT API]**. MNO qog'ozini rasmdan o'qish **[BRANCH]**. Bemor ilovasi **[REJADA]**. |
+| 5. Post-Op Guardian | Qoidalar, MNO, eskalatsiya **[FAQAT API]**. MNO qog'ozini rasmdan o'qish **[FAQAT API]**. Bemor ilovasi **[REJADA]**. |
 
 ---
 
@@ -75,7 +74,7 @@ Tizim bir vaqtda (a) xalqaro jurnal uchun **ilmiy tadqiqot** va (b) amaliyotdagi
         │  api/        FastAPI: endpointlar + bitta HTML sahifa │
         ├──────────────────────────────────────────────────────┤
         │  screening/  risk/  guardian/   (domen mantiqi)        │
-        │  (branch: ecg/ angio/ adapters/)                       │
+        │  (ecg/ angio/ adapters/)                       │
         ├──────────────────────────────────────────────────────┤
         │  core/   Evidence · Episode · Handoff · Concordance    │
         │          registry (litsenziya) · store (SQLite) · audit│
@@ -104,7 +103,7 @@ Dastur **modulli monolit**: bitta jarayon, bitta server. Mikroservislar yo'q.
 | `api/static/screening.html` | Yagona sahifa (skrining formasi va natija) | MAVJUD |
 | `research/` | O'qitish, baholash, tashqi validatsiya, moslashtirish tajribasi, mahalliy ma'lumot eksporti | MAVJUD |
 | `Start.bat` | Ikki marta bosib ishga tushirish (Windows) | MAVJUD |
-| `ecg/`, `angio/`, `adapters/echo_ef.py`, `guardian/ocr.py`, `guardian/wound_cv.py`, `api/ai_routes.py`, `api/ai_plain.py` | Qo'shimcha AI modullari | BRANCH |
+| `ecg/`, `angio/`, `adapters/echo_ef.py`, `guardian/ocr.py`, `guardian/wound_cv.py`, `api/ai_routes.py`, `api/ai_plain.py` | Qo'shimcha AI modullari (EKG, angiografiya, MNO rasmi, ExoKG EF) | MAVJUD (ekransiz) |
 
 ### 2.3. Asosiy abstraksiyalar (hamma narsa shu atrofida)
 
@@ -184,11 +183,11 @@ Server manzili: `http://localhost:8010` (faqat shu kompyuter).
 | `GET /episodes/{id}/heart-team-protocol` | Heart Team protokoli (oddiy matn, Markdown) | MAVJUD (ekransiz) |
 | `POST /episodes/{id}/guardian/inr` | MNO qiymati yoki OCR matni | MAVJUD (ekransiz) |
 | `POST /episodes/{id}/guardian/checkin` | Kundalik ko'rsatkichlar | MAVJUD (ekransiz) |
-| `GET /models` | Modullar holati va bloklanganlar ro'yxati | BRANCH |
-| `POST /episodes/{id}/ecg` | EKG tahlili (CSV, 12 tarmoq) | BRANCH |
-| `POST /episodes/{id}/angio` | Angiografiya kadri tahlili | BRANCH |
-| `POST /episodes/{id}/guardian/inr-image` | MNO qog'ozi rasmi | BRANCH |
-| `POST /episodes/{id}/echo-ef` | ExoKG videosidan EF | BRANCH |
+| `GET /models` | Modullar holati va bloklanganlar ro'yxati | MAVJUD (ekransiz) |
+| `POST /episodes/{id}/ecg` | EKG tahlili (CSV, 12 tarmoq) | MAVJUD (ekransiz) |
+| `POST /episodes/{id}/angio` | Angiografiya kadri tahlili | MAVJUD (ekransiz) |
+| `POST /episodes/{id}/guardian/inr-image` | MNO qog'ozi rasmi | MAVJUD (ekransiz) |
+| `POST /episodes/{id}/echo-ef` | ExoKG videosidan EF | MAVJUD (ekransiz) |
 
 **Mavjud EMAS (ekran uchun yangi API kerak bo'ladi):** epizodlar ro'yxati va qidiruv, epizodni o'chirish yoki tahrirlash, foydalanuvchi kirishi, bildirishnomalar ro'yxati, hisobot eksporti.
 
@@ -283,7 +282,7 @@ Maqsad: model yangi klinika va stetoskopga moslashishi uchun ExoKG bilan tasdiql
 |---|---|
 | Skrining → natija | MAVJUD, ekrani bor |
 | ExoKG tashxisi kiritish | MAVJUD |
-| Tahlil uchun qo'shimcha fayllar (EKG, angiografiya, ExoKG video) | BRANCH (API), ekrani yo'q |
+| Tahlil uchun qo'shimcha fayllar (EKG, angiografiya, ExoKG video) | FAQAT API (ekrani yo'q) |
 | Bosqichdan bosqichga o'tkazish | FAQAT API |
 | Heart Team xavf va protokol | FAQAT API |
 | Operatsiya, reanimatsiya (ma'lumot kiritish) | Bosqichlar bor, o'zining kiritish ekrani va maxsus mantiqi yo'q |
@@ -350,13 +349,13 @@ Qoidalar AI'dan mustaqil, va Concordance'da «qoida tomoni» bo'ladi. Batafsil �
 
 **AKI ML modeli** [REJADA]: interfeys tayyor (ONNX, noaniq zona, litsenziya tekshiruvi), lekin model yo'q: o'qitish uchun MIMIC-IV (PhysioNet credentialed) kerak. Muallifda bu ruxsat bor-yo'qligi menga ma'lum emas [NOMA'LUM]; kod hozircha bu ma'lumotsiz ishlaydi, model qurilmagan.
 
-**EKG (PTB-XL)** [BRANCH]: 12 tarmoqli 10 soniyalik EKG, 1D-CNN. Bo'lmachalar fibrillyatsiyasi (AFIB) va yana 5 toifa (NORM, MI, STTC, CD, HYP). Faqat kattalar (18+), bolalarda abstain. Test (PTB-XL 10-bo'lak, 2 060 yozuv): AFIB uchun AUROC 0.981 (0.963–0.992), sezgirlik 0.941, spetsifiklik 0.971. Boshqa toifalar bo'yicha batafsil metrikani men tekshirmadim. Guardian bosqichida AFIB topilsa, eskalatsiya ishlaydi.
+**EKG (PTB-XL)** [MAVJUD, ekransiz]: 12 tarmoqli 10 soniyalik EKG, 1D-CNN. Bo'lmachalar fibrillyatsiyasi (AFIB) va yana 5 toifa (NORM, MI, STTC, CD, HYP). Faqat kattalar (18+), bolalarda abstain. Test (PTB-XL 10-bo'lak, 2 060 yozuv): AFIB uchun AUROC 0.981 (0.963–0.992), sezgirlik 0.941, spetsifiklik 0.971. Boshqa toifalar bo'yicha batafsil metrikani men tekshirmadim. Guardian bosqichida AFIB topilsa, eskalatsiya ishlaydi.
 
-**Angiografiya stenoz nomzodlari (ARCADE, U-Net)** [BRANCH]: **SYNTAX kalkulyatori emas**. Faqat kadrdagi shubhali stenoz nomzodlarini ko'rsatadi; «nomzod topilmadi» «stenoz yo'q» degani emas. Model hozir o'qitilmoqda; yakuniy natija yo'q. (Boshqa sessiya hisobotiga ko'ra oraliq validatsiya Dice ~0.50, 60 epochdan 26 tasi o'tganda; men buni mustaqil tekshirmadim.)
+**Angiografiya stenoz nomzodlari (ARCADE, U-Net)** [MAVJUD, ekransiz]: **SYNTAX kalkulyatori emas**. Faqat kadrdagi shubhali stenoz nomzodlarini ko'rsatadi; «nomzod topilmadi» «stenoz yo'q» degani emas (shu sabab bunday javobda xavf `unknown` bo'ladi). 60 epoch o'qitilgan. Test (300 kadr, kadr darajasida bootstrap 95% CI): piksel Dice 0.538 (0.513–0.561), IoU 0.396 (0.374–0.416); lezion sezgirligi 0.892 (0.859–0.925), ya'ni 381 haqiqiy lezionning 340 tasi topildi; lezion aniqligi 0.497 (0.463–0.530), ya'ni topilgan 690 nomzodning taxminan yarmi haqiqiy lezion emas. Bu «nomzod ko'rsatuvchi yordamchi» darajasi, aniq o'lchov emas. Cheklov: dastur kadr haqiqatan angiogramma ekanini tekshirmaydi (tasodifiy shovqin rasmi rad etilmadi, «shubhali joy topilmadi» deb javob berdi).
 
-**ExoKG EF** [BRANCH]: NeuroSon-AI loyihasidagi ONNX og'irligidan foydalanadi (boshqa papkada; standart yo'l kodda yozilgan, `CARDIOPATH_EF_WEIGHTS` muhit o'zgaruvchisi bilan almashtiriladi). Kattalar, apikal 4 kamera videosi. NeuroSon hisobotidagi MAE 5.83%, R² 0.575; **bu loyihada qayta tekshirilmagan**. Litsenziya: EchoNet-Dynamic faqat tadqiqot uchun, `product` rejimida yuklanmaydi.
+**ExoKG EF** [MAVJUD, ekransiz]: NeuroSon-AI loyihasidagi ONNX og'irligidan foydalanadi (boshqa papkada; standart yo'l kodda yozilgan, `CARDIOPATH_EF_WEIGHTS` muhit o'zgaruvchisi bilan almashtiriladi). Kattalar, apikal 4 kamera videosi. NeuroSon hisobotidagi MAE 5.83%, R² 0.575; **bu loyihada qayta tekshirilmagan**. Litsenziya: EchoNet-Dynamic faqat tadqiqot uchun, `product` rejimida yuklanmaydi.
 
-**MNO qog'ozi OCR** [BRANCH]: rasm → matn → `parse_inr_text` → baholash. Dvigatel ixtiyoriy kutubxona (`rapidocr-onnxruntime`). Dvigatel yo'q, ishonch past (<0.80) yoki qiymat noaniq bo'lsa, abstain.
+**MNO qog'ozi OCR** [MAVJUD, ekransiz]: rasm → matn → `parse_inr_text` → baholash. Dvigatel ixtiyoriy kutubxona (`rapidocr-onnxruntime`). Dvigatel yo'q, ishonch past (<0.80) yoki qiymat noaniq bo'lsa, abstain.
 
 **Bloklangan, o'qitilmagan (faqat interfeys, natija o'ylab topilmaydi):** AI-EKG orqali past EF (MIMIC-IV-ECHO kerak); yara rasmidan infeksiya aniqlash (ochiq sternotomiya dataseti yo'q).
 
@@ -429,7 +428,7 @@ Baho: ≥5.0 — `high` (≥8 — `very_high`); mexanik klapanda maqsad pastidan
 **Eskalatsiya:** eng yuqori xavf `high` yoki undan yuqori — **qizil**; `moderate` yoki o'qib bo'lmagan ma'lumot (abstain) — **sariq**; aks holda yashil. Sariq va qizilda jarrohga xabar ketadi (bemor kodi, operatsiyadan keyingi kun, sabablar ro'yxati). Bemorga xabar: yashil — «Rahmat, qabul qilindi»; sariq — «shifokorga yuborildi, bugun bog'lanishadi»; qizil — «shifokor darhol xabardor qilindi; ahvolingiz og'ir bo'lsa, kutmasdan 103 ga qo'ng'iroq qiling». Bu xabarlar hozir faqat o'zbek tilida.
 
 ### 5.9. ExoKG tashxisi [MAVJUD]
-Shifokor tashxis kodini va izohni kiritadi. Bu «oltin standart» yorlig'i sifatida saqlanadi va modelni moslashtirishda ishlatiladi. Dastur ExoKG tasvirini o'zi tahlil qilmaydi (EF adapteri branch'da).
+Shifokor tashxis kodini va izohni kiritadi. Bu «oltin standart» yorlig'i sifatida saqlanadi va modelni moslashtirishda ishlatiladi. Dastur ExoKG tasvirini o'zi tahlil qilmaydi (ExoKG videosidan EF adapteri bor, 4.6-bo'lim).
 
 ### 5.10. Kuzatuv va izlanuvchanlik
 Har bir amal audit jurnaliga yoziladi. Har bir natijada qaysi qoida/model, qaysi versiya, qaysi dataset litsenziyasi ishlatilgani (`provenance`) saqlanadi.
@@ -451,12 +450,12 @@ Quyidagi ro'yxat **mahsulot uchun zarur bo'lgan ekranlar**ning to'liq majmuasi. 
 | E7 | Bosqichdan bosqichga o'tkazish (Handoff) | FAQAT API |
 | E8 | Operatsiya oldi xavf kiritish | FAQAT API |
 | E9 | Heart Team protokoli | FAQAT API (matn) |
-| E10 | Qo'shimcha tekshiruv fayllarini yuklash (EKG, angiografiya, ExoKG video) | BRANCH (API) |
+| E10 | Qo'shimcha tekshiruv fayllarini yuklash (EKG, angiografiya, ExoKG video) | FAQAT API |
 | E11 | Bemor ilovasi: kundalik check-in | FAQAT API |
-| E12 | Bemor ilovasi: MNO qog'ozi | FAQAT API; rasm varianti BRANCH |
+| E12 | Bemor ilovasi: MNO qog'ozi | FAQAT API; rasm varianti ham FAQAT API |
 | E13 | Jarroh va navbatchi: signallar paneli | REJADA (hozir faqat Telegram matni) |
 | E14 | Audit jurnali | FAQAT API |
-| E15 | Tizim va modellar holati | FAQAT API (`/health`, branch'da `/models`) |
+| E15 | Tizim va modellar holati | FAQAT API (`/health`, `/models`) |
 | E16 | Kirish va rollar | REJADA |
 | E17 | Ma'lumot yig'ish va eksport boshqaruvi | FAQAT buyruq satri |
 | E18 | Validatsiya va tadqiqot hisobotlari | Faqat fayllar (Markdown/JSON) |
@@ -506,7 +505,7 @@ EuroSCORE II va Thakar kiritishlari (5.7). Natija: o'lim %, ball, toifa, hisobla
 ### E9. Heart Team protokoli [FAQAT API]
 Protokol mazmuni 5.7 da. Hozir faqat matn (Markdown). Konsilium qarori va imzolar qog'ozda to'ldiriladi; ularni dasturda kiritish yo'q.
 
-### E10. Qo'shimcha tekshiruv fayllari [BRANCH]
+### E10. Qo'shimcha tekshiruv fayllari [FAQAT API]
 EKG (CSV, 12 tarmoq, namuna chastotasi, yosh), angiografiya kadri (rasm), ExoKG video (apikal 4 kamera). Har birida natija «oddiy tilda» (3 til) qaytadi; fayl hajmi cheklovi 25 MB (video 100 MB).
 
 ### E11. Bemor ilovasi: kundalik check-in [FAQAT API]
@@ -515,7 +514,7 @@ EKG (CSV, 12 tarmoq, namuna chastotasi, yosh), angiografiya kadri (rasm), ExoKG 
 - **Javob:** daraja (yashil/sariq/qizil), bemorga xabar, sabablar.
 - **Mo'ljallangan format:** bemor ilovasi (Telegram Mini App yoki PWA) **[REJADA]**; hozir ekrani yo'q.
 
-### E12. Bemor ilovasi: MNO qog'ozi [FAQAT API / BRANCH]
+### E12. Bemor ilovasi: MNO qog'ozi [FAQAT API]
 Laboratoriya qog'ozi matni yoki rasmi, ko'rsatma turi (5 xil). Qiymat o'qilmasa, bemor qo'lda kiritishi yoki rasmni qayta yuborishi kerak.
 
 ### E13. Jarroh va navbatchi signallari [REJADA]
@@ -579,9 +578,9 @@ Asosiy foydalanuvchi: **tuman va viloyatdagi shifokor** (ExoKG imkoniyati chekla
 | AI o'qitish | PyTorch 2.11 (CUDA 12.8), mahalliy GPU NVIDIA RTX 5060 Laptop 8 GB | MAVJUD |
 | Audio | Standart `wave` moduli + numpy (librosa va boshqalarsiz) | MAVJUD |
 | Bildirishnoma | Telegram Bot API (`httpx`), muhit o'zgaruvchilari orqali | Kod bor, haqiqiy bot bilan **sinalmagan** |
-| Tashqi OCR | `rapidocr-onnxruntime` (ixtiyoriy) | BRANCH |
+| Tashqi OCR | `rapidocr-onnxruntime` (ixtiyoriy) | MAVJUD |
 | Tilda xulosa | Deterministik shablonlar, LLM yo'q | MAVJUD |
-| Testlar | pytest: main'da 85, branch'da 146 | MAVJUD |
+| Testlar | pytest: 146 | MAVJUD |
 | Ishga tushirish | `Start.bat` (Windows) | MAVJUD |
 | Frontend freymvork (Next.js), PostgreSQL | Dastlabki rejada bor edi | **REJADA**, qurilmagan |
 
@@ -598,7 +597,7 @@ Asosiy foydalanuvchi: **tuman va viloyatdagi shifokor** (ExoKG imkoniyati chekla
 - Autentifikatsiya, rollar, huquq nazorati **yo'q**.
 - HTTPS yo'q; server faqat `127.0.0.1` da tinglaydi (bir kompyuter, bir foydalanuvchi).
 - Baza shifrlanmagan, zaxira nusxa yo'q.
-- `main`da fayl yuklash hajmi cheklanmagan (branch'da cheklov bor).
+- Fayl yuklash hajmi: yurak tovushi (skrining) endpointida cheklov yo'q; EKG, angiografiya va MNO rasmida 25 MB, ExoKG videoda 100 MB.
 - Ko'p foydalanuvchili ishlash va bir vaqtdagi tahrirlash himoyasi sinalmagan.
 - CI sozlanmagan.
 - Telegram bot haqiqiy hisob bilan sinalmagan.
@@ -625,7 +624,7 @@ Quyidagilar muallifning maqsad hujjati va kelishilgan rejadan olingan. Hammasi *
 
 **Yaqin muddat (muallif ustuvorligi)**
 1. Mahalliy ma'lumot yig'ish: etika ruxsati, rozilik shakli, raqamli stetoskop, 50–100 ta ExoKG bilan tasdiqlangan bola yozuvi; keyin modelni moslashtirish. (Dasturdagi yig'ish mexanizmi tayyor.)
-2. `feat/ai-models` branch'ini `main` bilan birlashtirish (angiografiya tugagach): EKG, angiografiya, MNO OCR, ExoKG EF. **Muallif shunday qaror qilgan.**
+2. ~~Qo'shimcha AI modullarni birlashtirish~~ **Bajarildi:** `feat/ai-models` 2026-10-30 da `main` bilan birlashtirildi (EKG, angiografiya, MNO OCR, ExoKG EF). Qolgani: ularni ekranga ulash.
 3. PhysioNet credentialing (CITI kursi) olish (holati [NOMA'LUM]); shundan keyin: AKI uchun ML modeli (MIMIC-IV, eICU tashqi tekshiruv), operatsiyadan keyingi bo'lmachalar fibrillyatsiyasi (POAF), AI-EKG orqali past EF.
 
 **O'rta muddat**
