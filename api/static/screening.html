@@ -6,265 +6,410 @@
 <title>CardioPath AI</title>
 <style>
   :root {
-    --bg: #f4f6f9; --card: #fff; --text: #17202a; --muted: #5a6573; --border: #d6dbe2; --accent: #0b6bcb;
+    --bg: #f3f7fc; --bg2: #e3eefb; --card: #ffffff; --text: #0f1f3d; --muted: #5b6b83; --border: #d9e2ef;
+    --accent: #1769e0; --accent2: #0ea5e9; --shadow: 0 6px 24px rgba(20, 60, 120, .08); --sil: #d3e3f7;
     --green: #17803d; --green-bg: #e7f5ec; --yellow: #8a5a00; --yellow-bg: #fff3d1;
     --red: #c62828; --red-bg: #fdeaea; --grey: #5a6573; --grey-bg: #eceff3;
   }
   @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0f1318; --card: #171c23; --text: #e8ebf0; --muted: #9aa5b3; --border: #2b333d; --accent: #5aa5ff;
-      --green: #55c777; --green-bg: #12281b; --yellow: #e0b341; --yellow-bg: #2c2512;
-      --red: #ff7b7b; --red-bg: #2e1517; --grey: #9aa5b3; --grey-bg: #232a33;
+    :root:not([data-theme]) {
+      --bg: #07142b; --bg2: #0c2a55; --card: #0e2147; --text: #e8eef8; --muted: #93a4bf; --border: #1c3563;
+      --accent: #4c9bff; --accent2: #38bdf8; --shadow: 0 6px 24px rgba(0, 0, 0, .35); --sil: #1b3a6b;
+      --green: #55c777; --green-bg: #11291d; --yellow: #e0b341; --yellow-bg: #2d2713;
+      --red: #ff7b7b; --red-bg: #321719; --grey: #9aa5b3; --grey-bg: #1a2a45;
     }
   }
+  :root[data-theme="dark"] {
+    --bg: #07142b; --bg2: #0c2a55; --card: #0e2147; --text: #e8eef8; --muted: #93a4bf; --border: #1c3563;
+    --accent: #4c9bff; --accent2: #38bdf8; --shadow: 0 6px 24px rgba(0, 0, 0, .35); --sil: #1b3a6b;
+    --green: #55c777; --green-bg: #11291d; --yellow: #e0b341; --yellow-bg: #2d2713;
+    --red: #ff7b7b; --red-bg: #321719; --grey: #9aa5b3; --grey-bg: #1a2a45;
+  }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 820px; margin: 0 auto; padding: 16px 16px 72px; }
-  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
-  h1 { font-size: 22px; margin: 8px 0 2px; }
-  .lang { display: flex; gap: 4px; }
-  .lang button { background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px;
-                 font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; min-height: 44px; }
-  .lang button[aria-pressed=true] { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .sub { color: var(--muted); margin: 0 0 4px; }
-  .steps { margin: 8px 0 12px; padding-left: 20px; color: var(--muted); font-size: 15px; }
-  .model { font-size: 13px; color: var(--muted); margin: 0 0 14px; }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
-  .card h2 { font-size: 17px; margin: 0 0 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  [hidden] { display: none !important; }
+  body { margin: 0; color: var(--text); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         background: radial-gradient(1100px 480px at 75% -8%, var(--bg2), transparent 70%), var(--bg); min-height: 100vh; }
+  main { max-width: 1040px; margin: 0 auto; padding: 14px 16px 72px; }
+
+  /* yuqori panel */
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 6px 0 14px; }
+  .brand { display: flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; }
+  .brand .logo { width: 40px; height: 40px; flex: none; }
+  .brand b { display: block; font-size: 20px; line-height: 1.1; }
+  .brand small { display: block; font-size: 12px; color: var(--muted); }
+  .tools { display: flex; gap: 8px; align-items: center; }
+  .seg { display: flex; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 3px; gap: 2px; box-shadow: var(--shadow); }
+  .seg button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 700; min-height: 40px; min-width: 44px;
+                padding: 0 10px; border-radius: 8px; cursor: pointer; }
+  .seg button[aria-pressed=true] { background: var(--accent); color: #fff; }
+  .theme { width: 46px; min-height: 46px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text);
+           font-size: 18px; cursor: pointer; box-shadow: var(--shadow); }
+  button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible, label.pick:focus-within, .pt:focus-visible {
+    outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  /* hero */
+  .hero { position: relative; overflow: hidden; background: linear-gradient(135deg, var(--card), var(--bg2)); border: 1px solid var(--border);
+          border-radius: 18px; padding: 22px 22px 18px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  .ecg { width: 100%; max-width: 520px; height: auto; display: block; margin: -4px 0 6px -4px; }
+  .ecg .line { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; animation: ecg 4.5s ease-in-out infinite; }
+  .ecg .heart { fill: none; stroke: var(--accent); stroke-width: 3; transform-origin: 260px 46px; animation: beat 1.6s ease-in-out infinite; }
+  .ecg .bar { fill: var(--accent2); }
+  @keyframes ecg { 0% { stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 1; } 55% { stroke-dasharray: 1; stroke-dashoffset: 0; }
+                   88% { stroke-dasharray: 1; stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dasharray: 1; stroke-dashoffset: 0; opacity: 0; } }
+  @keyframes beat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.07); } 28% { transform: scale(1); } 42% { transform: scale(1.04); } }
+  .hero h1 { font-size: 30px; line-height: 1.15; margin: 4px 0 8px; max-width: 560px; }
+  .hero p { color: var(--muted); margin: 0 0 14px; max-width: 600px; }
+  .chips { display: flex; gap: 10px; flex-wrap: wrap; }
+  .chip { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 6px 12px 6px 6px; }
+  .chip i { font-style: normal; width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--bg2); color: var(--accent); font-size: 16px; }
+  details.how { margin-top: 12px; } details.how summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--accent); }
+  details.how ol { margin: 8px 0 0; padding-left: 20px; color: var(--muted); font-size: 15px; }
+
+  .banner { width: 100%; text-align: left; background: var(--card); border: 1px dashed var(--accent); color: var(--accent); border-radius: 12px;
+            padding: 10px 14px; font: inherit; font-weight: 600; cursor: pointer; margin-bottom: 14px; min-height: 46px; }
+
+  /* kartalar va maydonlar */
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; box-shadow: var(--shadow); }
+  .card h2, .card h3 { font-size: 17px; margin: 0 0 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .tag { font-size: 12px; font-weight: 500; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 0 8px; }
   .tag.req { color: var(--red); border-color: var(--red); }
   .hint { font-size: 14px; color: var(--muted); margin: 2px 0 12px; }
   label.f { display: block; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
-  input[type=text], input[type=number], select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
-         background: var(--bg); color: var(--text); font: inherit; min-height: 44px; }
-  input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; }
-  .age { display: flex; gap: 6px; }
-  .age input { flex: 1; min-width: 0; } .age select { width: 96px; }
-  .flags { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 4px 16px; }
+  input[type=text], input[type=number], select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px;
+         background: var(--bg); color: var(--text); font: inherit; min-height: 46px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-top: 10px; }
+  .age { display: flex; gap: 6px; } .age input { flex: 1; min-width: 0; } .age select { width: 92px; }
+  .flags { display: grid; grid-template-columns: 1fr; gap: 2px; }
   .chk { display: flex; gap: 10px; align-items: flex-start; padding: 8px 4px; font-size: 15px; cursor: pointer; }
-  .chk input { width: 20px; height: 20px; margin-top: 2px; flex: none; }
+  .chk input { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: var(--accent); }
   .major { font-size: 11px; color: var(--red); border: 1px solid var(--red); border-radius: 4px; padding: 0 5px; margin-left: 6px; white-space: nowrap; }
-  .locs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
-  .loc { border: 1px dashed var(--border); border-radius: 10px; padding: 12px; }
-  .loc b { display: block; } .loc .where { font-size: 13px; color: var(--muted); margin: 2px 0 8px; }
-  .file { display: flex; align-items: center; gap: 8px; }
-  .file .pick { border: 1px solid var(--accent); color: var(--accent); border-radius: 8px; padding: 8px 12px; font-weight: 600; font-size: 14px; cursor: pointer; background: transparent; min-height: 40px; }
-  .file .name { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
-  .file .x { border: 0; background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; padding: 4px 8px; }
-  .btn { background: var(--accent); color: #fff; border: 0; border-radius: 10px; padding: 12px 22px; font: inherit; font-weight: 700; cursor: pointer; min-height: 48px; }
+
+  /* auskultatsiya: torso + nuqtalar */
+  .auscult { display: grid; grid-template-columns: 190px 1fr; gap: 14px; align-items: start; }
+  .torso { position: relative; width: 190px; aspect-ratio: 240 / 260; }
+  .torso svg { width: 100%; height: 100%; display: block; }
+  .torso .sil { fill: var(--sil); } .torso .ln { stroke: var(--muted); stroke-dasharray: 3 4; opacity: .5; fill: none; }
+  .torso .hrt { fill: color-mix(in srgb, var(--accent) 22%, transparent); stroke: var(--accent); stroke-width: 1; opacity: .8; }
+  .pt { position: absolute; width: 32px; height: 32px; margin: -16px 0 0 -16px; border-radius: 50%; border: 2px solid #fff; background: var(--c);
+        color: #fff; font: 700 11px/1 system-ui; cursor: pointer; display: grid; place-items: center; padding: 0; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+  .pt::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid var(--c); opacity: 0; }
+  .pt:hover::after, .pt:focus-visible::after { animation: ring 1.2s ease-out infinite; }
+  .pt[data-state=ok] { background: var(--green); } .pt[data-state=ok]::after { border-color: var(--green); animation: ring 2.2s ease-out infinite; }
+  .pt[data-state=short] { background: var(--yellow); }
+  @keyframes ring { 0% { transform: scale(.7); opacity: .8; } 100% { transform: scale(1.35); opacity: 0; } }
+  .lrow { display: grid; grid-template-columns: 14px 1fr auto; gap: 10px; align-items: start; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .lrow:last-child { border-bottom: 0; }
+  .ldot { width: 12px; height: 12px; border-radius: 50%; background: var(--c); margin-top: 6px; }
+  .linfo b { display: block; font-size: 15px; } .where { font-size: 12.5px; color: var(--muted); }
+  .lfile { display: flex; align-items: center; gap: 4px; }
+  .pick { border: 1px solid var(--accent); color: var(--accent); border-radius: 10px; padding: 8px 12px; font-weight: 700; font-size: 14px; cursor: pointer; min-height: 44px; display: inline-flex; align-items: center; }
+  .x { border: 0; background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; min-width: 40px; min-height: 40px; }
+  .wave { margin-top: 6px; }
+  .fname { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+  .wrow { display: flex; align-items: center; gap: 8px; }
+  .bars { width: 140px; height: 26px; fill: var(--accent); } .dur { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .ok-chip { font-size: 12.5px; color: var(--green); font-weight: 600; } .warn-chip { font-size: 12.5px; color: var(--yellow); font-weight: 600; }
+
+  .btn { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border: 0; border-radius: 12px; padding: 12px 22px; font: inherit;
+         font-weight: 700; cursor: pointer; min-height: 50px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
   .btn.sec { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
-  .btn:disabled { opacity: .6; cursor: wait; }
+  .btn.wide { width: 100%; font-size: 17px; }
+  .btn:disabled { opacity: .7; cursor: wait; }
+  .wv span { display: inline-block; width: 3px; height: 16px; margin: 0 1.5px; background: #fff; border-radius: 2px; animation: wv .9s ease-in-out infinite; }
+  .wv span:nth-child(2) { animation-delay: .15s; } .wv span:nth-child(3) { animation-delay: .3s; } .wv span:nth-child(4) { animation-delay: .45s; }
+  @keyframes wv { 0%, 100% { transform: scaleY(.35); } 50% { transform: scaleY(1.2); } }
   .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-  .err { border-left: 6px solid var(--red); background: var(--red-bg); }
+  .err { border-left: 6px solid var(--red); background: var(--red-bg); margin-top: 14px; }
   .err b { color: var(--red); }
-  details summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); }
+
   /* natija */
-  .verdict { border-left: 8px solid var(--grey); }
-  .verdict.lv-red { border-color: var(--red); background: var(--red-bg); }
-  .verdict.lv-yellow { border-color: var(--yellow); background: var(--yellow-bg); }
-  .verdict.lv-green { border-color: var(--green); background: var(--green-bg); }
-  .verdict.lv-grey { border-color: var(--grey); background: var(--grey-bg); }
-  .vh { display: flex; gap: 14px; align-items: flex-start; }
-  .ico { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-size: 24px; font-weight: 800; color: #fff; background: var(--grey); }
-  .lv-red .ico { background: var(--red); } .lv-yellow .ico { background: var(--yellow); } .lv-green .ico { background: var(--green); }
-  .headline { font-size: 21px; font-weight: 800; line-height: 1.25; margin: 0; }
-  .todo-l { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 14px 0 2px; }
+  .subbar { display: flex; align-items: center; gap: 10px; margin: 2px 0 12px; }
+  .subbar h2 { margin: 0; font-size: 22px; }
+  .back { width: 46px; height: 46px; border-radius: 12px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 20px; cursor: pointer; }
+  .verdict { --st: var(--grey); border: 1px solid var(--st); border-left: 10px solid var(--st); border-radius: 16px; padding: 20px; background: var(--grey-bg);
+             box-shadow: var(--shadow); animation: pop .5s cubic-bezier(.2, .9, .3, 1.2) both; margin-bottom: 16px; }
+  .verdict.lv-red { --st: var(--red); background: var(--red-bg); animation: pop .5s cubic-bezier(.2, .9, .3, 1.2) both, glow 3.2s ease-in-out 1s infinite; }
+  .verdict.lv-yellow { --st: var(--yellow); background: var(--yellow-bg); }
+  .verdict.lv-green { --st: var(--green); background: var(--green-bg); }
+  @keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: none; } }
+  @keyframes glow { 0%, 100% { box-shadow: var(--shadow); } 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--red) 22%, transparent); } }
+  .vh { display: flex; gap: 16px; align-items: center; }
+  .ico { flex: none; width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; font-size: 30px; font-weight: 800; color: #fff; background: var(--st); }
+  .headline { font-size: 24px; font-weight: 800; line-height: 1.2; margin: 0; color: var(--st); }
+  .support { font-size: 13px; color: var(--muted); margin: 2px 0 0; }
+  .todo-l { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 16px 0 2px; }
   .todo { font-size: 18px; margin: 0; }
-  .attn { margin: 14px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--card); border: 1px solid var(--yellow); }
-  .meta { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
-  ul.items { list-style: none; margin: 0; padding: 0; }
-  .it { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .attn { margin: 14px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--card); border: 1px solid var(--yellow); }
+  .meta { font-size: 13px; color: var(--muted); margin: 12px 0 0; }
+  ul.items { list-style: none; margin: 8px 0 0; padding: 0; }
+  .it { --st: var(--grey); display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); animation: rise .45s ease both; animation-delay: calc(var(--n, 0) * 90ms + 200ms); }
   .it:last-child { border-bottom: 0; }
-  .dot { flex: none; width: 14px; height: 14px; border-radius: 50%; margin-top: 6px; background: var(--grey); }
-  .it.lv-red .dot { background: var(--red); } .it.lv-yellow .dot { background: var(--yellow); } .it.lv-green .dot { background: var(--green); }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+  .it.lv-red { --st: var(--red); } .it.lv-yellow { --st: var(--yellow); } .it.lv-green { --st: var(--green); }
+  .dot { flex: none; width: 14px; height: 14px; border-radius: 50%; margin-top: 6px; background: var(--st); }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .stepper { list-style: none; padding: 0; margin: 14px 0 0; display: grid; grid-template-columns: repeat(4, 1fr); row-gap: 18px; }
+  .stepper li { position: relative; text-align: center; font-size: 12.5px; color: var(--muted); padding: 0 2px; }
+  .stepper li::after { content: ""; position: absolute; top: 16px; left: calc(50% + 20px); right: calc(-50% + 20px); height: 2px; background: var(--border); }
+  .stepper li:nth-child(4n)::after { display: none; }
+  .stepper .n { width: 32px; height: 32px; border-radius: 50%; margin: 0 auto 4px; display: grid; place-items: center; border: 2px solid var(--border); background: var(--card); font-weight: 700; color: var(--muted); }
+  .stepper li.cur { color: var(--text); font-weight: 700; }
+  .stepper li.cur .n { background: var(--accent); border-color: var(--accent); color: #fff; animation: ring2 2.4s ease-out infinite; }
+  @keyframes ring2 { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); } 100% { box-shadow: 0 0 0 10px transparent; } }
+  .info { display: flex; gap: 10px; margin-top: 16px; padding: 10px 12px; border-radius: 10px; background: var(--bg2); font-size: 14px; }
+  details.more { margin-top: 12px; border: 1px solid var(--border); border-radius: 10px; }
+  details.more summary { cursor: pointer; padding: 12px 14px; font-weight: 700; font-size: 15px; list-style: none; display: flex; justify-content: space-between; }
+  details.more summary::after { content: "›"; transform: rotate(90deg); transition: transform .2s; font-size: 20px; line-height: 1; }
+  details.more[open] summary::after { transform: rotate(-90deg); }
+  details.more .body { padding: 0 14px 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
   td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
   .disclaimer { font-size: 13px; color: var(--muted); margin-top: 16px; }
   .ok { color: var(--green); font-weight: 600; }
-  @media (max-width: 480px) { .headline { font-size: 19px; } .todo { font-size: 17px; } }
+
+  @media (max-width: 860px) { .cols { grid-template-columns: 1fr; } .hero h1 { font-size: 25px; } }
+  @media (max-width: 520px) {
+    main { padding: 10px 14px 56px; } .hero { padding: 16px 16px 14px; } .hero h1 { font-size: 22px; }
+    .auscult { grid-template-columns: 1fr; } .torso { margin: 0 auto; width: 210px; }
+    .lrow { grid-template-columns: 14px 1fr; } .lfile { grid-column: 2; } .fname { max-width: 200px; }
+    .headline { font-size: 20px; } .todo { font-size: 17px; } .ico { width: 48px; height: 48px; font-size: 25px; }
+    .brand small { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
   @media print {
-    body { background: #fff; color: #000; }
-    form, .topbar, .actions, #echoBox, .steps, .sub, .model, #err { display: none !important; }
-    .card { border: 1px solid #999; break-inside: avoid; }
-    details { display: block; } details > summary { display: none; }
+    body { background: #fff; color: #000; } .topbar, #viewForm, .subbar, .actions, #echoBox, .jcard { display: none !important; }
+    .card, .verdict { box-shadow: none; border: 1px solid #999; break-inside: avoid; } .cols { grid-template-columns: 1fr; }
+    details.more { display: block; } details.more summary { display: none; }
   }
 </style>
 </head>
 <body>
 <main>
-  <div class="topbar">
-    <h1 data-i="title"></h1>
-    <div class="lang" role="group" aria-label="Language">
-      <button type="button" data-lang="uz" aria-pressed="false">O'zbekcha</button>
-      <button type="button" data-lang="ru" aria-pressed="false">Русский</button>
-      <button type="button" data-lang="en" aria-pressed="false">English</button>
+  <header class="topbar">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b97ff"/><stop offset="1" stop-color="#0b4fb3"/></linearGradient></defs>
+        <path d="M24 43C8 31 4 21 4 15 4 9 8.5 5 14 5c4 0 7.500 2.300 10 6 2.500-3.700 6-6 10-6 5.500 0 10 4 10 10 0 6-4 16-20 28z" fill="url(#lg)"/>
+        <polyline points="9,24 17,24 20,17 25,32 29,21 32,24 39,24" fill="none" stroke="#fff" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><b>CardioPath AI</b><small data-i="brandSub"></small></div>
     </div>
-  </div>
-  <p class="sub" data-i="subtitle"></p>
-  <ol class="steps"><li data-i="step1"></li><li data-i="step2"></li><li data-i="step3"></li></ol>
-  <p class="model" id="modelInfo"></p>
-
-  <form id="form" novalidate>
-    <section class="card">
-      <h2><span data-i="s1"></span><span class="tag req" data-i="required"></span></h2>
-      <div class="grid" style="margin-top:10px">
-        <div><label class="f" for="ref" data-i="ref"></label><input id="ref" type="text" required maxlength="64" data-ph="refPh" autocomplete="off">
-          <div class="hint" data-i="refHint" style="margin:4px 0 0"></div></div>
-        <div><label class="f" for="actor" data-i="actor"></label><input id="actor" type="text" required maxlength="64" data-ph="actorPh" autocomplete="off"></div>
-        <div><label class="f" for="age" data-i="age"></label>
-          <div class="age"><input id="age" type="number" inputmode="numeric" min="0" step="1" required>
-            <select id="ageUnit" aria-label="unit"><option value="1" data-i="unitDay"></option><option value="30.44" data-i="unitMonth"></option><option value="365.25" data-i="unitYear" selected></option></select></div></div>
+    <div class="tools">
+      <div class="seg" role="group" aria-label="Language">
+        <button type="button" data-lang="uz" aria-pressed="false">UZ</button>
+        <button type="button" data-lang="ru" aria-pressed="false">RU</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
       </div>
-    </section>
-
-    <section class="card">
-      <h2><span data-i="s2"></span><span class="tag" data-i="optional"></span></h2>
-      <p class="hint" data-i="s2hint"></p>
-      <div class="grid">
-        <div><label class="f" for="rh" data-i="rh"></label><input id="rh" type="number" inputmode="numeric" min="50" max="100" step="1" placeholder="98"></div>
-        <div><label class="f" for="foot" data-i="foot"></label><input id="foot" type="number" inputmode="numeric" min="50" max="100" step="1" placeholder="97"></div>
-        <div><label class="f" for="attempt" data-i="attempt"></label><select id="attempt"><option value="1">1</option><option value="2">2</option></select></div>
-        <div><label class="f" for="resting" data-i="resting"></label><input id="resting" type="number" inputmode="numeric" min="50" max="100" step="1" placeholder="98"></div>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2><span data-i="s3"></span><span class="tag" data-i="optional"></span></h2>
-      <p class="hint" data-i="s3hint"></p>
-      <div class="flags" id="flags"></div>
-    </section>
-
-    <section class="card">
-      <h2><span data-i="s4"></span><span class="tag" data-i="optional"></span></h2>
-      <p class="hint" data-i="s4hint"></p>
-      <div class="locs" id="locs"></div>
-      <div class="grid" style="margin-top:14px">
-        <div><label class="f" for="device" data-i="device"></label><input id="device" type="text" maxlength="80" data-ph="devicePh" autocomplete="off"></div>
-      </div>
-      <label class="chk" style="margin-top:8px"><input type="checkbox" id="consent"><span data-html="consent"></span></label>
-    </section>
-
-    <div id="err"></div>
-    <div class="row">
-      <button class="btn" id="submit" type="submit" data-i="analyze"></button>
-      <span class="hint" id="status" style="margin:0"></span>
+      <button type="button" class="theme" id="theme" aria-label="Theme"></button>
     </div>
-  </form>
+  </header>
 
-  <div id="out" aria-live="polite"></div>
+  <!-- 1-ekran: forma -->
+  <section id="viewForm">
+    <div class="hero">
+      <svg class="ecg" viewBox="0 0 520 90" aria-hidden="true">
+        <path class="line" pathLength="1" d="M0 50H60L72 50 82 22 96 76 108 40 116 50H218"/>
+        <path class="heart" d="M260 82C232 62 218 48 218 34 218 22 227 14 238 14c9 0 17 5 22 12 5-7 13-12 22-12 11 0 20 8 20 20 0 14-14 28-42 48z"/>
+        <rect class="bar" x="241" y="39" width="3" height="10" rx="1.500"/><rect class="bar" x="248" y="33" width="3" height="22" rx="1.500"/>
+        <rect class="bar" x="255" y="27" width="3" height="34" rx="1.500"/><rect class="bar" x="262" y="35" width="3" height="18" rx="1.500"/>
+        <rect class="bar" x="269" y="30" width="3" height="28" rx="1.500"/><rect class="bar" x="276" y="38" width="3" height="12" rx="1.500"/>
+        <path class="line" pathLength="1" d="M302 50H404L414 50 424 28 436 70 446 44 454 50H520"/>
+      </svg>
+      <h1 data-i="tagline"></h1>
+      <p data-i="heroSub"></p>
+      <div class="chips">
+        <span class="chip"><i aria-hidden="true">⚡</i><span data-i="chip1"></span></span>
+        <span class="chip"><i aria-hidden="true">✓</i><span data-i="chip2"></span></span>
+        <span class="chip"><i aria-hidden="true">♥</i><span data-i="chip3"></span></span>
+      </div>
+      <details class="how"><summary data-i="howTitle"></summary>
+        <ol><li data-i="step1"></li><li data-i="step2"></li><li data-i="step3"></li></ol></details>
+    </div>
+
+    <button type="button" class="banner" id="lastBanner" hidden></button>
+
+    <form id="form" novalidate>
+      <div class="cols">
+        <div class="col">
+          <section class="card">
+            <h2><span data-i="s1"></span><span class="tag req" data-i="required"></span></h2>
+            <div class="grid">
+              <div><label class="f" for="ref" data-i="ref"></label><input id="ref" type="text" required maxlength="64" data-ph="refPh" autocomplete="off">
+                <div class="hint" data-i="refHint" style="margin:4px 0 0"></div></div>
+              <div><label class="f" for="actor" data-i="actor"></label><input id="actor" type="text" required maxlength="64" data-ph="actorPh" autocomplete="off"></div>
+              <div><label class="f" for="age" data-i="age"></label>
+                <div class="age"><input id="age" type="number" inputmode="numeric" min="0" step="1" required>
+                  <select id="ageUnit" aria-label="unit"><option value="1" data-i="unitDay"></option><option value="30.44" data-i="unitMonth"></option><option value="365.25" data-i="unitYear" selected></option></select></div></div>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2><span data-i="s2"></span><span class="tag" data-i="optional"></span></h2>
+            <p class="hint" data-i="s2hint"></p>
+            <div class="grid" style="margin-top:0">
+              <div><label class="f" for="rh" data-i="rh"></label><input id="rh" type="number" inputmode="numeric" min="50" max="100" step="1" placeholder="98"></div>
+              <div><label class="f" for="foot" data-i="foot"></label><input id="foot" type="number" inputmode="numeric" min="50" max="100" step="1" placeholder="97"></div>
+              <div><label class="f" for="attempt" data-i="attempt"></label><select id="attempt"><option value="1">1</option><option value="2">2</option></select></div>
+              <div><label class="f" for="resting" data-i="resting"></label><input id="resting" type="number" inputmode="numeric" min="50" max="100" step="1" placeholder="98"></div>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2><span data-i="s3"></span><span class="tag" data-i="optional"></span></h2>
+            <p class="hint" data-i="s3hint"></p>
+            <div class="flags" id="flags"></div>
+          </section>
+        </div>
+
+        <div class="col">
+          <section class="card">
+            <h2><span data-i="s4"></span><span class="tag" data-i="optional"></span></h2>
+            <p class="hint" data-i="s4hint"></p>
+            <div class="auscult">
+              <div class="torso">
+                <svg viewBox="0 0 240 260" aria-hidden="true">
+                  <circle class="sil" cx="120" cy="44" r="30"/><rect class="sil" x="107" y="68" width="26" height="26" rx="9"/>
+                  <path class="sil" d="M26 150C26 110 62 96 104 92L136 92C178 96 214 110 214 150L218 256 22 256Z"/>
+                  <line class="ln" x1="120" y1="98" x2="120" y2="206"/>
+                  <path class="hrt" transform="translate(132 160) scale(.95)" d="M0 -10C-10 -24 -32 -12 -22 6 -16 16 -4 24 0 28 4 24 16 16 22 6 32 -12 10 -24 0 -10z"/>
+                </svg>
+                <div id="pts"></div>
+              </div>
+              <div id="rows"></div>
+            </div>
+            <div class="grid" style="margin-top:14px">
+              <div><label class="f" for="device" data-i="device"></label><input id="device" type="text" maxlength="80" data-ph="devicePh" autocomplete="off"></div>
+            </div>
+            <label class="chk" style="margin-top:8px"><input type="checkbox" id="consent"><span data-html="consent"></span></label>
+          </section>
+          <div id="err" role="alert"></div>
+          <button class="btn wide" id="submit" type="submit"></button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <!-- 2-ekran: natija -->
+  <section id="viewResult" hidden>
+    <div class="subbar"><button type="button" class="back" id="back" aria-label="Back">←</button><h2 data-i="results"></h2></div>
+    <div id="out" aria-live="polite"></div>
+  </section>
 </main>
 
 <script>
 const I18N = {
   uz: {
-    title: "Yurak nuqsoni skriningi", subtitle: "Bolalarda tug'ma yurak nuqsonini erta aniqlash uchun yordamchi dastur.",
-    step1: "Bemor ma'lumotlarini kiriting (nimani bilsangiz, shuni).", step2: "«Tahlil qilish» tugmasini bosing.",
+    brandSub: "Bolalar yurak skriningi uchun sun'iy intellekt", tagline: "Har bir bola sog'lom yurakka loyiq",
+    heroSub: "Kislorod darajasi, klinik belgilar va yurak tovushi — bir joyda. Dastur tug'ma yurak nuqsoni xavfini baholab, nima qilish kerakligini aytadi.",
+    chip1: "Tezkor skrining", chip2: "Tushunarli natija", chip3: "Qaror — shifokorda",
+    howTitle: "Qanday foydalanaman?", step1: "Bemor ma'lumotlarini kiriting (nimani bilsangiz, shuni).", step2: "«Tahlil qilish» tugmasini bosing.",
     step3: "Natija va tavsiyani o'qing. Yakuniy qarorni siz qabul qilasiz.",
     required: "majburiy", optional: "ixtiyoriy",
     s1: "1. Bemor", ref: "Bemor kodi", refPh: "masalan, SAM-001", refHint: "Ism-familiya yozmang — faqat kod.",
     actor: "Shifokor", actorPh: "familiyangiz", age: "Yoshi", unitDay: "kun", unitMonth: "oy", unitYear: "yosh",
-    s2: "2. Kislorod darajasi (pulsoksimetriya)",
-    s2hint: "Yangi tug'ilgan chaqaloqda (24–48 soat) ikkala joyni o'lchang. Katta bolada faqat «tinch holatda» qatorini to'ldiring.",
+    s2: "2. Kislorod darajasi", s2hint: "Yangi tug'ilgan chaqaloqda (24–48 soat) ikkala joyni o'lchang. Katta bolada faqat «tinch holatda» qatorini to'ldiring.",
     rh: "O'ng qo'l, %", foot: "Oyoq, %", attempt: "Urinish", resting: "Tinch holatda, %",
     s3: "3. Klinik belgilar", s3hint: "Bolada ko'rgan belgilaringizni belgilang. Hech narsa bo'lmasa, bo'sh qoldiring.",
     s4: "4. Yurak tovushi yozuvlari",
-    s4hint: "Raqamli stetoskopdan olingan WAV fayl. Har bir nuqtada kamida 5 soniya (yaxshisi 15–20 soniya), bola tinch turganda. Bitta nuqta ham yetarli.",
+    s4hint: "Rasmdagi nuqtani bosing yoki fayl tanlang. WAV fayl, har bir nuqtada kamida 5 soniya (yaxshisi 15–20), bola tinch turganda. Bitta nuqta ham yetarli.",
     "loc.AV": "Aorta", "loc.AV.where": "to'sh suyagining o'ng chetida, 2-qovurg'a oralig'i",
     "loc.PV": "O'pka arteriyasi", "loc.PV.where": "to'sh suyagining chap chetida, 2-qovurg'a oralig'i",
     "loc.TV": "Trikuspidal", "loc.TV.where": "to'sh suyagining chap chetida, 4-qovurg'a oralig'i",
     "loc.MV": "Mitral (cho'qqi)", "loc.MV.where": "chap o'rta o'mrov chizig'i, 5-qovurg'a oralig'i",
-    choose: "Fayl tanlash", none: "fayl tanlanmagan",
+    choose: "Fayl tanlash", uploaded: "Audio yuklandi", ready: "Tahlil uchun tayyor", tooShort: "juda qisqa — kamida 5 soniya kerak",
     device: "Stetoskop modeli", devicePh: "masalan, Eko Core 500",
     consent: "Ota-onaning <b>yozma roziligi</b> olingan — yozuvlar dasturni mahalliy sharoitga moslashtirish uchun saqlansin (faqat bemor kodi bilan).",
-    analyze: "Tahlil qilish", analyzing: "Tahlil qilinmoqda…",
+    analyze: "Tahlil qilish", analyzing: "Tahlil qilinmoqda…", viewLast: "Oxirgi natijani ko'rish",
     needAny: "Kamida bitta ma'lumot kiriting: kislorod darajasi, klinik belgi yoki yurak tovushi yozuvi.",
     needPair: "Yangi tug'ilgan chaqaloq uchun o'ng qo'l VA oyoq qiymatlarini birga kiriting.",
     needWav: "Faqat WAV (.wav) fayl yuklash mumkin:", needFields: "Majburiy maydonlarni to'ldiring: bemor kodi, shifokor, yoshi.",
     errNet: "Serverga ulanib bo'lmadi. Dastur oynasi ochiqligini tekshiring.", err422: "Kiritilgan ma'lumotda xato bor.",
-    err409: "Bu bemor uchun amal hozir mumkin emas.", err500: "Dastur ichida xato yuz berdi. Qayta urinib ko'ring.",
-    errTitle: "Xato", more: "Batafsil",
-    result: "Natija", todoL: "Nima qilish kerak", patient: "Bemor", details: "Texnik tafsilotlar (shifokor uchun)",
+    err409: "Bu bemor uchun amal hozir mumkin emas.", err500: "Dastur ichida xato yuz berdi. Qayta urinib ko'ring.", errTitle: "Xato", more: "Batafsil",
+    results: "Natijalar", todoL: "Nima qilish kerak", patient: "Bemor", findings: "Topilmalar", detailsRow: "Batafsil ma'lumot",
+    journeyTitle: "Bemor yo'li", journeyInfo: "Ushbu natija shifokor qarori uchun yordam beradi. Tashxis emas.",
     pt: "Nuqta", chance: "Shovqin ehtimoli", consistency: "Barqarorlik", windows: "Bo'laklar",
-    modelOn: "AI modeli", modelOff: "AI modeli ulanmagan — faqat klinik qoidalar ishlaydi.",
-    mode: "Tadqiqot rejimi",
-    newPatient: "Yangi bemor", print: "Chop etish",
+    modelOn: "AI modeli", modelOff: "AI modeli ulanmagan — faqat klinik qoidalar ishlaydi.", mode: "Tadqiqot rejimi",
+    newPatient: "Yangi bemor", print: "Chop etish", support: "Faqat qaror qabul qilishga yordam — yakuniy tashxis emas.",
     echoTitle: "ExoKG tashxisini kiriting", echoHint: "Yozuvlar saqlandi. ExoKG natijasi aniq bo'lgach kiriting — dastur shu orqali o'rganadi.",
     echoNotes: "izoh (ixtiyoriy)", echoSave: "Saqlash", echoSaved: "saqlandi ✓", echoErr: "saqlanmadi",
     disclaimer: "Bu natija sun'iy intellekt va klinik qoidalar yordamchisi tomonidan tayyorlangan va YAKUNIY TASHXIS EMAS. Qaror faqat shifokor tomonidan qabul qilinadi. Tadqiqot rejimi.",
   },
   ru: {
-    title: "Скрининг порока сердца", subtitle: "Помощник для раннего выявления врождённых пороков сердца у детей.",
-    step1: "Введите данные пациента (то, что известно).", step2: "Нажмите «Анализировать».",
+    brandSub: "ИИ для скрининга сердца у детей", tagline: "Каждый ребёнок достоин здорового сердца",
+    heroSub: "Насыщение кислородом, клинические признаки и тоны сердца — в одном месте. Программа оценивает риск врождённого порока и подсказывает, что делать.",
+    chip1: "Быстрый скрининг", chip2: "Понятный результат", chip3: "Решает врач",
+    howTitle: "Как пользоваться?", step1: "Введите данные пациента (то, что известно).", step2: "Нажмите «Анализировать».",
     step3: "Прочитайте результат и рекомендацию. Окончательное решение принимаете вы.",
     required: "обязательно", optional: "по желанию",
     s1: "1. Пациент", ref: "Код пациента", refPh: "например, SAM-001", refHint: "Не вводите ФИО — только код.",
     actor: "Врач", actorPh: "ваша фамилия", age: "Возраст", unitDay: "дн.", unitMonth: "мес.", unitYear: "лет",
-    s2: "2. Насыщение кислородом (пульсоксиметрия)",
-    s2hint: "У новорождённого (24–48 часов) измерьте в обоих местах. У старших детей заполните только строку «в покое».",
+    s2: "2. Насыщение кислородом", s2hint: "У новорождённого (24–48 часов) измерьте в обоих местах. У старших детей заполните только строку «в покое».",
     rh: "Правая рука, %", foot: "Нога, %", attempt: "Попытка", resting: "В покое, %",
     s3: "3. Клинические признаки", s3hint: "Отметьте замеченные признаки. Если ничего нет — оставьте пустым.",
     s4: "4. Записи тонов сердца",
-    s4hint: "WAV-файл с цифрового стетоскопа. В каждой точке не меньше 5 секунд (лучше 15–20), пока ребёнок спокоен. Достаточно одной точки.",
+    s4hint: "Нажмите точку на рисунке или выберите файл. WAV, в каждой точке не меньше 5 секунд (лучше 15–20), пока ребёнок спокоен. Достаточно одной точки.",
     "loc.AV": "Аорта", "loc.AV.where": "у правого края грудины, 2-е межреберье",
     "loc.PV": "Лёгочная артерия", "loc.PV.where": "у левого края грудины, 2-е межреберье",
     "loc.TV": "Трикуспидальная", "loc.TV.where": "у левого края грудины, 4-е межреберье",
     "loc.MV": "Митральная (верхушка)", "loc.MV.where": "левая среднеключичная линия, 5-е межреберье",
-    choose: "Выбрать файл", none: "файл не выбран",
+    choose: "Выбрать файл", uploaded: "Аудио загружено", ready: "Готово к анализу", tooShort: "слишком короткая — нужно не менее 5 секунд",
     device: "Модель стетоскопа", devicePh: "например, Eko Core 500",
     consent: "Получено <b>письменное согласие</b> родителей — сохранить записи для адаптации программы к местным условиям (только с кодом пациента).",
-    analyze: "Анализировать", analyzing: "Идёт анализ…",
+    analyze: "Анализировать", analyzing: "Идёт анализ…", viewLast: "Показать последний результат",
     needAny: "Введите хотя бы один показатель: насыщение кислородом, клинический признак или запись тонов сердца.",
     needPair: "Для новорождённого введите значения правой руки И ноги вместе.",
     needWav: "Можно загружать только WAV (.wav):", needFields: "Заполните обязательные поля: код пациента, врач, возраст.",
     errNet: "Не удалось связаться с сервером. Проверьте, что окно программы открыто.", err422: "В введённых данных ошибка.",
-    err409: "Это действие сейчас недоступно для данного пациента.", err500: "Внутренняя ошибка программы. Повторите попытку.",
-    errTitle: "Ошибка", more: "Подробнее",
-    result: "Результат", todoL: "Что делать", patient: "Пациент", details: "Технические детали (для врача)",
+    err409: "Это действие сейчас недоступно для данного пациента.", err500: "Внутренняя ошибка программы. Повторите попытку.", errTitle: "Ошибка", more: "Подробнее",
+    results: "Результаты", todoL: "Что делать", patient: "Пациент", findings: "Данные обследования", detailsRow: "Подробные данные",
+    journeyTitle: "Путь пациента", journeyInfo: "Этот результат помогает врачу принять решение. Это не диагноз.",
     pt: "Точка", chance: "Вероятность шума", consistency: "Стабильность", windows: "Фрагменты",
-    modelOn: "Модель ИИ", modelOff: "Модель ИИ не подключена — работают только клинические правила.",
-    mode: "Исследовательский режим",
-    newPatient: "Новый пациент", print: "Печать",
+    modelOn: "Модель ИИ", modelOff: "Модель ИИ не подключена — работают только клинические правила.", mode: "Исследовательский режим",
+    newPatient: "Новый пациент", print: "Печать", support: "Только поддержка решения — не окончательный диагноз.",
     echoTitle: "Введите диагноз по ЭхоКГ", echoHint: "Записи сохранены. Введите результат ЭхоКГ, когда он будет готов — программа учится на нём.",
     echoNotes: "примечание (по желанию)", echoSave: "Сохранить", echoSaved: "сохранено ✓", echoErr: "не сохранено",
     disclaimer: "Результат подготовлен помощником на основе ИИ и клинических правил и НЕ ЯВЛЯЕТСЯ ОКОНЧАТЕЛЬНЫМ ДИАГНОЗОМ. Решение принимает только врач. Исследовательский режим.",
   },
   en: {
-    title: "Heart defect screening", subtitle: "An assistant for early detection of congenital heart disease in children.",
-    step1: "Enter what you know about the patient.", step2: "Press “Analyse”.",
+    brandSub: "AI for paediatric heart screening", tagline: "Every child deserves a healthy heart",
+    heroSub: "Oxygen saturation, clinical signs and heart sounds in one place. The app estimates the risk of congenital heart disease and tells you what to do next.",
+    chip1: "Quick screening", chip2: "Clear result", chip3: "Clinician decides",
+    howTitle: "How do I use it?", step1: "Enter what you know about the patient.", step2: "Press “Analyse”.",
     step3: "Read the result and recommendation. The final decision is yours.",
     required: "required", optional: "optional",
     s1: "1. Patient", ref: "Patient code", refPh: "e.g. SAM-001", refHint: "Do not enter a name — code only.",
     actor: "Clinician", actorPh: "your surname", age: "Age", unitDay: "days", unitMonth: "months", unitYear: "years",
-    s2: "2. Oxygen saturation (pulse oximetry)",
-    s2hint: "For a newborn (24–48 hours) measure both sites. For older children fill in only the “at rest” field.",
+    s2: "2. Oxygen saturation", s2hint: "For a newborn (24–48 hours) measure both sites. For older children fill in only the “at rest” field.",
     rh: "Right hand, %", foot: "Foot, %", attempt: "Attempt", resting: "At rest, %",
     s3: "3. Clinical signs", s3hint: "Tick the signs you noticed. Leave empty if none.",
     s4: "4. Heart sound recordings",
-    s4hint: "A WAV file from a digital stethoscope. At least 5 seconds per site (ideally 15–20) while the child is calm. One site is enough.",
+    s4hint: "Tap a point on the picture or choose a file. WAV, at least 5 seconds per site (ideally 15–20) while the child is calm. One site is enough.",
     "loc.AV": "Aortic", "loc.AV.where": "right sternal border, 2nd intercostal space",
     "loc.PV": "Pulmonary", "loc.PV.where": "left sternal border, 2nd intercostal space",
     "loc.TV": "Tricuspid", "loc.TV.where": "left sternal border, 4th intercostal space",
     "loc.MV": "Mitral (apex)", "loc.MV.where": "left mid-clavicular line, 5th intercostal space",
-    choose: "Choose file", none: "no file chosen",
+    choose: "Choose file", uploaded: "Audio uploaded", ready: "Ready for analysis", tooShort: "too short — at least 5 seconds needed",
     device: "Stethoscope model", devicePh: "e.g. Eko Core 500",
     consent: "Parents’ <b>written consent</b> obtained — keep the recordings to adapt the software to local conditions (patient code only).",
-    analyze: "Analyse", analyzing: "Analysing…",
+    analyze: "Analyse", analyzing: "Analysing…", viewLast: "View the last result",
     needAny: "Enter at least one finding: oxygen saturation, a clinical sign or a heart sound recording.",
     needPair: "For a newborn, enter the right-hand AND foot values together.",
     needWav: "Only WAV (.wav) files can be uploaded:", needFields: "Fill in the required fields: patient code, clinician, age.",
     errNet: "Could not reach the server. Make sure the program window is still open.", err422: "There is a problem with the entered data.",
-    err409: "This action is not available for this patient right now.", err500: "Internal program error. Please try again.",
-    errTitle: "Error", more: "Details",
-    result: "Result", todoL: "What to do", patient: "Patient", details: "Technical details (for clinicians)",
+    err409: "This action is not available for this patient right now.", err500: "Internal program error. Please try again.", errTitle: "Error", more: "Details",
+    results: "Results", todoL: "What to do", patient: "Patient", findings: "Findings", detailsRow: "More details",
+    journeyTitle: "Patient journey", journeyInfo: "This result supports the clinician’s decision. It is not a diagnosis.",
     pt: "Site", chance: "Murmur likelihood", consistency: "Consistency", windows: "Segments",
-    modelOn: "AI model", modelOff: "AI model not connected — only clinical rules are active.",
-    mode: "Research mode",
-    newPatient: "New patient", print: "Print",
+    modelOn: "AI model", modelOff: "AI model not connected — only clinical rules are active.", mode: "Research mode",
+    newPatient: "New patient", print: "Print", support: "Decision support only — not a final diagnosis.",
     echoTitle: "Enter the echocardiography diagnosis", echoHint: "Recordings saved. Enter the echo result when it is available — the software learns from it.",
     echoNotes: "note (optional)", echoSave: "Save", echoSaved: "saved ✓", echoErr: "not saved",
     disclaimer: "This result was prepared by an AI and clinical-rules assistant and is NOT A FINAL DIAGNOSIS. Only a clinician makes the decision. Research mode.",
   },
+};
+const JOURNEY = {
+  uz: ["Skrining", "Tekshiruv", "Heart Team", "Operatsiya", "Reanimatsiya", "Chiqarish", "30 kunlik uy nazorati", "Yopildi"],
+  ru: ["Скрининг", "Обследование", "Heart Team", "Операция", "Реанимация", "Выписка", "Домашний мониторинг 30 дней", "Закрыт"],
+  en: ["Screening", "Work-up", "Heart Team", "Procedure", "ICU", "Discharge", "30-day home monitoring", "Closed"],
 };
 const ECHO_DX = {
   NORMAL: { uz: "Normal (nuqson yo'q)", ru: "Норма (порока нет)", en: "Normal (no defect)" },
@@ -280,45 +425,85 @@ const ECHO_DX = {
   OTHER: { uz: "Boshqa", ru: "Другое", en: "Other" },
 };
 const LOCS = ["AV", "PV", "TV", "MV"];
+const COLORS = { AV: "#2f80ed", PV: "#00a3b4", TV: "#7b61ff", MV: "#d946a8" };
+const POS = { AV: [35, 42], PV: [65, 42], TV: [62, 60], MV: [78, 77] };   // sxematik joylashuv (aniq anatomiya emas)
 const ICONS = { red: "✕", yellow: "!", green: "✓", grey: "?" };
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private mode */ } } };
 const guess = () => { const l = (navigator.language || "uz").slice(0, 2); return l === "ru" ? "ru" : l === "en" ? "en" : "uz"; };
 let lang = store.get("lang") in I18N ? store.get("lang") : guess();
+let theme = ["light", "dark"].includes(store.get("theme")) ? store.get("theme") : null;
 let health = null, last = null, echoState = null;
+const locState = {};
 const t = (k) => I18N[lang][k] ?? I18N.uz[k] ?? k;
 
-// ---- bir marta chiziladigan joylar
-$("locs").innerHTML = LOCS.map((c) => `
-  <div class="loc"><b>${c} · <span data-i="loc.${c}"></span></b><div class="where" data-i="loc.${c}.where"></div>
-    <div class="file"><label class="pick" for="f_${c}" data-i="choose"></label>
-      <input type="file" id="f_${c}" data-loc="${c}" accept=".wav,audio/wav,audio/x-wav" hidden>
-      <span class="name" id="n_${c}"></span><button type="button" class="x" id="x_${c}" aria-label="remove" hidden>✕</button></div></div>`).join("");
+/* ---- mavzu */
+function applyTheme() {
+  const cur = theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  document.documentElement.dataset.theme = cur;
+  $("theme").textContent = cur === "dark" ? "☀" : "☾";
+}
+$("theme").addEventListener("click", () => { theme = document.documentElement.dataset.theme === "dark" ? "light" : "dark"; store.set("theme", theme); applyTheme(); });
+
+/* ---- auskultatsiya: nuqtalar va yuklash qatorlari */
+$("pts").innerHTML = LOCS.map((c) => `<button type="button" class="pt" id="p_${c}" style="--c:${COLORS[c]};left:${POS[c][0]}%;top:${POS[c][1]}%">${c}</button>`).join("");
+$("rows").innerHTML = LOCS.map((c) => `
+  <div class="lrow" style="--c:${COLORS[c]}"><span class="ldot"></span>
+    <div class="linfo"><b>${c} · <span data-i="loc.${c}"></span></b><div class="where" data-i="loc.${c}.where"></div><div class="wave" id="w_${c}" hidden></div></div>
+    <div class="lfile"><label class="pick" for="f_${c}" data-i="choose"></label>
+      <input type="file" id="f_${c}" accept=".wav,audio/wav,audio/x-wav" hidden><button type="button" class="x" id="x_${c}" aria-label="remove" hidden>✕</button></div></div>`).join("");
+
+const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+async function analyzeAudio(file) {
+  try {
+    const buf = await file.arrayBuffer();
+    const Ctx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    const audio = await new Ctx(1, 1, 44100).decodeAudioData(buf);
+    const ch = audio.getChannelData(0), N = 64, step = Math.max(1, Math.floor(ch.length / N)), bars = [];
+    for (let i = 0; i < N; i++) { let m = 0; for (let j = i * step; j < Math.min(ch.length, (i + 1) * step); j += 4) m = Math.max(m, Math.abs(ch[j])); bars.push(m); }
+    const peak = Math.max(...bars, 1e-6);
+    return { dur: audio.duration, bars: bars.map((b) => b / peak) };
+  } catch (e) { return null; }
+}
+function paintLoc(c) {
+  const f = $("f_" + c).files[0], s = locState[c], w = $("w_" + c), pt = $("p_" + c);
+  $("x_" + c).hidden = !f;
+  const short = !!(s && s.dur != null && s.dur < 5);
+  pt.dataset.state = !f ? "" : short ? "short" : "ok";
+  pt.setAttribute("aria-label", `${c} — ${t("loc." + c)}`);
+  if (!f) { w.hidden = true; w.innerHTML = ""; return; }
+  w.hidden = false;
+  const bars = s && s.bars ? `<svg class="bars" viewBox="0 0 64 20" preserveAspectRatio="none" aria-hidden="true">${s.bars.map((v, i) => `<rect x="${i}" y="${10 - v * 10}" width=".62" height="${Math.max(.7, v * 20)}"/>`).join("")}</svg>` : "";
+  const dur = s && s.dur != null ? `<span class="dur">${fmt(s.dur)}</span>` : "";
+  const state = short ? `<span class="warn-chip">⚠ ${esc(t("tooShort"))}</span>` : `<span class="ok-chip">✓ ${esc(t("uploaded"))} · ${esc(t("ready"))}</span>`;
+  w.innerHTML = `<div class="fname">${esc(f.name)}</div><div class="wrow">${bars}${dur}</div>${state}`;
+}
 LOCS.forEach((c) => {
-  const inp = $("f_" + c), name = $("n_" + c), x = $("x_" + c);
-  const show = () => { name.textContent = inp.files[0] ? inp.files[0].name : t("none"); x.hidden = !inp.files[0]; };
-  inp.addEventListener("change", show);
-  x.addEventListener("click", () => { inp.value = ""; show(); });
-  inp._show = show;
+  const inp = $("f_" + c);
+  inp.addEventListener("change", async () => {
+    const f = inp.files[0]; locState[c] = null; paintLoc(c);
+    if (f) { const r = await analyzeAudio(f); if (inp.files[0] === f) { locState[c] = r; paintLoc(c); } }
+  });
+  $("x_" + c).addEventListener("click", () => { inp.value = ""; locState[c] = null; paintLoc(c); });
+  $("p_" + c).addEventListener("click", () => inp.click());
 });
 
+/* ---- til */
 function applyLang() {
   document.documentElement.lang = lang;
-  document.title = t("title") + " — CardioPath AI";
+  document.title = `CardioPath AI — ${t("tagline")}`;
   document.querySelectorAll("[data-i]").forEach((el) => { el.textContent = t(el.dataset.i); });
   document.querySelectorAll("[data-ph]").forEach((el) => { el.placeholder = t(el.dataset.ph); });
   document.querySelectorAll("[data-html]").forEach((el) => { el.innerHTML = t(el.dataset.html); });
-  document.querySelectorAll(".lang button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
-  LOCS.forEach((c) => $("f_" + c)._show());
-  $("modelInfo").textContent = health
-    ? (health.pcg_model ? `${t("modelOn")}: ${health.pcg_model.name} v${health.pcg_model.version} · ${t("mode")}` : t("modelOff")) : "";
+  document.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+  $("submit").innerHTML = `<span class="wv" aria-hidden="true"><span></span><span></span><span></span><span></span></span> ${esc(t("analyze"))}`;
+  LOCS.forEach(paintLoc);
+  paintBanner();
   loadFlags();
   if (last) render();
 }
-document.querySelectorAll(".lang button").forEach((b) => b.addEventListener("click", () => {
-  lang = b.dataset.lang; store.set("lang", lang); applyLang();
-}));
+document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => { lang = b.dataset.lang; store.set("lang", lang); applyLang(); }));
 
 async function loadFlags() {
   const checked = new Set([...document.querySelectorAll("#flags input:checked")].map((c) => c.value));
@@ -326,32 +511,38 @@ async function loadFlags() {
     const flags = await (await fetch(`/screening/red-flags?lang=${lang}`)).json();
     $("flags").innerHTML = Object.entries(flags).map(([code, f]) =>
       `<label class="chk"><input type="checkbox" value="${esc(code)}" ${checked.has(code) ? "checked" : ""}><span>${esc(f.name)}${f.major ? `<span class="major">${{ uz: "jiddiy", ru: "серьёзный", en: "major" }[lang]}</span>` : ""}</span></label>`).join("");
-  } catch (e) { /* server o'chiq — submit paytida xabar chiqadi */ }
+  } catch (e) { /* server o'chiq — yuborishda xabar chiqadi */ }
 }
-fetch("/health").then((r) => r.json()).then((h) => { health = h; applyLang(); }).catch(() => applyLang());
+fetch("/health").then((r) => r.json()).then((h) => { health = h; }).catch(() => {});
 
-// ---- yuborish
+/* ---- ko'rinishlar */
+function show(view) { $("viewForm").hidden = view !== "form"; $("viewResult").hidden = view !== "result"; window.scrollTo({ top: 0 }); }
+function paintBanner() { const b = $("lastBanner"); b.hidden = !last; if (last) b.textContent = `${t("viewLast")} · ${last.ref}`; }
+$("lastBanner").addEventListener("click", () => show("result"));
+$("back").addEventListener("click", () => { show("form"); paintBanner(); });
+
+/* ---- yuborish */
 function showErr(msg, detail) {
-  $("err").innerHTML = `<div class="card err" role="alert"><b>${esc(t("errTitle"))}:</b> ${esc(msg)}${detail ? `<details><summary>${esc(t("more"))}</summary><pre style="white-space:pre-wrap;font-size:12px">${esc(detail)}</pre></details>` : ""}</div>`;
+  $("err").innerHTML = `<div class="card err"><b>${esc(t("errTitle"))}:</b> ${esc(msg)}${detail ? `<details style="margin-top:6px"><summary>${esc(t("more"))}</summary><pre style="white-space:pre-wrap;font-size:12px">${esc(detail)}</pre></details>` : ""}</div>`;
   $("err").scrollIntoView({ behavior: "smooth", block: "center" });
 }
 $("form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  $("err").innerHTML = ""; $("out").innerHTML = ""; last = null;
+  $("err").innerHTML = "";
   const ref = $("ref").value.trim(), actor = $("actor").value.trim(), age = $("age").value;
   if (!ref || !actor || age === "" || Number(age) < 0) return showErr(t("needFields"));
   const rh = $("rh").value, foot = $("foot").value, resting = $("resting").value;
   if (!!rh !== !!foot) return showErr(t("needPair"));
   const flags = [...document.querySelectorAll("#flags input:checked")].map((c) => c.value);
-  const files = LOCS.map((c) => $("f_" + c).files[0] ? [c, $("f_" + c).files[0]] : null).filter(Boolean);
+  const files = LOCS.map((c) => ($("f_" + c).files[0] ? [c, $("f_" + c).files[0]] : null)).filter(Boolean);
   const bad = files.find(([, f]) => !/\.wav$/i.test(f.name));
   if (bad) return showErr(`${t("needWav")} ${bad[1].name}`);
   if (!rh && !resting && !flags.length && !files.length) return showErr(t("needAny"));
 
-  $("submit").disabled = true; $("status").textContent = t("analyzing");
+  const btn = $("submit"), label = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = `<span class="wv" aria-hidden="true"><span></span><span></span><span></span><span></span></span> ${esc(t("analyzing"))}`;
   try {
-    const ep = await fetch("/episodes", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ patient_ref: ref, actor }) });
+    const ep = await fetch("/episodes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ patient_ref: ref, actor }) });
     if (!ep.ok) throw { status: ep.status, detail: await ep.text() };
     const { id } = await ep.json();
     const fd = new FormData();
@@ -367,46 +558,51 @@ $("form").addEventListener("submit", async (e) => {
     if (!r.ok) throw { status: r.status, detail: await r.text() };
     last = { body: await r.json(), id, ref, at: new Date() };
     echoState = null;
-    render();
-    $("out").scrollIntoView({ behavior: "smooth" });
+    render(); show("result");
   } catch (err) {
     const s = err && err.status;
     showErr(!s ? t("errNet") : s === 422 ? t("err422") : s === 409 ? t("err409") : t("err500"), s ? `HTTP ${s}\n${err.detail}` : String(err));
-  } finally {
-    $("submit").disabled = false; $("status").textContent = "";
-  }
+  } finally { btn.disabled = false; btn.innerHTML = label; }
 });
 
-// ---- natija
+/* ---- natija */
 function render() {
   const { body: b, id, ref, at } = last;
   const p = (b.plain_i18n && b.plain_i18n[lang]) || b.plain;
-  const items = p.items.map((i) => `<li class="it lv-${esc(i.level)}"><span class="dot"></span><div><b>${esc(i.title)}</b><div>${esc(i.text)}</div></div></li>`).join("");
+  const items = p.items.map((i, n) => `<li class="it lv-${esc(i.level)}" style="--n:${n}"><span class="dot"></span><div><b>${esc(i.title)}</b><div>${esc(i.text)}</div></div></li>`).join("");
   const ai = b.concordance.ai, v = (ai && ai.value) || {};
   const rows = (v.recordings || []).map((r) => `<tr><td>${esc(r.location)}</td><td>${Math.round(r.p_murmur * 100)}%</td><td>${Math.round(r.window_agreement * 100)}%</td><td>${r.n_windows}</td></tr>`).join("");
-  const detail = rows
-    ? `<table><tr><th>${esc(t("pt"))}</th><th>${esc(t("chance"))}</th><th>${esc(t("consistency"))}</th><th>${esc(t("windows"))}</th></tr>${rows}</table>` : "";
+  const detail = rows ? `<table><tr><th>${esc(t("pt"))}</th><th>${esc(t("chance"))}</th><th>${esc(t("consistency"))}</th><th>${esc(t("windows"))}</th></tr>${rows}</table>` : "";
+  const stages = JOURNEY[lang].map((s, n) => `<li class="${n === 0 ? "cur" : ""}"><div class="n">${n + 1}</div>${esc(s)}</li>`).join("");
+  const modelLine = health && health.pcg_model ? `<p class="hint" style="margin:8px 0 0">${esc(t("modelOn"))}: ${esc(health.pcg_model.name)} v${esc(health.pcg_model.version)} · ${esc(t("mode"))}</p>` : (health ? `<p class="hint" style="margin:8px 0 0">${esc(t("modelOff"))}</p>` : "");
   const echo = b.saved_for_research ? `
-    <section class="card" id="echoBox"><h2>${esc(t("echoTitle"))}</h2><p class="hint">${esc(t("echoHint"))}</p>
-      <div class="row"><select id="echoDx" style="max-width:340px">${Object.entries(ECHO_DX).map(([k, n]) => `<option value="${k}">${esc(n[lang])}</option>`).join("")}</select>
+    <section class="card" id="echoBox" style="margin-bottom:16px"><h3>${esc(t("echoTitle"))}</h3><p class="hint">${esc(t("echoHint"))}</p>
+      <div class="row"><select id="echoDx" style="max-width:360px">${Object.entries(ECHO_DX).map(([k, n]) => `<option value="${k}">${esc(n[lang])}</option>`).join("")}</select>
         <input id="echoNotes" type="text" maxlength="500" placeholder="${esc(t("echoNotes"))}" style="flex:1;min-width:160px">
         <button type="button" class="btn" id="echoSave">${esc(t("echoSave"))}</button><span id="echoStatus" class="hint" style="margin:0"></span></div></section>` : "";
   $("out").innerHTML = `
-    <section class="card verdict lv-${esc(p.level)}">
+    <section class="verdict lv-${esc(p.level)}">
       <div class="vh"><div class="ico" aria-hidden="true">${ICONS[p.level] || "?"}</div>
-        <div><p class="headline">${esc(p.headline)}</p></div></div>
+        <div><p class="headline">${esc(p.headline)}</p><p class="support">${esc(t("support"))}</p></div></div>
       <p class="todo-l">${esc(t("todoL"))}</p><p class="todo">${esc(p.todo)}</p>
       ${p.attention ? `<p class="attn">${esc(p.attention)}</p>` : ""}
       <p class="meta">${esc(t("patient"))}: <b>${esc(ref)}</b> · ${esc(at.toLocaleString(lang === "uz" ? "uz-UZ" : lang === "ru" ? "ru-RU" : "en-GB"))}</p>
     </section>
-    <section class="card"><ul class="items">${items}</ul>
-      ${detail ? `<details style="margin-top:10px"><summary>${esc(t("details"))}</summary>${detail}</details>` : ""}</section>
-    ${echo}
-    <div class="row actions" style="margin-top:6px">
+    <div class="cols">
+      <section class="card"><h3>${esc(t("findings"))}</h3><ul class="items">${items}</ul>${modelLine}</section>
+      <section class="card jcard"><h3>${esc(t("journeyTitle"))}</h3><ol class="stepper">${stages}</ol>
+        <div class="info"><span aria-hidden="true">ℹ</span><span>${esc(t("journeyInfo"))}</span></div>
+        ${detail ? `<details class="more"><summary>${esc(t("detailsRow"))}</summary><div class="body">${detail}</div></details>` : ""}</section>
+    </div>
+    <div style="margin-top:16px">${echo}</div>
+    <div class="row actions">
       <button class="btn" type="button" id="again">${esc(t("newPatient"))}</button>
       <button class="btn sec" type="button" id="print">${esc(t("print"))}</button></div>
     <p class="disclaimer">${esc(t("disclaimer"))}</p>`;
-  $("again").onclick = () => { $("form").reset(); LOCS.forEach((c) => { $("f_" + c).value = ""; $("f_" + c)._show(); }); last = null; $("out").innerHTML = ""; $("err").innerHTML = ""; window.scrollTo({ top: 0, behavior: "smooth" }); $("ref").focus(); };
+  $("again").onclick = () => {
+    $("form").reset(); LOCS.forEach((c) => { $("f_" + c).value = ""; locState[c] = null; paintLoc(c); });
+    last = null; $("out").innerHTML = ""; $("err").innerHTML = ""; paintBanner(); show("form"); $("ref").focus();
+  };
   $("print").onclick = () => window.print();
   if (b.saved_for_research) {
     if (echoState === "ok") $("echoStatus").innerHTML = `<span class="ok">${esc(t("echoSaved"))}</span>`;
@@ -418,6 +614,7 @@ function render() {
     };
   }
 }
+applyTheme();
 applyLang();
 </script>
 </body>
