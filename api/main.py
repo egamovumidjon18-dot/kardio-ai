@@ -4,7 +4,8 @@ Ishga tushirish:  uvicorn api.main:default_app --factory --port 8010
 Muhit: CARDIOPATH_DB (sqlite fayl), CARDIOPATH_WEIGHTS (PCG og'irliklari papkasi),
        CARDIOPATH_AKI_WEIGHTS, CARDIOPATH_MODE=research|product,
        CARDIOPATH_TG_TOKEN + CARDIOPATH_TG_CHAT (Guardian eskalatsiyasi),
-       CARDIOPATH_RECORDINGS (rozilik bilan saqlanadigan PCG yozuvlari papkasi)
+       CARDIOPATH_RECORDINGS (rozilik bilan saqlanadigan PCG yozuvlari papkasi),
+       CARDIOPATH_ECG_WEIGHTS, CARDIOPATH_ANGIO_WEIGHTS, CARDIOPATH_EF_WEIGHTS (NeuroSon heart_echonet.onnx)
 """
 from __future__ import annotations
 
@@ -16,13 +17,17 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
-from api import guardian_routes, risk_routes
+from api import ai_routes, guardian_routes, risk_routes
 from core.episode import Episode, Stage, TransitionError
 from core.evidence import DISCLAIMER
 from core.handoff import Handoff
 from core.registry import deploy_mode
 from core.store import EpisodeStore, SqliteEpisodeStore, episode_to_dict
 from guardian.escalation import LogNotifier, Notifier, TelegramNotifier
+from adapters.echo_ef import EchoEFAdapter
+from angio.model import AngioModel
+from ecg.model import ECGModel
+from guardian.ocr import Engine
 from risk.aki import AKIModel
 from screening.collection import ECHO_DIAGNOSES, echo_diagnosis, save_recordings
 from screening.model import LOCATIONS, PCGModel, Recording
@@ -62,7 +67,9 @@ class EchoIn(BaseModel):
 
 
 def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional[AKIModel] = None,
-               notifier: Optional[Notifier] = None, recordings_dir: Optional[Path] = None) -> FastAPI:
+               notifier: Optional[Notifier] = None, recordings_dir: Optional[Path] = None,
+               ecg_model: Optional[ECGModel] = None, angio_model: Optional[AngioModel] = None,
+               ef_model: Optional[EchoEFAdapter] = None, ocr_engine: Optional[Engine] = None) -> FastAPI:
     app = FastAPI(title="CardioPath AI", version="0.1.0",
                   description="Kardiologiya va kardioxirurgiya yagona AI-CDSS platformasi. " + DISCLAIMER)
 
@@ -77,7 +84,9 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
         return (Path(__file__).parent / "static" / "screening.html").read_text(encoding="utf-8")
 
     risk_routes.register(app, store, _get, aki_model)
-    guardian_routes.register(app, store, _get, notifier or LogNotifier())
+    notifier = notifier or LogNotifier()
+    guardian_routes.register(app, store, _get, notifier)
+    ai_routes.register(app, store, _get, notifier, ecg_model, angio_model, ef_model, ocr_engine)
 
     @app.get("/health")
     def health() -> dict:
@@ -196,6 +205,16 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
     return app
 
 
+def _load_ef() -> Optional[EchoEFAdapter]:
+    """EchoNet litsenziyasi product rejimida ruxsat bermaydi — o'sha holda modul o'chiriladi."""
+    from core.registry import LicenseError
+
+    try:
+        return EchoEFAdapter.from_env()
+    except LicenseError:
+        return None
+
+
 def default_app() -> FastAPI:
     """uvicorn api.main:default_app --factory --port 8010"""
     store = SqliteEpisodeStore(os.environ.get("CARDIOPATH_DB", "cardiopath.db"))
@@ -203,4 +222,7 @@ def default_app() -> FastAPI:
     aki = AKIModel.from_dir(os.environ.get("CARDIOPATH_AKI_WEIGHTS", "weights/aki"))
     rec_dir = os.environ.get("CARDIOPATH_RECORDINGS")
     return create_app(store, pcg, aki, TelegramNotifier.from_env() or LogNotifier(),
-                      Path(rec_dir) if rec_dir else None)
+                      Path(rec_dir) if rec_dir else None,
+                      ecg_model=ECGModel.from_dir(os.environ.get("CARDIOPATH_ECG_WEIGHTS", "weights/ecg")),
+                      angio_model=AngioModel.from_dir(os.environ.get("CARDIOPATH_ANGIO_WEIGHTS", "weights/angio")),
+                      ef_model=_load_ef())

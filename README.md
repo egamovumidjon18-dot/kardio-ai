@@ -154,11 +154,87 @@ python -m research.train_pcg --data-dir physionet.org/files/circor-heart-sound/1
 - Test to'plami bir marta baholanadi.
 - Metrikalar `model_card.json` ga yoziladi.
 
+## 4-modul: EKG (`ecg/`) — PTB-XL, CC-BY 4.0
+
+12 tarmoqli EKG (10 s, 100 Hz) → yengil 1D-CNN (ResNet, ~0.4M parametr, ONNX). Chiqish: **bo'lmachalar fibrillyatsiyasi (AFIB)** + NORM / MI / STTC / CD / HYP ehtimolliklari. Guardian (operatsiyadan keyingi 30 kun, POAF) va umumiy EKG uchun.
+
+- **Preprocessing** (`ecg/signal.py`): qayta diskretlash → 0.5–40 Hz band-pass → har tarmoq bo'yicha standartlash. O'qitish va inference bir xil funksiyalarni ishlatadi.
+- **Abstain** (`ecg/model.py`): sifatsiz signal (qisqa, tekis chiziq, >8 mV, shovqin; 12 tarmoqdan 2 tadan ko'pi yaroqsiz), tarmoq yetishmasligi, yosh <18, AFIB noaniq zonasi.
+- AFIB topilsa xavf HIGH (Guardian'da RED eskalatsiya); aniqlanmasa, boshqa o'zgarishlar bo'lsa MODERATE.
+- Endpoint: `POST /episodes/{id}/ecg` (CSV: 1-qator tarmoq nomlari, mV; `fs`, `lang`).
+
+```bash
+python -m research.train_ecg --data-dir <ptb-xl-1.0.3> --out weights/ecg
+```
+
+**Test natijasi** (`strat_fold=10`, 1795 bemor, hech qachon ko'rilmagan; train 1–8, val 9; bemor bo'linishi `strat_fold` orqali, kod ichida tekshiriladi). Bootstrap 95% CI bemor darajasida:
+
+| AFIB | Qiymat |
+|---|---|
+| AUROC | 0.981 (0.963–0.992) |
+| Sezgirlik | 0.941 (0.903–0.974) |
+| Spetsifiklik | 0.971 (0.963–0.979) |
+| PPV | 0.722 (0.652–0.785) |
+| NPV | 0.995 (0.992–0.998) |
+
+Boshqa toifalar AUROC: NORM 0.953, MI 0.934, STTC 0.934, CD 0.920, HYP 0.842 (CI `weights/ecg/model_card.json` da).
+
+**Cheklovlar:**
+- AFIB chegarasi validatsiyada tanlandi; sinflar yaxshi ajralgani uchun **noaniq zona (abstain oralig'i) hosil bo'lmadi** — AFIB bo'yicha model har doim qaror beradi.
+- PPV 0.72: har 100 AFIB ogohlantirishdan ~28 tasi yolg'on.
+- MI/STTC/CD/HYP chegaralari Youden bo'yicha oddiy; PTB-XL'da ~yarim yozuv patologik, shuning uchun MODERATE ko'p chiqadi.
+- Faqat kattalar, bitta ma'lumot manbai (Germaniya, 1989–96), tashqi validatsiya yo'q.
+
+## 5-modul: koronar angiografiya (`angio/`) — ARCADE, CC-BY 4.0
+
+U-Net (~1.9M parametr, 512 px, AMP) stenoz **nomzodlarini** segmentatsiya qiladi. Natija **"SYNTAX-ga yordamchi"** deb nomlanadi — **SYNTAX kalkulyatori emas** (segment nomi, okklyuziya, bifurkatsiya, kalsifikatsiya baholanmaydi).
+
+- Abstain: kichik/kvadrat bo'lmagan/kontrastsiz/noto'g'ri ekspozitsiyali kadr; >12 nomzod (ishonchsiz).
+- Nomzod topilmasa xavf **UNKNOWN** qoladi (LOW emas): "topilmadi" ≠ "stenoz yo'q".
+- Endpoint: `POST /episodes/{id}/angio` (PNG/JPG, `lang`).
+
+```bash
+python -m research.train_angio --data-dir <arcade> --out weights/angio
+```
+
+**Test natijasi** (ARCADE muallif bo'linishi: train 1000 / val 200 / test 300; chegara 0.3 va min. maydon 100 px faqat validatsiyada tanlangan; bootstrap kadr darajasida):
+
+| Metrika | Qiymat (95% CI) |
+|---|---|
+| Piksel Dice | 0.538 (0.513–0.561) |
+| IoU | 0.396 (0.374–0.416) |
+| Lezion sezgirligi | 0.892 (0.859–0.925) — 381 ta lezionning 340 tasi topildi |
+| Lezion aniqligi | 0.497 (0.463–0.530) — 690 nomzodning yarmi yolg'on |
+
+**Cheklovlar:**
+- ARCADE'da **bemor ID'si yo'q**: train/test orasida bir bemorning kadrlari bo'lmaganini tekshirib bo'lmaydi, natija yuqoriroq chiqqan bo'lishi mumkin.
+- 997/1000 kadrda stenoz bor → **rasm darajasida spetsifiklik va AUROC baholanmadi** (salbiy kadrlar yo'q).
+- Lezion "topilgan" deb sanaladi, agar bashorat bilan IoU ≥ 0.1 kesishsa (yumshoq mezon); piksel Dice 0.54 chegara aniqligi o'rtacha ekanini ko'rsatadi.
+- Bitta markaz, tashqi validatsiya yo'q. Litsenziya: registry'da CC-BY 4.0, Zenodo yozuvi CC0 deb ko'rsatadi.
+
+## 6-modul: MNO qog'ozi OCR (`guardian/ocr.py`)
+
+Rasm → `rapidocr-onnxruntime` (ONNX, CPU) → `parse_inr_text` → `assess_inr`. OCR ishonchi <80%, matn yo'q, qiymat bir ma'noli emas yoki fiziologik emas (2.5 ↔ 25) bo'lsa — abstain (bemor qo'lda kiritadi). Bemorga doza aytilmaydi. Endpoint: `POST /episodes/{id}/guardian/inr-image`. Haqiqiy OCR bilan rasmga yozilgan "INR 2.5" to'g'ri o'qiladi (test mavjud); haqiqiy laboratoriya qog'ozlarida aniqlik o'lchanmagan.
+
+## 7-modul: ExoKG EF (`adapters/echo_ef.py`)
+
+NeuroSon-AI (`uttai/heart`, EchoNet-Dynamic, R(2+1)D-18) ONNX og'irligi `Evidence("echo.ef")` ga ulangan (`CARDIOPATH_EF_WEIGHTS`, standart: NeuroSon `weights/heart_echonet.onnx`). **EchoNet litsenziyasi faqat tadqiqot** → registry'da `commercial_use=False`, `CARDIOPATH_MODE=product` da modul yuklanmaydi. NeuroSon hisoboti: MAE 5.83%, R² 0.575 — bu loyihada qayta baholanmagan. Abstain: yosh <18, video o'qilmadi, EF 10–85% dan tashqari. **Cheklov:** "bu ExoKG emas" degan tekshiruv yo'q — shovqin videosiga ham EF beradi. Endpoint: `POST /episodes/{id}/echo-ef`.
+
+## Bloklangan modellar (qurilmagan)
+
+| Model | Sabab | Qaerda |
+|---|---|---|
+| CSA-AKI ML | MIMIC-IV — PhysioNet credentialing kerak | `risk/aki.py` `AKIModel` (interfeys tayyor) |
+| AI-EKG past EF | MIMIC-IV-ECHO/ECG — credentialed; muqobil: o'z klinikangizda ExoKG bilan tasdiqlangan EKGlar | `ecg/low_ef.py` (doim abstain) |
+| Yara rasmi CV | ochiq sternotomiya dataseti yo'q | `guardian/wound_cv.py` (doim abstain) |
+
+`GET /models` hamma modullar holatini va bloklanganlar sababini qaytaradi.
+
 ## Keyingi qadamlar
 - PCG modelini haqiqiy CirCor ma'lumotida o'qitish (`research/train_pcg.py`)
 - CSA-AKI modeli: MIMIC-IV kogortasi + `weights/aki` (PhysioNet credentialing kerak)
 - Telegram Mini App (bemor) va Next.js shifokor paneli
-- MNO uchun OCR (telefon kamerasi → matn)
+- MNO OCR'ni haqiqiy laboratoriya qog'ozlarida baholash; EKG/angio tashqi validatsiyasi
 - Postgres adapteri (`EpisodeStore` interfeysi orqali)
 
 Tadqiqot xaritasi va manbalar: [docs/tadqiqot-xaritasi-2026-10.md](docs/tadqiqot-xaritasi-2026-10.md)

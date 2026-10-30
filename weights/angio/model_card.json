@@ -1,0 +1,80 @@
+{
+  "name": "angio_stenosis_unet",
+  "version": "2026.10.30",
+  "task": "koronar angiografiya (512 px): stenoz nomzodlari segmentatsiyasi — SYNTAX bahosiga yordamchi",
+  "dataset": "ARCADE",
+  "weights": "angio.onnx",
+  "thresholds": {
+    "prob": 0.3,
+    "min_area_px": 100,
+    "size": 512
+  },
+  "metrics": {
+    "val": {
+      "dice": 0.5601,
+      "iou": 0.4172,
+      "lesion_recall": 0.8132,
+      "lesion_precision": 0.6145,
+      "n_images": 200,
+      "n_gt_lesions": 380,
+      "n_pred_lesions": 454,
+      "ci95": {
+        "dice": [
+          0.5282,
+          0.5885
+        ],
+        "iou": [
+          0.3879,
+          0.4432
+        ],
+        "lesion_recall": [
+          0.772,
+          0.8525
+        ],
+        "lesion_precision": [
+          0.5757,
+          0.6542
+        ]
+      }
+    },
+    "test": {
+      "dice": 0.5377,
+      "iou": 0.3957,
+      "lesion_recall": 0.8924,
+      "lesion_precision": 0.4971,
+      "n_images": 300,
+      "n_gt_lesions": 381,
+      "n_pred_lesions": 690,
+      "ci95": {
+        "dice": [
+          0.5125,
+          0.5614
+        ],
+        "iou": [
+          0.3735,
+          0.4162
+        ],
+        "lesion_recall": [
+          0.8594,
+          0.9245
+        ],
+        "lesion_precision": [
+          0.4631,
+          0.5299
+        ]
+      }
+    }
+  },
+  "limitations": [
+    "ARCADE'da bemor ID'si yo'q: train/val/test orasida bemor leakage tekshirilmagan",
+    "997/1000 kadrda stenoz bor: rasm darajasidagi spetsifiklik baholanmadi",
+    "bitta markaz (Eron), bitta annotator guruhi; tashqi validatsiya yo'q",
+    "SYNTAX kalkulyatori EMAS: segment nomi, okklyuziya, bifurkatsiya, kalsifikatsiya baholanmaydi"
+  ],
+  "training": {
+    "seed": 42,
+    "epochs": 60,
+    "device": "cuda",
+    "amp": true
+  }
+}
