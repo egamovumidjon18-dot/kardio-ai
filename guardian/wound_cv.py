@@ -3,6 +3,7 @@
 NIMA KERAK: izohlangan operatsiyadan keyingi sternotomiya yarasi rasmlari (kamida bir necha yuz, eritema/
 ekssudat/dehissensiya yorliqlari bilan, bemor darajasida bo'lingan). Ochiq sternotomiya dataseti MAVJUD EMAS
 (umumiy yara datasetlari — diabetik oyoq, bosim yaralari — boshqa to'qima/anatomiya, ko'chirib bo'lmaydi).
+2026-10-31: ochiq SurgWound (qorin/to'piq/yuz, 686 rasm) bilan sinaldi: AUROC 0.68, 90% sezgirlikda o'ziga xoslik 21% → RAD ETILDI (docs/experiments/wound_surgwound.md).
 Yo'l: Guardian orqali rozilik bilan yig'ilgan rasmlar (`photo_ref`) + jarroh yorlig'i → keyin o'qitish.
 
 Hozir: yara bo'yicha qaror faqat so'rovnoma qoidalari (`guardian/checkin.py`) va jarroh rasmni ko'rishi orqali.

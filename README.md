@@ -270,7 +270,7 @@ NeuroSon-AI (`uttai/heart`, EchoNet-Dynamic, R(2+1)D-18) ONNX og'irligi `Evidenc
 |---|---|---|
 | CSA-AKI ML | MIMIC-IV — PhysioNet credentialing kerak | `risk/aki.py` `AKIModel` (interfeys tayyor) |
 | AI-EKG past EF | MIMIC-IV-ECHO/ECG — credentialed; muqobil: o'z klinikangizda ExoKG bilan tasdiqlangan EKGlar | `ecg/low_ef.py` (doim abstain) |
-| Yara rasmi CV | ochiq sternotomiya dataseti yo'q | `guardian/wound_cv.py` (doim abstain) |
+| Yara rasmi CV | ochiq sternotomiya dataseti yo'q; SurgWound (qorin/to'piq/yuz) bilan sinab ko'rildi va RAD ETILDI (AUROC 0.68, 90% sezgirlikda o'ziga xoslik 21%): [docs/experiments/wound_surgwound.md](docs/experiments/wound_surgwound.md) | `guardian/wound_cv.py` (doim abstain) |
 
 `GET /models` hamma modullar holatini va bloklanganlar sababini qaytaradi.
 
