@@ -7,3 +7,9 @@ onnxruntime>=1.18
 httpx>=0.27
 pytest>=8
 # o'qitish uchun (ixtiyoriy): torch>=2.7 (RTX 50xx: cu128 index)
+
+# EKG/angiografiya/OCR/ExoKG modullari
+pillow>=10
+opencv-python-headless>=4.9   # faqat ExoKG video (adapters/echo_ef.py)
+# ixtiyoriy: MNO rasm OCR
+rapidocr-onnxruntime>=1.3

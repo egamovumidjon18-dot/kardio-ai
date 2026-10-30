@@ -1,0 +1,207 @@
+{
+  "name": "ecg_cnn_ptbxl",
+  "version": "2026.10.30",
+  "task": "12 tarmoqli EKG (10 s, 100 Hz): AFIB + NORM/MI/STTC/CD/HYP",
+  "dataset": "PTB-XL",
+  "weights": "ecg.onnx",
+  "thresholds": {
+    "afib_low": 0.247087,
+    "afib_high": 0.247087,
+    "class_thresholds": {
+      "AFIB": 0.1203,
+      "NORM": 0.4363,
+      "MI": 0.4492,
+      "STTC": 0.411,
+      "CD": 0.7094,
+      "HYP": 0.4182
+    },
+    "classes": [
+      "AFIB",
+      "NORM",
+      "MI",
+      "STTC",
+      "CD",
+      "HYP"
+    ],
+    "fs": 100,
+    "n_samples": 1000,
+    "leads": [
+      "I",
+      "II",
+      "III",
+      "AVR",
+      "AVL",
+      "AVF",
+      "V1",
+      "V2",
+      "V3",
+      "V4",
+      "V5",
+      "V6"
+    ]
+  },
+  "metrics": {
+    "val": {
+      "n_records": 2045,
+      "n_patients": 1837,
+      "afib": {
+        "auroc": 0.9926,
+        "abstain_rate": 0.0,
+        "sensitivity": 0.9603,
+        "specificity": 0.9704,
+        "ppv": 0.7214,
+        "npv": 0.9967,
+        "tp": 145,
+        "fn": 6,
+        "tn": 1838,
+        "fp": 56
+      },
+      "afib_ci95": {
+        "auroc": [
+          0.9885,
+          0.9961
+        ],
+        "abstain_rate": [
+          0.0,
+          0.0
+        ],
+        "sensitivity": [
+          0.9267,
+          0.9922
+        ],
+        "specificity": [
+          0.9617,
+          0.9785
+        ],
+        "ppv": [
+          0.6489,
+          0.788
+        ],
+        "npv": [
+          0.994,
+          0.9995
+        ]
+      },
+      "n_afib": 151,
+      "auroc": {
+        "AFIB": 0.9926,
+        "NORM": 0.9539,
+        "MI": 0.9392,
+        "STTC": 0.9281,
+        "CD": 0.9331,
+        "HYP": 0.8601
+      },
+      "auroc_ci95": {
+        "AFIB": [
+          0.9879,
+          0.9956
+        ],
+        "NORM": [
+          0.9456,
+          0.9619
+        ],
+        "MI": [
+          0.9283,
+          0.9505
+        ],
+        "STTC": [
+          0.916,
+          0.9394
+        ],
+        "CD": [
+          0.9201,
+          0.9453
+        ],
+        "HYP": [
+          0.8325,
+          0.8869
+        ]
+      }
+    },
+    "test": {
+      "n_records": 2060,
+      "n_patients": 1795,
+      "afib": {
+        "auroc": 0.9805,
+        "abstain_rate": 0.0,
+        "sensitivity": 0.9408,
+        "specificity": 0.9712,
+        "ppv": 0.7222,
+        "npv": 0.9952,
+        "tp": 143,
+        "fn": 9,
+        "tn": 1853,
+        "fp": 55
+      },
+      "afib_ci95": {
+        "auroc": [
+          0.9631,
+          0.9924
+        ],
+        "abstain_rate": [
+          0.0,
+          0.0
+        ],
+        "sensitivity": [
+          0.9026,
+          0.9742
+        ],
+        "specificity": [
+          0.9633,
+          0.9786
+        ],
+        "ppv": [
+          0.6524,
+          0.7853
+        ],
+        "npv": [
+          0.9919,
+          0.9978
+        ]
+      },
+      "n_afib": 152,
+      "auroc": {
+        "AFIB": 0.9805,
+        "NORM": 0.9529,
+        "MI": 0.9338,
+        "STTC": 0.9339,
+        "CD": 0.9198,
+        "HYP": 0.8416
+      },
+      "auroc_ci95": {
+        "AFIB": [
+          0.9648,
+          0.9921
+        ],
+        "NORM": [
+          0.9443,
+          0.9612
+        ],
+        "MI": [
+          0.9214,
+          0.9459
+        ],
+        "STTC": [
+          0.9221,
+          0.946
+        ],
+        "CD": [
+          0.9055,
+          0.9355
+        ],
+        "HYP": [
+          0.8139,
+          0.8667
+        ]
+      }
+    }
+  },
+  "training": {
+    "seed": 42,
+    "epochs": 30,
+    "split": "strat_fold: train 1-8, val 9, test 10",
+    "min_sens": 0.95,
+    "min_spec": 0.95,
+    "device": "cuda"
+  }
+}

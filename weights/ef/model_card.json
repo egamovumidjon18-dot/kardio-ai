@@ -1,0 +1,11 @@
+{
+  "name": "echo_ef_r2plus1d",
+  "version": "neuroson-2026",
+  "task": "ExoKG videosidan LVEF% regressiyasi (NeuroSon-AI uttai/heart adapteri)",
+  "dataset": "EchoNet-Dynamic",
+  "weights": "C:/Users/user/NeuroSon-AI/weights/heart_echonet.onnx",
+  "thresholds": {"plausible_ef": [10, 85], "min_age_years": 18},
+  "metrics": {"val_mae_pct": 5.83, "val_r2": 0.575,
+              "note": "NeuroSon-AI hisobotidan olingan; bu loyihada qayta baholanmagan (EchoNet ma'lumoti yo'q)"},
+  "license_note": "EchoNet-Dynamic: Stanford AIMI tadqiqot shartnomasi — tijorat EMAS. CARDIOPATH_MODE=product da yuklanmaydi."
+}
