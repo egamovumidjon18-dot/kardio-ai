@@ -5,3 +5,4 @@ weights/**/*.onnx
 weights/**/split.json
 .pytest_cache/
 .claude/
+weights/**/*.pt

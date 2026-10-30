@@ -320,6 +320,7 @@ def main() -> None:
 
     args.out.mkdir(parents=True, exist_ok=True)
     model.eval().cpu()
+    torch.save(model.state_dict(), args.out / "pcg.pt")        # fine-tuning / domen moslashuvi uchun
     t_frames = feats["train"][0]["x"].shape[-1]
     torch.onnx.export(model, torch.zeros(1, 1, N_MELS, t_frames), args.out / "pcg.onnx",
                       input_names=["logmel"], output_names=["murmur_logits", "outcome_logits"],
