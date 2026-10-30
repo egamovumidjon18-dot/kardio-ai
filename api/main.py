@@ -26,6 +26,7 @@ from guardian.escalation import LogNotifier, Notifier, TelegramNotifier
 from risk.aki import AKIModel
 from screening.collection import ECHO_DIAGNOSES, echo_diagnosis, save_recordings
 from screening.model import LOCATIONS, PCGModel, Recording
+from screening.plain import flag_name, lang_of, plain_report
 from screening.rules import RED_FLAGS, newborn_pulse_ox, red_flags, resting_spo2
 from screening.triage import triage
 
@@ -111,8 +112,9 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
         return episode_to_dict(ep)
 
     @app.get("/screening/red-flags")
-    def list_red_flags() -> dict:
-        return {code: {"name": name, "major": major} for code, (name, major) in RED_FLAGS.items()}
+    def list_red_flags(lang: str = "uz") -> dict:
+        L = lang_of(lang)
+        return {code: {"name": flag_name(code, L), "major": major} for code, (_, major) in RED_FLAGS.items()}
 
     @app.post("/episodes/{eid}/screening")
     async def screening(
@@ -127,6 +129,7 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
         flags: str = Form("", alias="red_flags", description="vergul bilan: cyanosis,hepatomegaly"),
         research_consent: bool = Form(False, description="ota-ona yozma roziligi — yozuvlar saqlanadi"),
         device: str = Form("", max_length=80, description="stetoskop modeli"),
+        lang: str = Form("uz", pattern="^(uz|ru|en)$"),
         recordings: list[UploadFile] = File(default=[]),
     ) -> dict:
         ep = _get(eid)
@@ -173,6 +176,7 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
         if recordings and pcg is None:
             out["warning"] = "PCG modeli ulanmagan — audio tahlil qilinmadi, faqat qoidalar ishladi."
         out["saved_for_research"] = saved is not None
+        out["plain"] = plain_report(result, rule_items, pcg_ev, len(raw), pcg is not None, lang)
         return out
 
     @app.post("/episodes/{eid}/echo-diagnosis")
