@@ -17,7 +17,8 @@ from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
-from api import ai_routes, guardian_routes, risk_routes
+from api import ai_routes, guardian_routes, learning_routes, risk_routes
+from learning.versions import resolve_weights_dir
 from api import alerts as alerts_api
 from integration.digest import episode_digest
 from core.episode import Episode, Stage, TransitionError
@@ -71,7 +72,8 @@ class EchoIn(BaseModel):
 def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional[AKIModel] = None,
                notifier: Optional[Notifier] = None, recordings_dir: Optional[Path] = None,
                ecg_model: Optional[ECGModel] = None, angio_model: Optional[AngioModel] = None,
-               ef_model: Optional[EchoEFAdapter] = None, ocr_engine: Optional[Engine] = None) -> FastAPI:
+               ef_model: Optional[EchoEFAdapter] = None, ocr_engine: Optional[Engine] = None,
+               models_dir: Optional[Path] = None, running_version: str = "baseline") -> FastAPI:
     app = FastAPI(title="CardioPath AI", version="0.1.0",
                   description="Kardiologiya va kardioxirurgiya yagona AI-CDSS platformasi. " + DISCLAIMER)
 
@@ -90,10 +92,12 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
     guardian_routes.register(app, store, _get, notifier)
     ai_routes.register(app, store, _get, notifier, ecg_model, angio_model, ef_model, ocr_engine)
     alerts_api.register(app, store, _get)
+    if models_dir is not None:
+        learning_routes.register(app, store, models_dir, recordings_dir, running_version)
 
     @app.get("/health")
     def health() -> dict:
-        return {"status": "ok", "mode": deploy_mode(),
+        return {"status": "ok", "mode": deploy_mode(), "pcg_version": running_version,
                 "pcg_model": pcg.card.to_dict() if pcg else None,
                 "aki_model": aki_model.card.to_dict() if aki_model else None}
 
@@ -237,11 +241,14 @@ def _load_ef() -> Optional[EchoEFAdapter]:
 def default_app() -> FastAPI:
     """uvicorn api.main:default_app --factory --port 8010"""
     store = SqliteEpisodeStore(os.environ.get("CARDIOPATH_DB", "cardiopath.db"))
-    pcg = PCGModel.from_dir(os.environ.get("CARDIOPATH_WEIGHTS", "weights/pcg"))
+    # PCG og'irliklari: aniq ko'rsatilgan (CARDIOPATH_WEIGHTS) > shifokor tasdiqlagan joriy versiya > bazaviy weights/pcg
+    models_dir = Path(os.environ.get("CARDIOPATH_MODELS", "models/pcg"))
+    weights_dir, running = resolve_weights_dir("weights/pcg", models_dir, os.environ.get("CARDIOPATH_WEIGHTS"))
+    pcg = PCGModel.from_dir(weights_dir)
     aki = AKIModel.from_dir(os.environ.get("CARDIOPATH_AKI_WEIGHTS", "weights/aki"))
     rec_dir = os.environ.get("CARDIOPATH_RECORDINGS")
     return create_app(store, pcg, aki, TelegramNotifier.from_env() or LogNotifier(),
-                      Path(rec_dir) if rec_dir else None,
+                      Path(rec_dir) if rec_dir else None, models_dir=models_dir, running_version=running,
                       ecg_model=ECGModel.from_dir(os.environ.get("CARDIOPATH_ECG_WEIGHTS", "weights/ecg")),
                       angio_model=AngioModel.from_dir(os.environ.get("CARDIOPATH_ANGIO_WEIGHTS", "weights/angio")),
                       ef_model=_load_ef())

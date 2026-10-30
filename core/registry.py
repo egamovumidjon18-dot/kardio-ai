@@ -17,6 +17,8 @@ DATASET_LICENSES: dict[str, tuple[str, bool]] = {
     # lekin tasdiqlanmagan. Tasdiqlanmaguncha tijoratga YO'Q deb olinadi (xavfsiz tomon).
     "ZCHSound": ("shartlari tasdiqlanmagan (CC BY 4.0 bo'lishi mumkin)", False),
     "CirCor DigiScope + ZCHSound": ("CirCor ODC-By 1.0 + ZCHSound (shartlari tasdiqlanmagan)", False),
+    # Mahalliy ma'lumot ota-ona roziligi bilan TADQIQOT uchun yig'iladi; tijorat huquqi alohida tasdiqlanmaguncha YO'Q.
+    "CirCor DigiScope + mahalliy ma'lumot": ("CirCor ODC-By 1.0 + mahalliy rozilikli ma'lumot (tijorat huquqi tasdiqlanmagan)", False),
     "PTB-XL": ("CC-BY 4.0", True),
     "ARCADE": ("CC-BY 4.0", True),
     "CACTUS": ("CC-BY 4.0", True),

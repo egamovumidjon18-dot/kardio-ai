@@ -63,6 +63,30 @@ def collection_confound(children: dict[str, tuple[str, str, str]], min_n: int = 
             "device_purity": pure, "device_warn": device_split}
 
 
+def collect_children(store, recordings: Path) -> tuple[list[dict], Counter]:
+    """Rozilik bilan saqlangan yozuvi VA ExoKG tashxisi bor bolalar. Eksport ham, o'rganish sikli ham shu manbadan oladi."""
+    children, skipped = [], Counter()
+    for eid in store.ids():
+        ep = store.get(eid)
+        rec, dx = ep.latest("research.recordings"), ep.latest("workup.echo_dx")
+        if rec is None:
+            continue
+        if dx is None:
+            skipped["ExoKG tashxisi yo'q"] += 1
+            continue
+        files = []
+        for f in rec.value["files"]:
+            src = recordings / eid / f["file"]
+            if not src.exists():
+                skipped["fayl topilmadi"] += 1
+                continue
+            files.append({"location": f["location"], "file": f["file"], "path": src})
+        if files:
+            children.append({"eid": eid, "created_at": ep.created_at, "dx": dx.value, "device": rec.value.get("device", ""),
+                             "age_days": rec.value.get("age_days"), "files": files})
+    return children, skipped
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--db", required=True)
@@ -72,28 +96,16 @@ def main() -> None:
 
     csv_name, wav_dir, _ = SUBSETS["clean"]
     (args.out / wav_dir).mkdir(parents=True, exist_ok=True)
-    store = SqliteEpisodeStore(args.db)
-    rows, skipped, children = [], Counter(), {}
-    for eid in store.ids():
-        ep = store.get(eid)
-        rec, dx = ep.latest("research.recordings"), ep.latest("workup.echo_dx")
-        if rec is None:
-            continue
-        if dx is None:
-            skipped["ExoKG tashxisi yo'q"] += 1
-            continue
-        for f in rec.value["files"]:
-            src = args.recordings / eid / f["file"]
-            if not src.exists():
-                skipped["fayl topilmadi"] += 1
-                continue
-            name = f"{eid[:12]}_{f['file']}"
-            shutil.copyfile(src, args.out / wav_dir / name)
-            age = rec.value.get("age_days")
+    found, skipped = collect_children(SqliteEpisodeStore(args.db), args.recordings)
+    rows, children = [], {}
+    for ch in found:
+        for f in ch["files"]:
+            name = f"{ch['eid'][:12]}_{f['file']}"
+            shutil.copyfile(f["path"], args.out / wav_dir / name)
+            age = ch["age_days"]
             rows.append({"fileName": name, "gender": "", "age(days)": "" if age is None else round(age),
-                         "diagnosis": dx.value, "subject": eid, "location": f["location"],
-                         "device": rec.value.get("device", "")})
-            children[eid] = (ep.created_at, dx.value, rec.value.get("device", ""))
+                         "diagnosis": ch["dx"], "subject": ch["eid"], "location": f["location"], "device": ch["device"]})
+        children[ch["eid"]] = (ch["created_at"], ch["dx"], ch["device"])
     with open(args.out / csv_name, "w", newline="", encoding="utf-8") as fh:
         w = csv.DictWriter(fh, fieldnames=["fileName", "gender", "age(days)", "diagnosis", "subject", "location", "device"])
         w.writeheader()

@@ -1,6 +1,6 @@
 # CardioPath AI — loyiha tavsifi (dizayner AI uchun texnik va funksional hujjat)
 
-Holat: 2026-yil 30-oktabr. Manba: loyiha kodi (`main` branch, 179 ta test; `feat/ai-models` branch'i 2026-10-30 da `main` bilan birlashtirildi), muallifning o'z maqsad hujjati va o'qitish/baholash hisobotlari.
+Holat: 2026-yil 30-oktabr. Manba: loyiha kodi (`main` branch, 207 ta test; `feat/ai-models` branch'i 2026-10-30 da `main` bilan birlashtirildi), muallifning o'z maqsad hujjati va o'qitish/baholash hisobotlari.
 
 ## 0. Bu hujjatni qanday o'qish kerak
 
@@ -50,6 +50,7 @@ Tizim bir vaqtda (a) xalqaro jurnal uchun **ilmiy tadqiqot** va (b) amaliyotdagi
 5. **Bemorga doza aytilmaydi.** Varfarin bo'yicha faqat «me'yorda / shifokorga murojaat qiling» turidagi xabar ketadi.
 6. **Shaxsiy ma'lumot saqlanmaydi.** Bemor ism-familiya bilan emas, **kod (psevdonim)** bilan yuritiladi.
 7. **Litsenziya nazorati.** Faqat tadqiqot uchun ruxsat etilgan ma'lumotda o'qitilgan model «mahsulot rejimi»da avtomatik bloklanadi.
+8. **Dastur o'zini o'zi o'rgatadi, lekin modelni o'zi almashtirmaydi.** Yangi tasdiqlangan holatlardan nomzod model avtomatik o'qitiladi va avtomatik darvozalardan o'tkaziladi; joriy qilish faqat ismi aniq ko'rsatilgan shifokor tasdig'i bilan, orqaga qaytarish mumkin (3.4.1).
 
 ### 1.6. Beshta bo'g'inning hozirgi holati
 
@@ -99,6 +100,7 @@ Dastur **modulli monolit**: bitta jarayon, bitta server. Mikroservislar yo'q.
 | `screening/` | Yurak tovushi (PCG) qayta ishlash va modeli, pulsoksimetriya, klinik belgilar, triaj, oddiy tildagi xulosa, ma'lumot yig'ish | MAVJUD |
 | `risk/` | EuroSCORE II, Thakar (AKI), AKI ML interfeysi, Heart Team protokoli | MAVJUD (ekransiz) |
 | `integration/` | Modullarni bitta tizimga ulash: LVEF (shifokor vs AI EF) va AKI solishtiruvi, **epizod xulosasi (digest)** | MAVJUD (ekransiz) |
+| `learning/` | **O'z-o'zini o'rgatish**: model versiyalari, inson tasdig'i va orqaga qaytarish, ma'lumot va model darvozalari, nomzod o'qitish sikli | MAVJUD (ekransiz, buyruq satri + holat API'si) |
 | `api/alerts.py` | Signallar: saqlash, ro'yxat, qabul qilish | MAVJUD (ekransiz) |
 | `guardian/` | MNO tahlili, vazn/puls/belgi/yara qoidalari, eskalatsiya va Telegram | MAVJUD (ekransiz) |
 | `api/main.py`, `risk_routes.py`, `guardian_routes.py` | Endpointlar | MAVJUD |
@@ -181,6 +183,7 @@ Server manzili: `http://localhost:8010` (faqat shu kompyuter).
 | `GET /alerts?status=&level=&episode_id=&limit=&offset=` | Signallar: `status` = `open` (standart) / `acknowledged` / `all`; `level` = `red` / `amber`. Ochiqlari avval qizil, keyin eng yangisi | MAVJUD (ekransiz) |
 | `POST /alerts/{id}/ack` | Signalni «qabul qildim» deb belgilash: `actor`, `note`. Ikkinchi marta 409, yo'q signal 404; audit jurnaliga yoziladi | MAVJUD (ekransiz) |
 | `GET /episodes/{id}/alerts` | Bitta bemorning signallari | MAVJUD (ekransiz) |
+| `GET /learning/status` | O'rganish holati (faqat o'qish): ishlayotgan va joriy model versiyasi, qayta ishga tushirish kerakmi, oxirgi nomzod va uning darvozalari, to'plangan tasdiqlangan bolalar soni, ma'lumot darvozasi, tarix. Tasdiqlash va qaytarish bu yerda ATAYLAB yo'q | MAVJUD (ekransiz) |
 | `GET /episodes/{id}/audit` | Audit jurnali | MAVJUD |
 | `POST /episodes/{id}/transition` | Bosqichdan bosqichga o'tkazish (Handoff) | MAVJUD (ekransiz) |
 | `GET /screening/red-flags?lang=` | 12 klinik belgi ro'yxati (uz/ru/en) | MAVJUD |
@@ -266,6 +269,29 @@ Maqsad: model yangi klinika va stetoskopga moslashishi uchun ExoKG bilan tasdiql
 
 **Hozirgacha haqiqiy mahalliy bemor ma'lumoti yig'ilmagan.** Hamma sinov ochiq datasetlarda va sun'iy yozuvlarda o'tgan.
 
+### 3.4.1. O'z-o'zini o'rgatish sikli (nazorat bilan) [MAVJUD, ekransiz]
+**Tamoyil:** dastur o'zi o'rganadi, lekin o'zini o'zi almashtirmaydi. Tibbiyotda nazoratsiz o'z-o'zini o'zgartiradigan model xavfli: ma'lumotdagi yashirin xato (ZCHSound'da shunday bo'lgan) modelni jimgina yomonlashtirishi mumkin.
+
+**Sikl (`python -m learning.cycle`, Task Scheduler bilan rejalashtirsa bo'ladi):**
+1. Rozilik bilan saqlangan va ExoKG tashxisi bor bolalar yig'iladi. Noaniq tashxislar (PFO, OTHER) va 29 kundan kichiklar chiqariladi. Oxirgi nomzoddan beri kamida 30 ta yangi bola bo'lmasa, sikl to'xtaydi (`--force` bilan chetlab o'tiladi).
+2. **Ma'lumot darvozasi (o'qitishdan OLDIN):** kamida 60 bola, har sinfdan kamida 20 ta, mahalliy testda har sinfdan kamida 8 ta; yig'ish tartibi tashxis bilan ketma-ket emas; har bir stetoskop ikkala sinfni yozgan. O'tmasa, o'qitish umuman boshlanmaydi.
+3. **Nomzod o'qitish:** joriy modeldan davom ettirib (fine-tuning), CirCor bilan aralashtirib (unutmaslik uchun); har bir manba ichida sinflar teng vaznlanadi. Bo'linish bola ID xeshi bo'yicha barqaror: bola bir marta testga tushsa, doim shu yerda qoladi (test to'plami sizib kirmaydi).
+4. **Model darvozalari (hammasi bajarilishi shart):** mahalliy testda AUROC kamida +0.03 oshgan va juft bootstrap 95% CI quyi chegarasi >0; CirCor testida 0.03 dan ko'p yomonlashmagan; «javob bermadi» ulushi 0.05 dan ko'p oshmagan; sezgirlik 0.05 dan ko'p pasaymagan (ikkala testda); **salbiy nazorat:** mahalliy belgilari aralashtirilgan nomzod joriy modeldan «yaxshi» chiqmasligi (sizib chiqish yo'qligi), haqiqiy nomzod esa aralashtirilganidan kamida 0.02 yaxshiroq bo'lishi.
+5. Nomzod va hisobot `models/pcg/versions/<id>/` ga yoziladi. **Nomzod avtomatik joriy bo'lmaydi.**
+6. **Tasdiqlash:** `python -m learning.promote --version <id> --approved-by "Ismingiz" --note "sabab"`. Faqat darvozalardan o'tgan nomzod, va ismi kamida 3 belgi bo'lsa. Orqaga qaytarish: `--rollback`. Hamma hodisa `history.jsonl` ga faqat qo'shiladi (kim, qachon, sabab).
+7. Dastur qayta ishga tushirilgach, tasdiqlangan joriy versiyani yuklaydi (aniq `CARDIOPATH_WEIGHTS` ko'rsatilgan bo'lsa, o'sha ustun). `GET /learning/status` ishlayotgan va joriy versiya farq qilsa, `restart_needed: true` deydi.
+
+**Ataylab qilingan cheklovlar:**
+- Tasdiqlash **veb-API'da yo'q**: kirish tizimi (autentifikatsiya) yo'qligi sababli API orqali tasdiqlansa, istalgan odam modelni almashtira olardi. Kirish tizimi bo'lgach, tasdiqlash ekran orqali ham mumkin bo'ladi [REJADA].
+- Qayta o'qitilgan model dataseti «CirCor + mahalliy ma'lumot» deb yoziladi va **mahsulot rejimida bloklanadi**, chunki mahalliy ma'lumotning tijorat huquqi tasdiqlanmagan (rozilik tadqiqot uchun).
+
+**Cheklovlar (halol):**
+- Sikl **faqat mexanik sinovdan o'tgan** (sun'iy ma'lumot bilan; soxta dvigatel testlari + haqiqiy o'qitish/eksport/yuklash). Haqiqiy mahalliy bemor ma'lumoti hali yo'q, shuning uchun klinik foyda isbotlanmagan.
+- **Mexanik sinovda darvoza haqiqatan ishladi:** sun'iy klinika (150 bola) bilan haqiqiy sikl o'tkazildi; nomzod mahalliy AUROC'ni +0.114 oshirgan va CirCor'da 0.958 → 0.955 bo'lgan, lekin «javob bermadi» ulushi CirCor'da 3.8% → 20.5%, mahalliyda 9.5% → 23.8% ga sakragani uchun TO'XTATILDI. Sabab oynalar kelishuvi emas (u ikkala modelda 4.3%); nomzodning chegaralari ikki domen birgalikdagi validatsiyada tanlangani uchun «noaniq zona» paydo bo'lgan (0.078–0.234; joriy modelda zona yo'q). Ya'ni ikki xil ma'lumotni aralashtirish noaniqlikni kengaytiradi. Tasdiqlash oqimi ham (darvozasi sinov uchun bo'shatilgan nomzod bilan) tekshirildi: tasdiqlovchisiz rad etildi; ismli tasdiq qabul qilindi; ilova yangi versiyani yukladi; qaytarish bazaviy modelni tikladi.
+- Darvozalar yig'ish **tartibi va qurilmasi**dagi aralashuvni ushlaydi. Tartib aralash bo'lib, lekin audioda boshqa yashirin iz bo'lsa, ularni ko'rmaydi. Salbiy nazorat esa sizib chiqishni topadi, audio izini emas.
+- Kichik ma'lumotda ko'p darvozalar ataylab o'tmaydi (masalan, mahalliy testda sinf boshiga 8 bola); bu to'g'ri xatti-harakat.
+- «Soya rejimi» (nomzod joriy model bilan yonma-yon, natijasi foydalanuvchiga ko'rsatilmay ishlashi) hali yo'q [REJADA].
+
 ### 3.5. Epizodni keyingi bosqichga o'tkazish [FAQAT API]
 `POST /episodes/{id}/transition`: `from_stage`, `to_stage`, `author`, `evidence_ids`, `open_questions`, `note`. Yo'llanma epizodga yoziladi, bosqich o'zgaradi, audit jurnaliga tushadi.
 
@@ -338,6 +364,7 @@ Maqsad: model yangi klinika va stetoskopga moslashishi uchun ExoKG bilan tasdiql
 | **Yashirin omil tekshiruvi (yosh)** | ZCHSound'da nuqsonli bolalar sog'lardan yoshroq: faqat yoshning o'zi AUROC 0.75 beradi. «Yosh guruhlari ichida ham yuqori, demak tovushni o'rganadi» degan avvalgi xulosa **bekor qilindi** (pastdagi topilma sababli). |
 | **Yozuv-blok izi (topilma)** | ZCHSound fayllari tashxis bo'yicha ketma-ket: normal 0001–0533, ASD 0534–0652, PDA 0653–0684, PFO 0685–0754, VSD 0755–0941; fayl raqami bilan tashxis AUROC 1.0. Salbiy nazorat: faqat sog' bolalar ichida model «erta vs kech yozilgan»ni AUROC ≈0.67 bilan ajratdi (yosh bilan 0.55): yozuvlarda sharoit izi bor. |
 | **Ko'p manbali model (CirCor + ZCHSound)** — **RAD ETILDI** | Oldindan belgilangan mezon bo'yicha «qabul» bo'lgan edi (ZCHSound testida AUROC 0.97), lekin yuqoridagi topilma mezonni bekor qildi. Qo'shimcha zarar: CirCor testida AUROC 0.960 → 0.937 va abstain 10% → 21%. Mahsulot modeli CirCor'da o'qitilgani bo'lib qoladi. Hisobot: `weights/pcg_multisite/report.md`. |
+| **CirCor yashirin-omil tekshiruvi** | Metama'lumot (kampaniya, bemor raqami, yosh, bo'y, vazn) murmur bilan atigi 0.51–0.62 AUROC bog'langan; takror audio yo'q. Lekin audiodan kampaniyani ajratish mumkin (murmur yo'q bolalar ichida AUROC 0.83): yozuvlarda kampaniya izi bor. Hal qiluvchi tekshiruv — bir kampaniyada o'qitib, ko'rilmagan ikkinchisida sinash: CC2014→CC2015 AUROC 0.903 (0.858–0.943, n=445), CC2015→CC2014 0.907 (0.847–0.952, n=301). Demak CirCor natijasi kampaniya izidan emas, tovushdan. Cheklov: ikkala kampaniya bitta skrining dasturidan (mustaqil klinikalar emas). 70 bola ikkala kampaniyada ikki ID bilan, ularning 21% da murmur belgisi mos kelmaydi (belgi shovqini). Hisobot: `docs/experiments/circor_batch_check.md`. |
 
 **Cheklovlar:** model faqat Braziliya skrining kampaniyasi yozuvlarida o'qitilgan; boshqa mamlakat va stetoskopda sifati sezilarli pasayadi (qisman yozuv sharoiti farqidan bo'lishi mumkin); **mahalliy klinik validatsiya o'tkazilmagan**; mahalliy moslashtirish uchun kerakli bola soni **noma'lum**.
 
@@ -468,6 +495,7 @@ Quyidagi ro'yxat **mahsulot uchun zarur bo'lgan ekranlar**ning to'liq majmuasi. 
 | E16 | Kirish va rollar | REJADA |
 | E17 | Ma'lumot yig'ish va eksport boshqaruvi | FAQAT buyruq satri |
 | E18 | Validatsiya va tadqiqot hisobotlari | Faqat fayllar (Markdown/JSON) |
+| E19 | O'rganish holati va nomzod modelni tasdiqlash | FAQAT API (holat); tasdiqlash faqat buyruq satrida |
 
 ### E1. Skrining formasi [MAVJUD]
 - **Vazifa:** bitta bolaning birlamchi skrining ma'lumotini kiritish.
@@ -537,7 +565,7 @@ Laboratoriya qog'ozi matni yoki rasmi, ko'rsatma turi (5 xil). Qiymat o'qilmasa,
 Epizod bo'yicha amallar ro'yxati: kim, nima, qachon, qisqa tafsilot.
 
 ### E15. Tizim va modellar holati [FAQAT API]
-`/health`: rejim va ulangan modellar kartalari. Branch'da `/models`: modullar, bloklanganlar va sabablari.
+`/health`: rejim, ishlayotgan PCG model versiyasi va ulangan modellar kartalari. `/models`: modullar, bloklanganlar va sabablari.
 
 ### E16. Kirish va rollar [REJADA]
 Hozir yo'q. Muallif konsepsiyasida rollar bor (2.5), lekin amalga oshirilmagan.
@@ -547,6 +575,12 @@ Eksport va moslashtirish buyruqlari (3.4). Foydalanuvchi ekrani yo'q.
 
 ### E18. Hisobotlar [fayllar]
 `weights/pcg/eval_report_test.md`, `external_zchsound.md`, `docs/experiments/zchsound_adaptation.md`. Ekranda ko'rsatilmaydi.
+
+### E19. O'rganish holati va nomzod modelni tasdiqlash [FAQAT API; tasdiqlash — buyruq satri]
+- **Vazifa:** shifokor/tadqiqotchi dastur o'zi o'qitgan yangi nomzodni ko'radi, darvozalar natijasini tushunadi va tasdiqlash yoki rad etish haqida qaror qiladi.
+- **Mavjud ma'lumot (`GET /learning/status`):** ishlayotgan versiya, joriy versiya, qayta ishga tushirish kerakmi; oxirgi nomzod (yaratilgan vaqt, har bir darvoza: nomi, o'tdi/o'tmadi, tushuntirish; mahalliy testdagi AUROC farqi va ishonch oralig'i; tasdiqlash buyrug'i); to'plangan tasdiqlangan bolalar soni, oxirgi nomzoddan beri yangilari va keraklisi; ma'lumot darvozasi natijasi; oxirgi sikl holati; tarix (kim, qachon tasdiqlagan yoki qaytargan).
+- **Amallar:** ekranda faqat ko'rish. Tasdiqlash va qaytarish hozir faqat `python -m learning.promote` (kirish tizimi bo'lgach, ekranga chiqarilishi mumkin) [REJADA].
+- **Muhim:** darvozadan o'tmagan nomzod tasdiqlanmaydi (server rad etadi); tasdiqlovchining ismi majburiy.
 
 ---
 
@@ -593,12 +627,12 @@ Asosiy foydalanuvchi: **tuman va viloyatdagi shifokor** (ExoKG imkoniyati chekla
 | Bildirishnoma | Telegram Bot API (`httpx`), muhit o'zgaruvchilari orqali | Kod bor, haqiqiy bot bilan **sinalmagan** |
 | Tashqi OCR | `rapidocr-onnxruntime` (ixtiyoriy) | MAVJUD |
 | Tilda xulosa | Deterministik shablonlar, LLM yo'q | MAVJUD |
-| Testlar | pytest: 179 | MAVJUD |
+| Testlar | pytest: 207 | MAVJUD |
 | Ishga tushirish | `Start.bat` (Windows) | MAVJUD |
 | Frontend freymvork (Next.js), PostgreSQL | Dastlabki rejada bor edi | **REJADA**, qurilmagan |
 
 ### 8.2. Sozlash (muhit o'zgaruvchilari)
-`CARDIOPATH_DB` (baza fayli), `CARDIOPATH_WEIGHTS` (PCG og'irliklari papkasi), `CARDIOPATH_AKI_WEIGHTS`, `CARDIOPATH_MODE` (`research`/`product`), `CARDIOPATH_RECORDINGS` (rozilik bilan saqlanadigan yozuvlar), `CARDIOPATH_TG_TOKEN` va `CARDIOPATH_TG_CHAT` (Telegram), `CARDIOPATH_PORT` (`Start.bat`, standart 8010). Branch'da yana `CARDIOPATH_EF_WEIGHTS` (ExoKG EF og'irligi).
+`CARDIOPATH_DB` (baza fayli), `CARDIOPATH_WEIGHTS` (PCG og'irliklari papkasi), `CARDIOPATH_AKI_WEIGHTS`, `CARDIOPATH_MODE` (`research`/`product`), `CARDIOPATH_RECORDINGS` (rozilik bilan saqlanadigan yozuvlar), `CARDIOPATH_TG_TOKEN` va `CARDIOPATH_TG_CHAT` (Telegram), `CARDIOPATH_PORT` (`Start.bat`, standart 8010). Yana `CARDIOPATH_EF_WEIGHTS` (ExoKG EF og'irligi) va `CARDIOPATH_MODELS` (model versiyalari papkasi, standart `models/pcg`).
 
 ### 8.3. Ma'lumot saqlash
 - Jadvallar: `episodes` (id, JSON hujjat, yangilangan vaqt), `audit_log` (faqat qo'shiladi).
@@ -628,6 +662,7 @@ Asosiy foydalanuvchi: **tuman va viloyatdagi shifokor** (ExoKG imkoniyati chekla
 - Etika komissiyasi ruxsati va tibbiy qurilma ro'yxatdan o'tishi (SaMD) bo'yicha holat **[NOMA'LUM]**; dastur tadqiqot rejimi deb belgilangan.
 - MIMIC ma'lumotiga kirish bo'lmagani uchun AKI ML va AI-EKG past EF modellari qurilmagan.
 - Intraoperatsion video uchun ochiq ma'lumot yo'q; yo'nalish muzlatilgan.
+- O'z-o'zini o'rgatish sikli (3.4.1) haqiqiy mahalliy ma'lumotda sinalmagan; yashirin ma'lumot izlarini (yig'ish tartibi/qurilmadan tashqari) ko'ra olmaydi.
 
 ---
 
@@ -643,7 +678,7 @@ Quyidagilar muallifning maqsad hujjati va kelishilgan rejadan olingan. Hammasi *
 **O'rta muddat**
 4. Ekranlar: bemorlar ro'yxati, epizod tafsiloti va bosqichga o'tkazish, Heart Team kiritish va protokol, jarroh/navbatchi signallari paneli.
 5. Bemor ilovasi (Telegram Mini App yoki PWA): kundalik check-in, MNO qog'ozini rasmga olish, uchala tilda xabarlar.
-6. Foydalanuvchi kirishi va rollar; PostgreSQL ga o'tish (saqlash qatlami shuni ko'zda tutib interfeys orqali yozilgan).
+6. Foydalanuvchi kirishi va rollar; PostgreSQL ga o'tish (saqlash qatlami shuni ko'zda tutib interfeys orqali yozilgan). Kirish tizimi bo'lgach: nomzod modelni tasdiqlashni ekranga chiqarish, «soya rejimi» (nomzod joriy model bilan yonma-yon, natijasi ko'rsatilmay sinaladi), sikl rejalashtirgichi.
 7. RACHS-1 (bolalar xavfi); STS ballini qo'lda kiritish; mexanik klapan bemorlari uchun Guardian qoidalarini kengaytirish.
 8. ExoKG: regional devor harakati (RWMA), klapan regurgitatsiyasi, pediatrik EF; ExoKG foundation modellarini mahalliy apparatda tashqi validatsiya qilish.
 9. Yara rasmi uchun CV modeli (Guardian orqali rozilik bilan yig'ilgan rasm va jarroh yorlig'i bilan).

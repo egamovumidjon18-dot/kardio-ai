@@ -7,3 +7,4 @@ weights/**/split.json
 .claude/
 weights/**/*.pt
 data/
+models/

@@ -135,7 +135,8 @@ def val_score(model, val_items: list[dict], labels: dict, device) -> float:
     return float(np.mean(aucs)) if aucs else float("nan")
 
 
-def fit(train_items, val_items, labels, device, epochs, seed, batch=128, lr=1e-3, log=print):
+def fit(train_items, val_items, labels, device, epochs, seed, batch=128, lr=1e-3, log=print, init_state=None):
+    """init_state — joriy model og'irliklari (state_dict): berilsa, noldan emas, shundan davom ettirib o'qitiladi."""
     torch.manual_seed(seed); random.seed(seed); np.random.seed(seed)
     sites = {it["site"] for it in train_items}
     ds = SiteDataset(train_items, augment=True)
@@ -145,6 +146,8 @@ def fit(train_items, val_items, labels, device, epochs, seed, batch=128, lr=1e-3
     w_abn = float((out_y == 0).sum() / max((out_y == 1).sum(), 1)) if len(out_y) else 1.0
     loader = torch.utils.data.DataLoader(ds, batch_size=batch, shuffle=True, drop_last=len(ds) > batch)
     model = PCGNet().to(device)
+    if init_state is not None:
+        model.load_state_dict(init_state)
     opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-3)
     sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=lr, total_steps=max(1, epochs * len(loader)))
     use_amp = device.type == "cuda"

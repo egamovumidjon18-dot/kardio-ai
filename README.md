@@ -63,6 +63,8 @@ SCREENING → WORKUP → HEART_TEAM → PROCEDURE → ICU → DISCHARGE → GUAR
 
 To'liq hisobot: [weights/pcg/eval_report_test.md](weights/pcg/eval_report_test.md).
 
+**Yashirin-omil tekshiruvi (CirCor):** audiodan kampaniyani ajratish mumkin (AUROC 0.83), lekin kampaniya murmur bilan deyarli bog'lanmagan (0.54). Bir kampaniyada o'qitilgan model ko'rilmagan boshqasida AUROC 0.903 va 0.907 berdi (n=445 va 301), ya'ni natija kampaniya izidan emas, tovushdan. Cheklov: ikkala kampaniya bitta skrining dasturidan. Batafsil: [docs/experiments/circor_batch_check.md](docs/experiments/circor_batch_check.md).
+
 ### Tashqi validatsiya: ZCHSound (Xitoy, haqiqiy TYN tashxislari, qayta o'qitishsiz)
 
 | | Toza (941 bola) | Shovqinli, faqat neonatlar (318) |
@@ -108,6 +110,23 @@ python -m research.adapt_zchsound --data-dir <eksport> --base <pcg.pt papkasi> -
 - **Aralash tartibda yozing:** sog' va kasal bolalarni bir xil kunlarda, navbatma-navbat. Avval hamma sog'larni, keyin hamma kasallarni yozmang: model kasallikni emas, yozilgan kunni o'rganib oladi. `export_local` buni tekshirib, ogohlantiradi.
 - Yoshlari mos bo'lsin.
 - Test uchun keyinroq yig'ilgan alohida guruh qoldirilsin.
+
+### O'z-o'zini o'rgatish (nazorat bilan)
+
+Dastur yangi tasdiqlangan holatlardan o'zi o'rganadi, lekin **modelni o'zi almashtirmaydi**: nomzod avtomatik o'qitiladi va darvozalardan o'tkaziladi, joriy qilish esa faqat shifokor tasdig'i bilan.
+
+```bash
+python -m learning.cycle --db data/cardiopath.db --recordings data/recordings --circor-dir <CirCor papkasi>
+python -m learning.promote --list
+python -m learning.promote --version <id> --approved-by "Ismingiz" --note "sabab"
+python -m learning.promote --rollback --approved-by "Ismingiz" --note "sabab"
+```
+
+- **Ma'lumot darvozasi** (o'qitishdan oldin): yetarli bola, har sinfdan yetarli, yig'ish tartibi va qurilma tashxis bilan aralashib ketmagan. O'tmasa, o'qitish boshlanmaydi.
+- **Model darvozalari:** mahalliy testda ishonchli yaxshilanish, CirCor'da yomonlashmaslik, sezgirlik va «javob bermadi» ulushi yomonlashmasligi, aralashtirilgan belgilar bilan salbiy nazorat.
+- Holat: `GET /learning/status`. Tasdiqlangan versiya dastur qayta ishga tushirilgach yuklanadi.
+- Tasdiqlash ataylab veb-API'da yo'q (kirish tizimi hali yo'q). Batafsil: [docs/CardioPath-AI-loyiha-tavsifi.md](docs/CardioPath-AI-loyiha-tavsifi.md), 3.4.1-bo'lim.
+- Haqiqiy mahalliy bemor ma'lumotida hali sinalmagan: faqat mexanika tekshirilgan.
 
 ## 2-modul: operatsiya oldi xavf (`risk/`)
 

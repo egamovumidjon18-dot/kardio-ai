@@ -1,0 +1,179 @@
+{
+  "meta": {
+    "n_patients": 942,
+    "campaigns": {
+      "CC2015": 557,
+      "CC2014": 385
+    },
+    "by_campaign": {
+      "CC2014": {
+        "n": 385,
+        "murmur": {
+          "Unknown": 20,
+          "Absent": 302,
+          "Present": 63
+        },
+        "present_rate": 0.1726027397260274,
+        "id_range": [
+          49558,
+          50829
+        ],
+        "id_vs_murmur_auroc": 0.6186271418059497,
+        "present_rate_by_id_quartile": [
+          0.24,
+          0.21,
+          0.14,
+          0.1
+        ]
+      },
+      "CC2015": {
+        "n": 557,
+        "murmur": {
+          "Absent": 393,
+          "Present": 116,
+          "Unknown": 48
+        },
+        "present_rate": 0.22789783889980353,
+        "id_range": [
+          2530,
+          85349
+        ],
+        "id_vs_murmur_auroc": 0.6220496621918048,
+        "present_rate_by_id_quartile": [
+          0.33,
+          0.23,
+          0.19,
+          0.16
+        ]
+      }
+    },
+    "campaign_only_auroc": 0.5412885334190748,
+    "age_auroc": 0.5066805769089977,
+    "height_auroc": 0.5497867932497938,
+    "weight_auroc": 0.5640984153134071,
+    "duplicate_audio": 0,
+    "multi_id_groups": 70,
+    "multi_id_cross_campaign": 70,
+    "multi_id_label_disagree": 15,
+    "multi_id_pairs": 70
+  },
+  "E1_campaign_from_audio": {
+    "auroc": [
+      0.8384405856315968,
+      0.858869594824651,
+      0.7980932924753149
+    ],
+    "mean": 0.8318011576438543,
+    "n_groups": 613
+  },
+  "E2_leave_campaign_out": {
+    "CC2014->CC2015": {
+      "ichki (xuddi shu kampaniya, ko'rilmagan bolalar)": {
+        "n": 44,
+        "n_pos": 4,
+        "auroc": 0.91875,
+        "abstain_rate": 0.045454545454545414,
+        "tp": 2,
+        "fn": 1,
+        "tn": 35,
+        "fp": 4,
+        "sensitivity": 0.6666666666666666,
+        "specificity": 0.8974358974358975,
+        "ci95": {
+          "auroc": [
+            0.7723577235772358,
+            1.0
+          ],
+          "sensitivity": [
+            0.0,
+            1.0
+          ],
+          "specificity": [
+            0.7837837837837838,
+            0.975015243902439
+          ]
+        }
+      },
+      "TASHQI (CC2015)": {
+        "n": 445,
+        "n_pos": 92,
+        "auroc": 0.9030052962187461,
+        "abstain_rate": 0.0674157303370787,
+        "tp": 66,
+        "fn": 17,
+        "tn": 306,
+        "fp": 26,
+        "sensitivity": 0.7951807228915663,
+        "specificity": 0.9216867469879518,
+        "ci95": {
+          "auroc": [
+            0.8583418020252374,
+            0.942879140515551
+          ],
+          "sensitivity": [
+            0.7051136363636364,
+            0.8762915556585197
+          ],
+          "specificity": [
+            0.8901660989540324,
+            0.9502928516944535
+          ]
+        }
+      }
+    },
+    "CC2015->CC2014": {
+      "ichki (xuddi shu kampaniya, ko'rilmagan bolalar)": {
+        "n": 66,
+        "n_pos": 14,
+        "auroc": 0.8804945054945055,
+        "abstain_rate": 0.18181818181818177,
+        "tp": 12,
+        "fn": 2,
+        "tn": 36,
+        "fp": 4,
+        "sensitivity": 0.8571428571428571,
+        "specificity": 0.9,
+        "ci95": {
+          "auroc": [
+            0.7253009259259259,
+            0.9922047595841456
+          ],
+          "sensitivity": [
+            0.6363636363636364,
+            1.0
+          ],
+          "specificity": [
+            0.8,
+            0.975609756097561
+          ]
+        }
+      },
+      "TASHQI (CC2014)": {
+        "n": 301,
+        "n_pos": 42,
+        "auroc": 0.906784335355764,
+        "abstain_rate": 0.19933554817275745,
+        "tp": 32,
+        "fn": 3,
+        "tn": 169,
+        "fp": 37,
+        "sensitivity": 0.9142857142857143,
+        "specificity": 0.8203883495145631,
+        "ci95": {
+          "auroc": [
+            0.8473204450319454,
+            0.9521050671090944
+          ],
+          "sensitivity": [
+            0.8,
+            1.0
+          ],
+          "specificity": [
+            0.7688085968536469,
+            0.8714408866995074
+          ]
+        }
+      }
+    }
+  }
+}
