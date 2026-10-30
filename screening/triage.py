@@ -56,6 +56,10 @@ def triage(rule_items: list[Evidence], pcg: Optional[Evidence]) -> TriageResult:
         final = RiskLevel.VERY_HIGH
         conc.final_risk = final
     action = ACTIONS[final]
+    # AAP 2020: REPEAT — avval 1 soatdan keyin qayta o'lchash (yo'llanmadan oldin).
+    if final == RiskLevel.MODERATE and any(e.kind == "screening.cchd" and e.value == "repeat" for e in rule_items):
+        action = ("QAYTA O'LCHASH: 1 soatdan keyin pulsoksimetriyani takrorlang (urinish=2). "
+                  "Yana PASS bo'lmasa — FAIL: darhol kardiolog va ExoKG.")
     summary = Evidence(kind="screening.triage", value={"action": action, "concordance": conc.status.value},
                        source=Source.RULE, provenance=Provenance(name="chd_triage"),
                        risk=final, explanation=[conc.message])

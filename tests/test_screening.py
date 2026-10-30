@@ -123,6 +123,13 @@ def test_triage_ai_escalates_but_flags_disagreement(wav_factory):
     assert r.concordance.final_risk == RiskLevel.MODERATE and r.action.startswith("REJALI")
 
 
+def test_triage_cchd_repeat_asks_for_second_measurement():
+    r = triage([newborn_pulse_ox(93, 93, attempt=1), red_flags([])], None)
+    assert r.concordance.final_risk == RiskLevel.MODERATE and r.action.startswith("QAYTA O'LCHASH")
+    r2 = triage([newborn_pulse_ox(93, 93, attempt=2), red_flags([])], None)
+    assert r2.action.startswith("DARHOL")
+
+
 def test_triage_rule_only_when_no_model():
     r = triage([red_flags(["hepatomegaly"])], None)
     assert r.concordance.status == Agreement.RULE_ONLY and r.concordance.final_risk == RiskLevel.HIGH

@@ -53,7 +53,7 @@ def compare(question: str, rule: Evidence, ai: Optional[Evidence], tolerance: in
     """
     if ai is None:
         return ConcordanceResult(question, Agreement.RULE_ONLY, rule, None, rule.risk,
-                                 "AI moduli ulanmagan — faqat deterministik qoida.")
+                                 "AI natijasi yo'q (ma'lumot yuklanmagan yoki model ulanmagan) — faqat deterministik qoida.")
     r, a = risk_rank(rule.risk), risk_rank(ai.risk)
     if ai.abstained or a is None:
         reason = "; ".join(ai.explanation) or "ishonch past"

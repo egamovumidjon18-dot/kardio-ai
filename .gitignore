@@ -4,3 +4,4 @@ __pycache__/
 weights/**/*.onnx
 weights/**/split.json
 .pytest_cache/
+.claude/

@@ -2,7 +2,19 @@ import numpy as np
 import pytest
 
 pytest.importorskip("torch")
-from research.train_pcg import auroc, choose_thresholds  # noqa: E402
+from research.train_pcg import auroc, choose_thresholds, split_patients  # noqa: E402
+
+
+def test_split_keeps_same_child_together():
+    pts = [{"id": str(i), "murmur": "Present" if i % 3 == 0 else "Absent", "outcome": i % 2,
+            "additional_id": None, "recordings": [1]} for i in range(60)]
+    pts[0]["additional_id"], pts[1]["additional_id"] = "1", "0"     # bir bola, ikki kampaniya
+    pts[5]["additional_id"] = "40"                                 # bir tomonlama havola ham
+    for seed in range(20):
+        split = split_patients(pts, seed)
+        where = {p["id"]: name for name, ps in split.items() for p in ps}
+        assert len(where) == 60
+        assert where["0"] == where["1"] and where["5"] == where["40"]
 
 
 def decide(s, low, high):

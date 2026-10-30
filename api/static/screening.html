@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TYN skriningi — CardioPath AI</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #fff; --text: #1b1f24; --muted: #5b6470; --border: #d9dde3;
+    --accent: #0b6bcb; --green: #1a7f37; --amber: #9a6700; --red: #cf222e; --darkred: #82071e;
+    --green-bg: #e6f4ea; --amber-bg: #fff4d6; --red-bg: #ffebe9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1216; --card: #171b21; --text: #e6e9ee; --muted: #9aa4b2; --border: #2c333d;
+      --accent: #4c9aff; --green: #4ac26b; --amber: #d4a72c; --red: #ff6a69; --darkred: #ff8182;
+      --green-bg: #12261a; --amber-bg: #2b2412; --red-bg: #2d1416;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 16px; }
+  .card h2 { font-size: 16px; margin: 0 0 12px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  input[type=number], input[type=text] { width: 100%; padding: 8px 10px; border: 1px solid var(--border);
+         border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .flags { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 6px 16px; }
+  .flags label { display: flex; gap: 8px; align-items: flex-start; color: var(--text); font-size: 14px; margin: 0; }
+  .major { font-size: 11px; color: var(--red); border: 1px solid var(--red); border-radius: 4px; padding: 0 4px; margin-left: 4px; }
+  .locs { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .loc { border: 1px dashed var(--border); border-radius: 8px; padding: 10px; }
+  .loc b { display: block; margin-bottom: 6px; }
+  .loc input { width: 100%; font-size: 12px; }
+  button { background: var(--accent); color: #fff; border: 0; border-radius: 8px; padding: 10px 18px;
+           font: inherit; font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: .6; cursor: wait; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .hint { font-size: 13px; color: var(--muted); }
+  .result { border-left: 6px solid var(--muted); }
+  .result.low, .result.normal { border-color: var(--green); background: var(--green-bg); }
+  .result.moderate { border-color: var(--amber); background: var(--amber-bg); }
+  .result.high { border-color: var(--red); background: var(--red-bg); }
+  .result.very_high { border-color: var(--darkred); background: var(--red-bg); }
+  .action { font-size: 18px; font-weight: 700; margin: 0 0 8px; }
+  .pill { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); margin-right: 6px; }
+  .warn { color: var(--red); font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+  td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  ul { margin: 6px 0; padding-left: 20px; }
+  .disclaimer { font-size: 12px; color: var(--muted); margin-top: 12px; }
+  .err { color: var(--red); white-space: pre-wrap; }
+  @media (max-width: 480px) { main { padding: 16px 16px 48px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Tug'ma yurak nuqsoni skriningi</h1>
+  <p class="sub">Pulsoksimetriya + klinik belgilar + yurak tovushi (AI). Natija shifokor uchun yordamchi, yakuniy tashxis emas.</p>
+  <p class="hint" id="modelInfo"></p>
+
+  <form id="form">
+    <div class="card">
+      <h2>1. Bemor</h2>
+      <div class="grid">
+        <div><label for="ref">Psevdonim (F.I.Sh. emas)</label><input id="ref" type="text" required maxlength="64" placeholder="masalan, SAM-2026-001"></div>
+        <div><label for="actor">Shifokor</label><input id="actor" type="text" required placeholder="dr.familiya"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>2. Pulsoksimetriya</h2>
+      <p class="hint">Yangi tug'ilgan (24–48 soat): o'ng qo'l va oyoq. Katta bolalar: tinch holatdagi SpO₂. Ikkalasi ham ixtiyoriy.</p>
+      <div class="grid">
+        <div><label for="rh">O'ng qo'l SpO₂, %</label><input id="rh" type="number" min="50" max="100" step="1"></div>
+        <div><label for="foot">Oyoq SpO₂, %</label><input id="foot" type="number" min="50" max="100" step="1"></div>
+        <div><label for="attempt">Urinish</label><input id="attempt" type="number" min="1" max="2" value="1"></div>
+        <div><label for="resting">Tinch holatdagi SpO₂, %</label><input id="resting" type="number" min="50" max="100" step="1"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>3. Klinik belgilar</h2>
+      <div class="flags" id="flags"><span class="hint">yuklanmoqda…</span></div>
+    </div>
+
+    <div class="card">
+      <h2>4. Yurak tovushi yozuvlari (WAV)</h2>
+      <p class="hint">Har bir auskultatsiya nuqtasida kamida 5 soniya (tavsiya 15–20 s). Hech bo'lmaganda bitta nuqta.</p>
+      <div class="locs" id="locs"></div>
+    </div>
+
+    <div class="row">
+      <button id="submit" type="submit">Tahlil qilish</button>
+      <span class="hint" id="status"></span>
+    </div>
+  </form>
+
+  <div id="out"></div>
+</main>
+
+<script>
+const LOCS = [["AV", "Aorta"], ["PV", "O'pka arteriyasi"], ["TV", "Trikuspidal"], ["MV", "Mitral"], ["Phc", "Boshqa"]];
+const RISK_UZ = { normal: "me'yorda", low: "past", moderate: "o'rta", high: "yuqori", very_high: "juda yuqori", unknown: "noma'lum" };
+const CONC_UZ = { agree: "qoida va AI mos", disagree: "qoida va AI zid", ai_abstained: "AI xulosa bermadi", rule_only: "faqat qoidalar" };
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+$("locs").innerHTML = LOCS.map(([code, name]) =>
+  `<div class="loc"><b>${code} <span class="hint">${name}</span></b><input type="file" accept=".wav,audio/wav" data-loc="${code}"></div>`).join("");
+
+fetch("/screening/red-flags").then((r) => r.json()).then((flags) => {
+  $("flags").innerHTML = Object.entries(flags).map(([code, f]) =>
+    `<label><input type="checkbox" value="${esc(code)}"> <span>${esc(f.name)}${f.major ? '<span class="major">katta</span>' : ""}</span></label>`).join("");
+});
+fetch("/health").then((r) => r.json()).then((h) => {
+  $("modelInfo").textContent = h.pcg_model
+    ? `AI modeli: ${h.pcg_model.name} v${h.pcg_model.version} (${h.pcg_model.dataset}, ${h.pcg_model.dataset_license}) · rejim: ${h.mode}`
+    : "AI modeli ulanmagan — faqat qoidalar ishlaydi.";
+});
+
+$("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  $("submit").disabled = true; $("status").textContent = "tahlil qilinmoqda…"; $("out").innerHTML = "";
+  try {
+    const ep = await fetch("/episodes", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ patient_ref: $("ref").value.trim(), actor: $("actor").value.trim() }) });
+    if (!ep.ok) throw new Error(await ep.text());
+    const { id } = await ep.json();
+
+    const fd = new FormData();
+    fd.append("actor", $("actor").value.trim());
+    if ($("rh").value || $("foot").value) { fd.append("right_hand_spo2", $("rh").value); fd.append("foot_spo2", $("foot").value); }
+    fd.append("attempt", $("attempt").value || "1");
+    if ($("resting").value) fd.append("resting_spo2", $("resting").value);
+    fd.append("red_flags", [...document.querySelectorAll("#flags input:checked")].map((c) => c.value).join(","));
+    for (const inp of document.querySelectorAll("#locs input[type=file]")) {
+      if (inp.files[0]) fd.append("recordings", inp.files[0], `${inp.dataset.loc}.wav`);
+    }
+    const r = await fetch(`/episodes/${id}/screening`, { method: "POST", body: fd });
+    const body = await r.json();
+    if (!r.ok) throw new Error(body.detail ? JSON.stringify(body.detail, null, 1) : r.statusText);
+    render(body, id);
+    $("status").textContent = "";
+  } catch (err) {
+    $("out").innerHTML = `<div class="card err">Xato: ${esc(err.message)}</div>`;
+    $("status").textContent = "";
+  } finally {
+    $("submit").disabled = false;
+  }
+});
+
+function render(b, id) {
+  const c = b.concordance;
+  const ai = c.ai;
+  let aiHtml = "<p class='hint'>Yurak tovushi yuklanmagan yoki model ulanmagan.</p>";
+  if (ai) {
+    const v = ai.value || {};
+    const rows = (v.recordings || []).map((r) =>
+      `<tr><td>${esc(r.location)}</td><td>${(r.p_murmur * 100).toFixed(0)}%</td><td>${(r.window_agreement * 100).toFixed(0)}%</td><td>${r.n_windows}</td></tr>`).join("");
+    aiHtml = `
+      <p>${ai.abstained ? "<span class='warn'>AI xulosa bermadi:</span> " : ""}${esc(ai.explanation.join("; "))}</p>
+      ${rows ? `<table><tr><th>Nuqta</th><th>Shovqin ehtimoli</th><th>Oynalar kelishuvi</th><th>Oynalar</th></tr>${rows}</table>` : ""}
+      ${(v.skipped || []).length ? `<p class="hint">O'tkazib yuborilgan: ${esc(v.skipped.join(" | "))}</p>` : ""}`;
+  }
+  $("out").innerHTML = `
+    <div class="card result ${esc(b.final_risk)}">
+      <p class="action">${esc(b.action)}</p>
+      <span class="pill">xavf: ${RISK_UZ[b.final_risk] || esc(b.final_risk)}</span>
+      <span class="pill">${CONC_UZ[c.status] || esc(c.status)}</span>
+      ${c.needs_discussion ? "<span class='pill warn'>muhokama talab qilinadi</span>" : ""}
+      <p>${esc(c.message)}</p>
+      ${b.warning ? `<p class="warn">${esc(b.warning)}</p>` : ""}
+    </div>
+    <div class="card"><h2>Qoidalar (deterministik)</h2><ul>${c.rule.explanation.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>
+    <div class="card"><h2>AI: yurak tovushi</h2>${aiHtml}</div>
+    <p class="disclaimer">${esc(b.disclaimer)} · Epizod: ${esc(id)}</p>`;
+  $("out").scrollIntoView({ behavior: "smooth" });
+}
+</script>
+</body>
+</html>

@@ -54,24 +54,46 @@ def read_patients(data_dir: Path) -> list[dict]:
             else:
                 m = IGNORE
             recs.append({"path": wav, "location": loc, "murmur": m})
+        extra = (r.get("Additional ID") or "").strip()
         patients.append({"id": pid, "murmur": murmur, "outcome": int(r["Outcome"].strip() == "Abnormal"),
-                         "recordings": recs})
+                         "additional_id": extra if extra not in ("", "nan") else None, "recordings": recs})
     return [p for p in patients if p["recordings"]]
 
 
-def split_patients(patients: list[dict], seed: int, frac=(0.70, 0.15, 0.15)) -> dict[str, list[dict]]:
-    """(Murmur, Outcome) bo'yicha stratifikatsiyalangan bemor darajasidagi bo'linish."""
-    rng = random.Random(seed)
+def subject_groups(patients: list[dict]) -> list[list[dict]]:
+    """Bir bola ikki kampaniyada ikki xil ID bilan bo'lishi mumkin ("Additional ID").
+    Ularni bitta guruhga birlashtiramiz — aks holda train/test leakage."""
+    parent = {p["id"]: p["id"] for p in patients}
+
+    def find(x: str) -> str:
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    for p in patients:
+        if p["additional_id"] in parent:
+            parent[find(p["id"])] = find(p["additional_id"])
     groups = defaultdict(list)
     for p in patients:
-        groups[(p["murmur"], p["outcome"])].append(p)
+        groups[find(p["id"])].append(p)
+    return list(groups.values())
+
+
+def split_patients(patients: list[dict], seed: int, frac=(0.70, 0.15, 0.15)) -> dict[str, list[dict]]:
+    """Bola (subject) darajasida, (Murmur, Outcome) bo'yicha stratifikatsiyalangan bo'linish."""
+    rng = random.Random(seed)
+    strata = defaultdict(list)
+    for g in subject_groups(patients):
+        # guruh yorlig'i: guruhda shovqin "Present" bo'lsa — Present, aks holda birinchi a'zoniki
+        murmur = "Present" if any(p["murmur"] == "Present" for p in g) else g[0]["murmur"]
+        strata[(murmur, max(p["outcome"] for p in g))].append(g)
     out = {"train": [], "val": [], "test": []}
-    for g in groups.values():
-        rng.shuffle(g)
-        n_tr, n_va = int(round(len(g) * frac[0])), int(round(len(g) * frac[1]))
-        out["train"] += g[:n_tr]
-        out["val"] += g[n_tr:n_tr + n_va]
-        out["test"] += g[n_tr + n_va:]
+    for gs in strata.values():
+        rng.shuffle(gs)
+        n_tr, n_va = int(round(len(gs) * frac[0])), int(round(len(gs) * frac[1]))
+        for name, part in (("train", gs[:n_tr]), ("val", gs[n_tr:n_tr + n_va]), ("test", gs[n_tr + n_va:])):
+            out[name] += [p for g in part for p in g]
     return out
 
 

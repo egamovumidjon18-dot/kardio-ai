@@ -35,6 +35,25 @@ SCREENING → WORKUP → HEART_TEAM → PROCEDURE → ICU → DISCHARGE → GUAR
   - ehtimollik noaniq zonada
 - **Triaj** (`triage.py`): Concordance → yo'nalish. CCHD FAIL har doim eng yuqori darajani beradi.
 
+### Joriy model natijasi (CirCor test, 132 bola, hech qachon ko'rilmagan)
+
+| Metrika | Qiymat (bola darajasida bootstrap 95% CI) |
+|---|---|
+| AUROC | 0.958 (0.909–0.990) |
+| Sezgirlik | 0.913 (0.778–1.000) — 23 ta shovqindan 21 tasi topildi |
+| Spetsifiklik | 0.923 (0.870–0.971) |
+| NPV | 0.980 |
+| Abstain | 3.8% |
+
+To'liq hisobot: [weights/pcg/eval_report_test.md](weights/pcg/eval_report_test.md).
+
+**Cheklovlar:**
+- Model shovqin bor-yo'qligini aniqlaydi, nuqson turini emas. Shovqinlarning bir qismi zararsiz (innocent) bo'ladi.
+- Ma'lumot bitta manbadan (Braziliya skrining kampaniyalari). Shuning uchun mahalliy stetoskopda validatsiya majburiy.
+- Chaqaloqlar bo'yicha kichik guruh juda kichik (n=18).
+
+Shifokor sahifasi: `http://localhost:8010/` (server ishga tushirilganda).
+
 ## 2-modul: operatsiya oldi xavf (`risk/`)
 
 - **EuroSCORE II** (`euroscore2.py`): Nashef 2012 formulasi, Cockcroft-Gault (kreatinin µmol/L da). Rasmiy kalkulyatordagi namunaviy holatga (89.32%) qarshi test qilingan.

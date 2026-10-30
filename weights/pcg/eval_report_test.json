@@ -1,0 +1,179 @@
+{
+  "split": "test",
+  "model": {
+    "name": "pcg_murmur_cnn",
+    "version": "2026.10.30",
+    "task": "pediatrik PCG: shovqin bor/yo'q + kardiolog natijasi normal/anormal",
+    "dataset": "CirCor DigiScope",
+    "weights": "pcg.onnx",
+    "thresholds": {
+      "murmur_low": 0.318729,
+      "murmur_high": 0.318729,
+      "window_agreement": 0.6
+    },
+    "metrics": {
+      "val": {
+        "n_patients": 133,
+        "murmur_auroc": 0.9913,
+        "abstain_rate": 0.0301,
+        "sensitivity_decided": 1.0,
+        "specificity_decided": 0.951,
+        "confusion_decided": {
+          "tp": 27,
+          "fn": 0,
+          "tn": 97,
+          "fp": 5
+        },
+        "missed_murmur_among_all_present": 0,
+        "outcome_auroc": 0.7185
+      },
+      "test": {
+        "n_patients": 132,
+        "murmur_auroc": 0.9577,
+        "abstain_rate": 0.0379,
+        "sensitivity_decided": 0.913,
+        "specificity_decided": 0.9231,
+        "confusion_decided": {
+          "tp": 21,
+          "fn": 2,
+          "tn": 96,
+          "fp": 8
+        },
+        "missed_murmur_among_all_present": 2,
+        "outcome_auroc": 0.7196
+      }
+    },
+    "dataset_license": "ODC-By 1.0",
+    "commercial_use": true
+  },
+  "overall": {
+    "n": 132,
+    "n_present": 27,
+    "auroc": 0.9580246913580247,
+    "abstain_rate": 0.037878787878787845,
+    "sensitivity": 0.9130434782608695,
+    "specificity": 0.9230769230769231,
+    "ppv": 0.7241379310344828,
+    "npv": 0.9795918367346939,
+    "tp": 21,
+    "fn": 2,
+    "tn": 96,
+    "fp": 8
+  },
+  "ci95": {
+    "auroc": [
+      0.9086783343512923,
+      0.990391355140187
+    ],
+    "abstain_rate": [
+      0.007575757575757569,
+      0.0714285714285714
+    ],
+    "sensitivity": [
+      0.7777777777777778,
+      1.0
+    ],
+    "specificity": [
+      0.8699166666666667,
+      0.970873786407767
+    ],
+    "ppv": [
+      0.5516810344827586,
+      0.8823529411764706
+    ],
+    "npv": [
+      0.9504826732673267,
+      1.0
+    ]
+  },
+  "subgroups": {
+    "Age=Adolescent": {
+      "n": 14,
+      "n_present": 4,
+      "auroc": 1.0,
+      "abstain_rate": 0.0,
+      "sensitivity": 1.0,
+      "specificity": 1.0,
+      "ppv": 1.0,
+      "npv": 1.0,
+      "tp": 4,
+      "fn": 0,
+      "tn": 10,
+      "fp": 0
+    },
+    "Age=Child": {
+      "n": 85,
+      "n_present": 17,
+      "auroc": 0.9403114186851211,
+      "abstain_rate": 0.04705882352941182,
+      "sensitivity": 0.9285714285714286,
+      "specificity": 0.9253731343283582,
+      "ppv": 0.7222222222222222,
+      "npv": 0.9841269841269841,
+      "tp": 13,
+      "fn": 1,
+      "tn": 62,
+      "fp": 5
+    },
+    "Age=Infant": {
+      "n": 18,
+      "n_present": 5,
+      "auroc": 0.9846153846153847,
+      "abstain_rate": 0.05555555555555558,
+      "sensitivity": 0.75,
+      "specificity": 1.0,
+      "ppv": 1.0,
+      "npv": 0.9285714285714286,
+      "tp": 3,
+      "fn": 1,
+      "tn": 13,
+      "fp": 0
+    },
+    "Age=nan": {
+      "n": 15,
+      "n_present": 1,
+      "auroc": 1.0,
+      "abstain_rate": 0.0,
+      "sensitivity": 1.0,
+      "specificity": 0.7857142857142857,
+      "ppv": 0.25,
+      "npv": 1.0,
+      "tp": 1,
+      "fn": 0,
+      "tn": 11,
+      "fp": 3
+    },
+    "Campaign=CC2014": {
+      "n": 59,
+      "n_present": 10,
+      "auroc": 1.0,
+      "abstain_rate": 0.03389830508474578,
+      "sensitivity": 1.0,
+      "specificity": 0.9591836734693877,
+      "ppv": 0.8,
+      "npv": 1.0,
+      "tp": 8,
+      "fn": 0,
+      "tn": 47,
+      "fp": 2
+    },
+    "Campaign=CC2015": {
+      "n": 73,
+      "n_present": 17,
+      "auroc": 0.9254201680672269,
+      "abstain_rate": 0.04109589041095896,
+      "sensitivity": 0.8666666666666667,
+      "specificity": 0.8909090909090909,
+      "ppv": 0.6842105263157895,
+      "npv": 0.9607843137254902,
+      "tp": 13,
+      "fn": 2,
+      "tn": 49,
+      "fp": 6
+    }
+  },
+  "abstain_reasons": {
+    "oynalar kelishmadi": 6,
+    "sifatli yozuv yo'q": 1
+  }
+}

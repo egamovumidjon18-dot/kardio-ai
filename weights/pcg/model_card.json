@@ -1,0 +1,53 @@
+{
+  "name": "pcg_murmur_cnn",
+  "version": "2026.10.30",
+  "task": "pediatrik PCG: shovqin bor/yo'q + kardiolog natijasi normal/anormal",
+  "dataset": "CirCor DigiScope",
+  "weights": "pcg.onnx",
+  "thresholds": {
+    "murmur_low": 0.318729,
+    "murmur_high": 0.318729,
+    "window_agreement": 0.6
+  },
+  "metrics": {
+    "val": {
+      "n_patients": 133,
+      "murmur_auroc": 0.9913,
+      "abstain_rate": 0.0301,
+      "sensitivity_decided": 1.0,
+      "specificity_decided": 0.951,
+      "confusion_decided": {
+        "tp": 27,
+        "fn": 0,
+        "tn": 97,
+        "fp": 5
+      },
+      "missed_murmur_among_all_present": 0,
+      "outcome_auroc": 0.7185
+    },
+    "test": {
+      "n_patients": 132,
+      "murmur_auroc": 0.9577,
+      "abstain_rate": 0.0379,
+      "sensitivity_decided": 0.913,
+      "specificity_decided": 0.9231,
+      "confusion_decided": {
+        "tp": 21,
+        "fn": 2,
+        "tn": 96,
+        "fp": 8
+      },
+      "missed_murmur_among_all_present": 2,
+      "outcome_auroc": 0.7196
+    }
+  },
+  "training": {
+    "seed": 42,
+    "epochs": 40,
+    "sr": 2000,
+    "win_s": 4.0,
+    "min_sens": 0.95,
+    "min_spec": 0.9,
+    "device": "cuda"
+  }
+}

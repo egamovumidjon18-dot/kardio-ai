@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 from api import guardian_routes, risk_routes
@@ -61,6 +62,10 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
         if ep is None:
             raise HTTPException(404, "epizod topilmadi")
         return ep
+
+    @app.get("/", response_class=HTMLResponse, include_in_schema=False)
+    def screening_page() -> str:
+        return (Path(__file__).parent / "static" / "screening.html").read_text(encoding="utf-8")
 
     risk_routes.register(app, store, _get, aki_model)
     guardian_routes.register(app, store, _get, notifier or LogNotifier())
