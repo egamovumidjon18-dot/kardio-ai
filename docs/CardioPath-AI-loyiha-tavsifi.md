@@ -1,6 +1,6 @@
 # CardioPath AI — loyiha tavsifi (dizayner AI uchun texnik va funksional hujjat)
 
-Holat: 2026-yil 30-oktabr. Manba: loyiha kodi (`main` branch, 154 ta test; `feat/ai-models` branch'i 2026-10-30 da `main` bilan birlashtirildi), muallifning o'z maqsad hujjati va o'qitish/baholash hisobotlari.
+Holat: 2026-yil 30-oktabr. Manba: loyiha kodi (`main` branch, 167 ta test; `feat/ai-models` branch'i 2026-10-30 da `main` bilan birlashtirildi), muallifning o'z maqsad hujjati va o'qitish/baholash hisobotlari.
 
 ## 0. Bu hujjatni qanday o'qish kerak
 
@@ -95,9 +95,11 @@ Dastur **modulli monolit**: bitta jarayon, bitta server. Mikroservislar yo'q.
 | `core/handoff.py` | Bosqichlar orasidagi yo'llanma paketi | MAVJUD |
 | `core/concordance.py` | Qoida va AI natijasini solishtirish (4 holat) | MAVJUD |
 | `core/registry.py` | Model kartasi, dataset litsenziyalari, `research`/`product` rejimi | MAVJUD |
-| `core/store.py` | Saqlash (SQLite) va audit jurnali | MAVJUD |
+| `core/store.py` | Saqlash (SQLite): epizodlar, audit jurnali, signallar jadvali | MAVJUD |
 | `screening/` | Yurak tovushi (PCG) qayta ishlash va modeli, pulsoksimetriya, klinik belgilar, triaj, oddiy tildagi xulosa, ma'lumot yig'ish | MAVJUD |
 | `risk/` | EuroSCORE II, Thakar (AKI), AKI ML interfeysi, Heart Team protokoli | MAVJUD (ekransiz) |
+| `integration/` | Modullarni bitta tizimga ulash: LVEF (shifokor vs AI EF) va AKI solishtiruvi, **epizod xulosasi (digest)** | MAVJUD (ekransiz) |
+| `api/alerts.py` | Signallar: saqlash, ro'yxat, qabul qilish | MAVJUD (ekransiz) |
 | `guardian/` | MNO tahlili, vazn/puls/belgi/yara qoidalari, eskalatsiya va Telegram | MAVJUD (ekransiz) |
 | `api/main.py`, `risk_routes.py`, `guardian_routes.py` | Endpointlar | MAVJUD |
 | `api/static/screening.html` | Yagona sahifa (skrining formasi va natija) | MAVJUD |
@@ -175,6 +177,10 @@ Server manzili: `http://localhost:8010` (faqat shu kompyuter).
 | `POST /episodes` | Yangi epizod: `patient_ref` (1–64 belgi), `population`, `actor` | MAVJUD |
 | `GET /episodes?stage=&q=&limit=&offset=` | Bemorlar ro'yxati, yangisi birinchi. `stage` bo'yicha filtr, `q` — bemor kodidan qidiruv (katta-kichik harf farqsiz), `limit` 1–200 (standart 50). Javob: `total`, `limit`, `offset`, `items[]`, har birida `id`, `patient_ref`, `population`, `stage`, `created_at`, `updated_at`, `n_evidence`, `n_handoffs`, `screening_risk` (oxirgi skrining xavfi yoki `null`). To'liq hujjatsiz | MAVJUD (ekransiz) |
 | `GET /episodes/{id}` | Epizodning to'liq yozuvi (bosqich, barcha Evidence, Handoff'lar) | MAVJUD |
+| `GET /episodes/{id}/digest` | **Epizod xulosasi**: har bir tur bo'yicha oxirgi natija, AI modullari holati (`not_run`/`ok`/`abstained`), solishtiruvlar, **majburiy muhokama punktlari** (har birida mashina kodi), takliflar, ochiq savollar (takrorsiz), ochiq signallar, keyingi mumkin bo'lgan bosqichlar | MAVJUD (ekransiz) |
+| `GET /alerts?status=&level=&episode_id=&limit=&offset=` | Signallar: `status` = `open` (standart) / `acknowledged` / `all`; `level` = `red` / `amber`. Ochiqlari avval qizil, keyin eng yangisi | MAVJUD (ekransiz) |
+| `POST /alerts/{id}/ack` | Signalni «qabul qildim» deb belgilash: `actor`, `note`. Ikkinchi marta 409, yo'q signal 404; audit jurnaliga yoziladi | MAVJUD (ekransiz) |
+| `GET /episodes/{id}/alerts` | Bitta bemorning signallari | MAVJUD (ekransiz) |
 | `GET /episodes/{id}/audit` | Audit jurnali | MAVJUD |
 | `POST /episodes/{id}/transition` | Bosqichdan bosqichga o'tkazish (Handoff) | MAVJUD (ekransiz) |
 | `GET /screening/red-flags?lang=` | 12 klinik belgi ro'yxati (uz/ru/en) | MAVJUD |
@@ -265,9 +271,9 @@ Maqsad: model yangi klinika va stetoskopga moslashishi uchun ExoKG bilan tasdiql
 
 ### 3.6. Operatsiya oldi xavf baholash (Heart Team) [FAQAT API]
 1. Epizod `heart_team` (yoki `icu`) bosqichida bo'lishi kerak.
-2. `POST /episodes/{id}/risk` ikkita blok qabul qiladi: EuroSCORE II kiritishlari va AKI (buyrak) kiritishlari (5.7-bo'limda to'liq ro'yxat).
+2. `POST /episodes/{id}/risk` ikkita blok qabul qiladi: EuroSCORE II kiritishlari va AKI (buyrak) kiritishlari (5.7-bo'limda to'liq ro'yxat). **Bitta bemor — bitta LVEF:** u AKI blokida majburiy; EuroSCORE blokida ham berilsa va farq qilsa, so'rov rad etiladi (422), berilmasa AKI blokidagi qiymat olinadi. Shifokor LVEF'i alohida natija sifatida saqlanadi va ExoKG videosidan AI hisoblagan EF bilan solishtiriladi.
 3. Server EuroSCORE II (o'lim %) va Thakar balli (qoida) hisoblaydi. AKI ML modeli ulangan bo'lsa, uning ehtimolini ham beradi. Hozir ML modeli yo'q.
-4. Qoida va ML solishtiriladi (qo'shni xavf toifasi farqi «mos» hisoblanadi, chunki ular turli natijani bashorat qiladi).
+4. Qoida va ML solishtiriladi (qo'shni xavf toifasi farqi «mos» hisoblanadi, chunki ular turli natijani bashorat qiladi). **Kiritilmagan maydonlar jim qolmaydi:** NYHA, shoshilinchlik, aralashuv og'irligi va o'pka bosimi berilmasa, EuroSCORE II eng past xavfli qiymatni oladi; endi javobda `assumed_defaults` ro'yxati qaytadi va protokolda muhokama punkti bo'ladi.
 5. `GET /episodes/{id}/heart-team-protocol` protokolni matn (Markdown) shaklida beradi.
 
 ### 3.7. 30 kunlik Guardian [FAQAT API]
@@ -416,7 +422,7 @@ Yozuv talabi: WAV, har bir nuqtada kamida 5 soniya (tavsiya 15–20), bola tinch
 ### 5.7. Operatsiya oldi xavf [FAQAT API]
 **EuroSCORE II kiritishlari:** yosh, jins, vazn, kreatinin (mkmol/L), dializda ekanligi, ekstrakardial arteriopatiya, yomon harakatchanlik, oldingi yurak operatsiyasi, surunkali o'pka kasalligi, faol endokardit, kritik holat, insulin talab qiluvchi diabet, NYHA (1–4), CCS4 stenokardiya, LVEF %, yaqinda infarkt (≤90 kun), o'pka arteriyasi sistolik bosimi, shoshilinchlik (rejali / shoshilinch / favqulodda / qutqaruv), aralashuv og'irligi, torakal aorta. Chiqish: o'lim %, xavf toifasi (<2% past, 2–5% o'rta, 5–10% yuqori, ≥10% juda yuqori; bu platforma konvensiyasi), hisoblash izi.
 **Thakar balli kiritishlari:** jins, yurak yetishmovchiligi, LVEF, IABP, COPD, insulin talab qiluvchi diabet, oldingi operatsiya, shoshilinchlik, operatsiya turi, kreatinin. Toifalar: 0–2 past, 3–5 o'rta, 6–8 yuqori, ≥9 juda yuqori.
-**Heart Team protokoli (matn):** sarlavha va bemor kodi; xavf jadvali (EuroSCORE II, Thakar, ML, har birining xavf toifasi va manbasi); AKI concordance satri; **«majburiy muhokama punktlari»** (zidlik, AI abstain, EuroSCORE hisoblanmagani); oldingi bosqichlardan ochiq savollar; qaror variantlari (jarrohlik / intervensiya / dori / qo'shimcha tekshiruv); kardiolog, kardioxirurg va anesteziolog imzo joylari; ogohlantirish. Hozir faqat o'zbek tilida.
+**Heart Team protokoli (matn):** sarlavha va bemor kodi; xavf jadvali (EuroSCORE II, Thakar, ML, har birining xavf toifasi va manbasi); AKI concordance satri; **«AI yordamchi topilmalari»** jadvali (EKG: bo'lmachalar fibrillyatsiyasi, angiografiya: stenoz nomzodlari, ExoKG videosidan EF; bajarilmagan yoki AI javob bermagan bo'lsa, shu aytiladi); **LVEF solishtiruvi** (shifokor vs AI); **«majburiy muhokama punktlari»** (zidlik, AI abstain, EuroSCORE hisoblanmagani, kiritilmay qolgan maydonlar, EKGda yuqori AFIB ehtimoli, angiografiyada nomzodlar);  oldingi bosqichlardan ochiq savollar; qaror variantlari (jarrohlik / intervensiya / dori / qo'shimcha tekshiruv); kardiolog, kardioxirurg va anesteziolog imzo joylari; ogohlantirish. Hozir faqat o'zbek tilida.
 **Mavjud emas:** RACHS-1 (bolalar) va STS (kattalar) [REJADA]; STS koeffitsiyentlari to'liq ochiq emas, tashqi qiymat sifatida qo'lda kiritish ko'zda tutilgan.
 
 ### 5.8. 30 kunlik monitoring [FAQAT API]
@@ -454,7 +460,7 @@ Quyidagi ro'yxat **mahsulot uchun zarur bo'lgan ekranlar**ning to'liq majmuasi. 
 | E10 | Qo'shimcha tekshiruv fayllarini yuklash (EKG, angiografiya, ExoKG video) | FAQAT API |
 | E11 | Bemor ilovasi: kundalik check-in | FAQAT API |
 | E12 | Bemor ilovasi: MNO qog'ozi | FAQAT API; rasm varianti ham FAQAT API |
-| E13 | Jarroh va navbatchi: signallar paneli | REJADA (hozir faqat Telegram matni) |
+| E13 | Jarroh va navbatchi: signallar paneli | FAQAT API |
 | E14 | Audit jurnali | FAQAT API |
 | E15 | Tizim va modellar holati | FAQAT API (`/health`, `/models`) |
 | E16 | Kirish va rollar | REJADA |
@@ -491,12 +497,14 @@ Til almashtirgich (UZ/RU/EN, butun interfeys, natija matni va klinik belgilar no
 ### E5. Bemorlar (epizodlar) ro'yxati [FAQAT API]
 - **Vazifa:** shifokor o'z bemorlarini topishi va davom ettirishi.
 - **Hozir mavjud (`GET /episodes`):** bemor kodi, bosqich, populyatsiya, yaratilgan va oxirgi yangilangan vaqt, Evidence va yo'llanmalar soni, oxirgi skrining xavfi. Bosqich bo'yicha filtr, bemor kodi bo'yicha qidiruv, sahifalash. 5 000 ta bemorda 0.07–0.3 soniya (o'lchangan).
-- **Hali yo'q (ekran uchun kerak bo'lishi mumkin):** oxirgi qizil/sariq Guardian signali, ochiq savollar belgisi, yosh, shifokor bo'yicha filtr. Foydalanuvchi kirishi bo'lmagani uchun «mening bemorlarim» ko'rinishi ham yo'q: ro'yxat hamma epizodni ko'rsatadi.
+- **Ochiq signal belgisi bor:** har bir qatorda `open_alerts` (soni) va `open_alert_level` (`red` / `amber` / `null`).
+- **Hali yo'q (ekran uchun kerak bo'lishi mumkin):** ochiq savollar belgisi, yosh, shifokor bo'yicha filtr. Foydalanuvchi kirishi bo'lmagani uchun «mening bemorlarim» ko'rinishi ham yo'q: ro'yxat hamma epizodni ko'rsatadi.
 - **Masshtab:** SQLite va JSON hujjat tufayli bir klinika uchun yetarli; bir necha ming bemordan oshsa, PostgreSQL'ga o'tish kerak.
 
 ### E6. Epizod tafsiloti va vaqt chizig'i [FAQAT API]
 - **Vazifa:** bemorning butun yo'lini ko'rish.
 - **Mavjud ma'lumot:** `GET /episodes/{id}` butun yozuvni beradi: bosqich, vaqt bo'yicha tartiblangan barcha Evidence (tur, qiymat, manba, xavf, abstain, izoh, provenance), barcha Handoff'lar.
+- **Tayyor xulosa:** `GET /episodes/{id}/digest` shu yozuvdan ekran uchun tayyorlangan qisqa ko'rinishni beradi (AI holati, zidliklar, muhokama punktlari va ularning kodlari, takliflar, ochiq savollar, ochiq signallar, keyingi bosqichlar). Ekran uni qayta hisoblamasdan ko'rsatishi mumkin. Muhokama punktlarining `reason` matni hozir o'zbekcha; `code` orqali istalgan tilga o'giriladi.
 
 ### E7. Bosqichdan bosqichga o'tkazish [FAQAT API]
 Joriy bosqichdan ruxsat etilgan keyingi bosqichga o'tish; kim (`author`), qaysi Evidence asosida, ochiq savollar, izoh. Ruxsat etilmagan o'tish rad etiladi va sababi qaytadi.
@@ -519,8 +527,9 @@ EKG (CSV, 12 tarmoq, namuna chastotasi, yosh), angiografiya kadri (rasm), ExoKG 
 ### E12. Bemor ilovasi: MNO qog'ozi [FAQAT API]
 Laboratoriya qog'ozi matni yoki rasmi, ko'rsatma turi (5 xil). Qiymat o'qilmasa, bemor qo'lda kiritishi yoki rasmni qayta yuborishi kerak.
 
-### E13. Jarroh va navbatchi signallari [REJADA]
-Hozir signal faqat Telegram xabari (yoki jurnalga yozuv). Panel, o'qildi/qabul qilindi belgisi, tarix **mavjud emas**.
+### E13. Jarroh va navbatchi signallari [FAQAT API]
+- **Mavjud:** Guardian eskalatsiyasi sariq yoki qizil bo'lsa (kundalik ko'rsatkich, MNO, uy nazoratidagi EKG), signal saqlanadi (bemor kodi, daraja, manba, sabablar, vaqt). Ro'yxat, filtr, «qabul qildim» belgisi (kim, qachon, izoh) va audit jurnali bor. Telegram xabari o'tib ketsa ham, ochiq signal ro'yxatda qoladi.
+- **Yo'q:** signallar paneli (ekran), real vaqtda yangilanish (hozir ro'yxat so'rab olinadi), signalni boshqa shifokorga yo'naltirish, signal «kimga» tegishli ekani (kirish tizimi yo'q, hamma signalni ko'radi), takroriy signallarni birlashtirish.
 
 ### E14. Audit jurnali [FAQAT API]
 Epizod bo'yicha amallar ro'yxati: kim, nima, qachon, qisqa tafsilot.
@@ -582,7 +591,7 @@ Asosiy foydalanuvchi: **tuman va viloyatdagi shifokor** (ExoKG imkoniyati chekla
 | Bildirishnoma | Telegram Bot API (`httpx`), muhit o'zgaruvchilari orqali | Kod bor, haqiqiy bot bilan **sinalmagan** |
 | Tashqi OCR | `rapidocr-onnxruntime` (ixtiyoriy) | MAVJUD |
 | Tilda xulosa | Deterministik shablonlar, LLM yo'q | MAVJUD |
-| Testlar | pytest: 154 | MAVJUD |
+| Testlar | pytest: 167 | MAVJUD |
 | Ishga tushirish | `Start.bat` (Windows) | MAVJUD |
 | Frontend freymvork (Next.js), PostgreSQL | Dastlabki rejada bor edi | **REJADA**, qurilmagan |
 

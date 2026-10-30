@@ -7,6 +7,7 @@ from typing import Callable, Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+from api.alerts import record_alert
 from core.episode import Episode, Stage
 from core.evidence import Evidence
 from core.store import EpisodeStore
@@ -55,8 +56,11 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
         for ev in items:
             ep.add(ev)
         esc = escalate(ep.patient_ref, _postop_day(ep, at), items, notifier)
-        store.save(ep, actor, action, {"alert": esc.alert.value, "notified": esc.notified})
-        return {"escalation": esc.to_dict(), "evidence": [e.to_dict() for e in items]}
+        alert = record_alert(store, ep, esc, action)
+        store.save(ep, actor, action, {"alert": esc.alert.value, "notified": esc.notified,
+                                       "alert_id": alert["id"] if alert else None})
+        return {"escalation": esc.to_dict(), "evidence": [e.to_dict() for e in items],
+                "alert_id": alert["id"] if alert else None}
 
     @app.post("/episodes/{eid}/guardian/inr")
     def inr(eid: str, body: InrIn) -> dict:

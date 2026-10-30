@@ -9,6 +9,7 @@ from typing import Callable, Optional
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 
 from adapters.echo_ef import EchoEFAdapter
+from api.alerts import record_alert
 from angio.model import AngioModel
 from api.ai_plain import plain_ai
 from api.guardian_routes import _postop_day
@@ -80,8 +81,11 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
         out = {"evidence": _save(ep, actor, "ecg.analyze", ev), "plain": plain_ai(ev, lang)}
         if ep.stage == Stage.GUARDIAN_30D:           # POAF / operatsiyadan keyingi nazorat
             esc = escalate(ep.patient_ref, _postop_day(ep, datetime.now(timezone.utc)), [ev], notifier)
-            store.save(ep, actor, "guardian.ecg", {"alert": esc.alert.value, "notified": esc.notified})
+            alert = record_alert(store, ep, esc, "guardian.ecg")
+            store.save(ep, actor, "guardian.ecg", {"alert": esc.alert.value, "notified": esc.notified,
+                                                   "alert_id": alert["id"] if alert else None})
             out["escalation"] = esc.to_dict()
+            out["alert_id"] = alert["id"] if alert else None
         return out
 
     @app.post("/episodes/{eid}/angio")
@@ -103,8 +107,11 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
         ev = assess_inr_image(await _read(file, MAX_UPLOAD), indication, ocr_engine)
         ep.add(ev)
         esc = escalate(ep.patient_ref, _postop_day(ep, datetime.now(timezone.utc)), [ev], notifier)
-        store.save(ep, actor, "guardian.inr_image", {"alert": esc.alert.value, "notified": esc.notified})
-        return {"escalation": esc.to_dict(), "evidence": [ev.to_dict()], "plain": plain_ai(ev, lang)}
+        alert = record_alert(store, ep, esc, "guardian.inr_image")
+        store.save(ep, actor, "guardian.inr_image", {"alert": esc.alert.value, "notified": esc.notified,
+                                                     "alert_id": alert["id"] if alert else None})
+        return {"escalation": esc.to_dict(), "evidence": [ev.to_dict()], "plain": plain_ai(ev, lang),
+                "alert_id": alert["id"] if alert else None}
 
     @app.post("/episodes/{eid}/echo-ef")
     async def echo_ef(eid: str, actor: str = Form(...), lang: str = Form("uz", pattern="^(uz|ru|en)$"), age_years: Optional[float] = Form(None, ge=0, le=120),

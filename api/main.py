@@ -18,6 +18,8 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 from api import ai_routes, guardian_routes, risk_routes
+from api import alerts as alerts_api
+from integration.digest import episode_digest
 from core.episode import Episode, Stage, TransitionError
 from core.evidence import DISCLAIMER
 from core.handoff import Handoff
@@ -87,6 +89,7 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
     notifier = notifier or LogNotifier()
     guardian_routes.register(app, store, _get, notifier)
     ai_routes.register(app, store, _get, notifier, ecg_model, angio_model, ef_model, ocr_engine)
+    alerts_api.register(app, store, _get)
 
     @app.get("/health")
     def health() -> dict:
@@ -112,6 +115,13 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
     @app.get("/episodes/{eid}")
     def get_episode(eid: str) -> dict:
         return episode_to_dict(_get(eid))
+
+    @app.get("/episodes/{eid}/digest")
+    def get_digest(eid: str) -> dict:
+        """Bir bemorning barcha qoida va AI natijalari, zidliklar, muhokama punktlari, ochiq signallar — bitta javobda."""
+        ep = _get(eid)
+        _, open_alerts = store.alerts(status="open", episode_id=eid, limit=200)
+        return episode_digest(ep, open_alerts)
 
     @app.get("/episodes/{eid}/audit")
     def get_audit(eid: str) -> list[dict]:

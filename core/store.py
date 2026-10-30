@@ -55,6 +55,22 @@ class EpisodeStore(ABC):
                   limit: int = 50, offset: int = 0) -> tuple[int, list[dict]]:
         """Epizodlar qisqa ro'yxati (yangisi birinchi): (jami soni, sahifa)."""
 
+    @abstractmethod
+    def add_alert(self, episode_id: str, patient_ref: str, level: str, source: str, reasons: list[str]) -> dict: ...
+
+    @abstractmethod
+    def alerts(self, status: str = "open", level: Optional[str] = None, episode_id: Optional[str] = None,
+               limit: int = 50, offset: int = 0) -> tuple[int, list[dict]]:
+        """Signallar: `status` open | acknowledged | all. Ochiqlari: avval qizil, keyin eng yangisi."""
+
+    @abstractmethod
+    def ack_alert(self, alert_id: int, actor: str, note: str = "") -> Optional[dict]:
+        """Signalni qabul qilingan deb belgilaydi. Yo'q signal → None; allaqachon qabul qilingan → AlertAckError."""
+
+
+class AlertAckError(ValueError):
+    pass
+
 
 def episode_summary(doc: dict, updated_at: Optional[str]) -> dict:
     """Ro'yxat qatori: to'liq hujjatsiz, faqat tanlash va ustuvorlik uchun kerakli ma'lumot."""
@@ -82,6 +98,12 @@ class SqliteEpisodeStore(EpisodeStore):
             self._conn.execute(
                 "CREATE TABLE IF NOT EXISTS audit_log (seq INTEGER PRIMARY KEY AUTOINCREMENT, "
                 "episode_id TEXT, actor TEXT, action TEXT, detail TEXT, at TEXT)")
+            self._conn.execute(
+                "CREATE TABLE IF NOT EXISTS alerts (id INTEGER PRIMARY KEY AUTOINCREMENT, episode_id TEXT NOT NULL, "
+                "patient_ref TEXT, level TEXT NOT NULL, source TEXT, reasons TEXT, created_at TEXT, "
+                "ack_by TEXT, ack_at TEXT, ack_note TEXT)")
+            self._conn.execute("CREATE INDEX IF NOT EXISTS alerts_open ON alerts (ack_at, level, created_at)")
+            self._conn.execute("CREATE INDEX IF NOT EXISTS alerts_episode ON alerts (episode_id)")
 
     def save(self, ep: Episode, actor: str, action: str, detail: Optional[dict] = None) -> None:
         now = utcnow()
@@ -125,4 +147,73 @@ class SqliteEpisodeStore(EpisodeStore):
             rows = self._conn.execute(
                 f"SELECT doc, updated_at FROM episodes {clause} ORDER BY updated_at DESC, id LIMIT ? OFFSET ?",
                 [*args, limit, offset]).fetchall()
-        return total, [episode_summary(json.loads(doc), upd) for doc, upd in rows]
+        items = [episode_summary(json.loads(doc), upd) for doc, upd in rows]
+        # ochiq (qabul qilinmagan) signallar: bir so'rovda hamma qatorlar uchun
+        by_ep: dict[str, dict[str, int]] = {}
+        if items:
+            marks = ",".join("?" * len(items))
+            with self._lock:
+                for ep_id, lvl, n in self._conn.execute(
+                        f"SELECT episode_id, level, count(*) FROM alerts WHERE ack_at IS NULL "
+                        f"AND episode_id IN ({marks}) GROUP BY episode_id, level", [i["id"] for i in items]):
+                    by_ep.setdefault(ep_id, {})[lvl] = n
+        for it in items:
+            lv = by_ep.get(it["id"], {})
+            it["open_alerts"] = sum(lv.values())
+            it["open_alert_level"] = "red" if lv.get("red") else ("amber" if lv.get("amber") else None)
+        return total, items
+
+    # ---- signallar
+    @staticmethod
+    def _alert_row(r) -> dict:
+        return {"id": r[0], "episode_id": r[1], "patient_ref": r[2], "level": r[3], "source": r[4],
+                "reasons": json.loads(r[5] or "[]"), "created_at": r[6], "acknowledged": r[8] is not None,
+                "ack_by": r[7], "ack_at": r[8], "ack_note": r[9]}
+
+    _ALERT_COLS = "id, episode_id, patient_ref, level, source, reasons, created_at, ack_by, ack_at, ack_note"
+
+    def add_alert(self, episode_id: str, patient_ref: str, level: str, source: str, reasons: list[str]) -> dict:
+        now = utcnow()
+        with self._lock, self._conn:
+            cur = self._conn.execute(
+                "INSERT INTO alerts (episode_id, patient_ref, level, source, reasons, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+                (episode_id, patient_ref, level, source, json.dumps(reasons, ensure_ascii=False), now))
+            row = self._conn.execute(f"SELECT {self._ALERT_COLS} FROM alerts WHERE id = ?", (cur.lastrowid,)).fetchone()
+        return self._alert_row(row)
+
+    def alerts(self, status: str = "open", level: Optional[str] = None, episode_id: Optional[str] = None,
+               limit: int = 50, offset: int = 0) -> tuple[int, list[dict]]:
+        where, args = [], []
+        if status == "open":
+            where.append("ack_at IS NULL")
+        elif status == "acknowledged":
+            where.append("ack_at IS NOT NULL")
+        if level:
+            where.append("level = ?"); args.append(level)
+        if episode_id:
+            where.append("episode_id = ?"); args.append(episode_id)
+        clause = ("WHERE " + " AND ".join(where)) if where else ""
+        with self._lock:
+            total = self._conn.execute(f"SELECT count(*) FROM alerts {clause}", args).fetchone()[0]
+            rows = self._conn.execute(
+                f"SELECT {self._ALERT_COLS} FROM alerts {clause} "
+                "ORDER BY (ack_at IS NOT NULL), CASE level WHEN 'red' THEN 0 ELSE 1 END, created_at DESC, id DESC "
+                "LIMIT ? OFFSET ?", [*args, limit, offset]).fetchall()
+        return total, [self._alert_row(r) for r in rows]
+
+    def ack_alert(self, alert_id: int, actor: str, note: str = "") -> Optional[dict]:
+        now = utcnow()
+        with self._lock, self._conn:
+            row = self._conn.execute(f"SELECT {self._ALERT_COLS} FROM alerts WHERE id = ?", (alert_id,)).fetchone()
+            if row is None:
+                return None
+            if row[8] is not None:
+                raise AlertAckError(f"signal allaqachon qabul qilingan ({row[7]}, {row[8]})")
+            self._conn.execute("UPDATE alerts SET ack_by = ?, ack_at = ?, ack_note = ? WHERE id = ?",
+                               (actor, now, note, alert_id))
+            self._conn.execute(
+                "INSERT INTO audit_log (episode_id, actor, action, detail, at) VALUES (?, ?, ?, ?, ?)",
+                (row[1], actor, "alert.ack", json.dumps({"alert_id": alert_id, "level": row[3], "note": note},
+                                                        ensure_ascii=False), now))
+            row = self._conn.execute(f"SELECT {self._ALERT_COLS} FROM alerts WHERE id = ?", (alert_id,)).fetchone()
+        return self._alert_row(row)
