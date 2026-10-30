@@ -213,7 +213,7 @@ def clinic(tmp_path_factory):
 class FakeEngine:
     """Soxta dvigatel: yaxshi nomzod (good=True) yoki yaxshilanmagan (good=False). train chaqirilganini hisoblaydi."""
 
-    def __init__(self, tmp_path, good=True, control=0.70):
+    def __init__(self, tmp_path, good=True, control=0.50):
         self.tmp, self.good, self.control_auroc, self.trained = tmp_path, good, control, 0
 
     def train(self, split):
@@ -264,7 +264,7 @@ def test_cycle_rejects_bad_dataset_before_training(tmp_path):
 
 def test_cycle_creates_candidate_but_never_promotes_automatically(clinic, tmp_path):
     store, rec = clinic
-    eng, mv = FakeEngine(tmp_path, good=True, control=0.70), ModelVersions(tmp_path / "m")
+    eng, mv = FakeEngine(tmp_path, good=True, control=0.50), ModelVersions(tmp_path / "m")
     res = run_cycle(store, rec, mv, tmp_path, eng, cfg={**CFG, "min_new": 10})
     assert res["status"] == "candidate_ready", [g for g in res["gates"]["items"] if not g["passed"]]
     assert mv.current() is None and eng.trained == 1              # TASDIQSIZ joriy bo'lmadi

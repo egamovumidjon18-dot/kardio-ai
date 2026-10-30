@@ -12,6 +12,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from core.episode import Episode, Stage
+from core.identity import effective_actor
 from core.evidence import Evidence, utcnow
 from core.handoff import Handoff
 
@@ -54,6 +55,12 @@ class EpisodeStore(ABC):
     def summaries(self, stage: Optional[str] = None, q: Optional[str] = None,
                   limit: int = 50, offset: int = 0) -> tuple[int, list[dict]]:
         """Epizodlar qisqa ro'yxati (yangisi birinchi): (jami soni, sahifa)."""
+
+    @abstractmethod
+    def log_event(self, actor: str, action: str, detail: Optional[dict] = None) -> None: ...
+
+    @abstractmethod
+    def security_events(self, limit: int = 100) -> list[dict]: ...
 
     @abstractmethod
     def add_alert(self, episode_id: str, patient_ref: str, level: str, source: str, reasons: list[str]) -> dict: ...
@@ -107,6 +114,7 @@ class SqliteEpisodeStore(EpisodeStore):
 
     def save(self, ep: Episode, actor: str, action: str, detail: Optional[dict] = None) -> None:
         now = utcnow()
+        actor = effective_actor(actor)
         with self._lock, self._conn:
             self._conn.execute(
                 "INSERT INTO episodes (id, doc, updated_at) VALUES (?, ?, ?) "
@@ -131,6 +139,22 @@ class SqliteEpisodeStore(EpisodeStore):
     def ids(self) -> list[str]:
         with self._lock:
             return [r[0] for r in self._conn.execute("SELECT id FROM episodes ORDER BY updated_at")]
+
+    # ---- tizim (xavfsizlik) hodisalari: kirish, chiqish, foydalanuvchilar boshqaruvi. Parol va tokenlar HECH QACHON yozilmaydi.
+    SYSTEM_ID = "system"
+
+    def log_event(self, actor: str, action: str, detail: Optional[dict] = None) -> None:
+        with self._lock, self._conn:
+            self._conn.execute(
+                "INSERT INTO audit_log (episode_id, actor, action, detail, at) VALUES (?, ?, ?, ?, ?)",
+                (self.SYSTEM_ID, actor, action, json.dumps(detail or {}, ensure_ascii=False), utcnow()))
+
+    def security_events(self, limit: int = 100) -> list[dict]:
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT actor, action, detail, at FROM audit_log WHERE episode_id = ? ORDER BY seq DESC LIMIT ?",
+                (self.SYSTEM_ID, limit)).fetchall()
+        return [{"actor": a, "action": b, "detail": json.loads(c), "at": d} for a, b, c, d in rows]
 
     def summaries(self, stage: Optional[str] = None, q: Optional[str] = None,
                   limit: int = 50, offset: int = 0) -> tuple[int, list[dict]]:
@@ -203,6 +227,7 @@ class SqliteEpisodeStore(EpisodeStore):
 
     def ack_alert(self, alert_id: int, actor: str, note: str = "") -> Optional[dict]:
         now = utcnow()
+        actor = effective_actor(actor)
         with self._lock, self._conn:
             row = self._conn.execute(f"SELECT {self._ALERT_COLS} FROM alerts WHERE id = ?", (alert_id,)).fetchone()
             if row is None:

@@ -17,7 +17,11 @@ from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
-from api import ai_routes, guardian_routes, learning_routes, risk_routes
+from fastapi import Depends
+
+from api import ai_routes, auth_routes, guardian_routes, learning_routes, risk_routes
+from core.auth import AuthService
+from core.identity import effective_actor
 from learning.versions import resolve_weights_dir
 from api import alerts as alerts_api
 from integration.digest import episode_digest
@@ -73,9 +77,14 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
                notifier: Optional[Notifier] = None, recordings_dir: Optional[Path] = None,
                ecg_model: Optional[ECGModel] = None, angio_model: Optional[AngioModel] = None,
                ef_model: Optional[EchoEFAdapter] = None, ocr_engine: Optional[Engine] = None,
-               models_dir: Optional[Path] = None, running_version: str = "baseline") -> FastAPI:
+               models_dir: Optional[Path] = None, running_version: str = "baseline",
+               auth: Optional[AuthService] = None) -> FastAPI:
+    # Kirish yoqilgan bo'lsa: har bir so'rov huquq jadvali bo'yicha tekshiriladi; API hujjatlari (/docs) ochiq qolmaydi.
     app = FastAPI(title="CardioPath AI", version="0.1.0",
-                  description="Kardiologiya va kardioxirurgiya yagona AI-CDSS platformasi. " + DISCLAIMER)
+                  description="Kardiologiya va kardioxirurgiya yagona AI-CDSS platformasi. " + DISCLAIMER,
+                  dependencies=[Depends(auth_routes.make_dependency(auth))] if auth else None,
+                  docs_url=None if auth else "/docs", redoc_url=None if auth else "/redoc",
+                  openapi_url=None if auth else "/openapi.json")
 
     def _get(eid: str) -> Episode:
         ep = store.get(eid)
@@ -92,12 +101,15 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
     guardian_routes.register(app, store, _get, notifier)
     ai_routes.register(app, store, _get, notifier, ecg_model, angio_model, ef_model, ocr_engine)
     alerts_api.register(app, store, _get)
+    auth_routes.register_status(app, auth is not None)
+    if auth is not None:
+        auth_routes.register(app, auth, store)
     if models_dir is not None:
         learning_routes.register(app, store, models_dir, recordings_dir, running_version)
 
     @app.get("/health")
     def health() -> dict:
-        return {"status": "ok", "mode": deploy_mode(), "pcg_version": running_version,
+        return {"status": "ok", "mode": deploy_mode(), "pcg_version": running_version, "auth": "on" if auth else "off",
                 "pcg_model": pcg.card.to_dict() if pcg else None,
                 "aki_model": aki_model.card.to_dict() if aki_model else None}
 
@@ -135,7 +147,7 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
     @app.post("/episodes/{eid}/transition")
     def transition(eid: str, body: TransitionIn) -> dict:
         ep = _get(eid)
-        handoff = Handoff(**body.model_dump())
+        handoff = Handoff(**{**body.model_dump(), "author": effective_actor(body.author)})   # kirish yoqilgan bo'lsa — haqiqiy foydalanuvchi
         try:
             ep.transition(handoff)
         except TransitionError as exc:
@@ -238,9 +250,22 @@ def _load_ef() -> Optional[EchoEFAdapter]:
         return None
 
 
+def _load_auth(db_path: str, store: EpisodeStore) -> Optional[AuthService]:
+    """CARDIOPATH_AUTH=on bo'lsa kirish yoqiladi. Administrator bo'lmasa, ishga tushmaydi (tizim qulflanib qolmasin)."""
+    if os.environ.get("CARDIOPATH_AUTH", "off").strip().lower() not in ("on", "1", "true", "yes"):
+        return None
+    auth = AuthService(db_path, log=store.log_event)
+    if not auth.has_admin():
+        raise SystemExit("CARDIOPATH_AUTH=on, lekin faol administrator yo'q. Avval yarating:\n"
+                         "  python -m core.auth_cli create-user --username <nom> --role admin")
+    return auth
+
+
 def default_app() -> FastAPI:
     """uvicorn api.main:default_app --factory --port 8010"""
-    store = SqliteEpisodeStore(os.environ.get("CARDIOPATH_DB", "cardiopath.db"))
+    db_path = os.environ.get("CARDIOPATH_DB", "cardiopath.db")
+    store = SqliteEpisodeStore(db_path)
+    auth = _load_auth(db_path, store)
     # PCG og'irliklari: aniq ko'rsatilgan (CARDIOPATH_WEIGHTS) > shifokor tasdiqlagan joriy versiya > bazaviy weights/pcg
     models_dir = Path(os.environ.get("CARDIOPATH_MODELS", "models/pcg"))
     weights_dir, running = resolve_weights_dir("weights/pcg", models_dir, os.environ.get("CARDIOPATH_WEIGHTS"))
@@ -251,4 +276,4 @@ def default_app() -> FastAPI:
                       Path(rec_dir) if rec_dir else None, models_dir=models_dir, running_version=running,
                       ecg_model=ECGModel.from_dir(os.environ.get("CARDIOPATH_ECG_WEIGHTS", "weights/ecg")),
                       angio_model=AngioModel.from_dir(os.environ.get("CARDIOPATH_ANGIO_WEIGHTS", "weights/angio")),
-                      ef_model=_load_ef())
+                      ef_model=_load_ef(), auth=auth)

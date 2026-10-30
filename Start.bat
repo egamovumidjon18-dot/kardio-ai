@@ -23,6 +23,8 @@ if not exist "%~dp0data" mkdir "%~dp0data"
 set "CARDIOPATH_DB=%~dp0data\cardiopath.db"
 set "CARDIOPATH_RECORDINGS=%~dp0data\recordings"
 if not defined CARDIOPATH_PORT set "CARDIOPATH_PORT=8010"
+rem Kirish (login) o'chiq. Yoqish: CARDIOPATH_AUTH=on (avval: python -m core.auth_cli create-user --role admin ...)
+if not defined CARDIOPATH_AUTH set "CARDIOPATH_AUTH=off"
 
 if not exist "%~dp0weights\pcg\model_card.json" (
   echo  Eslatma: AI modeli topilmadi, faqat klinik qoidalar ishlaydi.

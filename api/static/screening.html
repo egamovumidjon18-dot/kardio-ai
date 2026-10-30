@@ -77,7 +77,7 @@
   .tag.req { color: var(--red); border-color: var(--red); }
   .hint { font-size: 14px; color: var(--muted); margin: 2px 0 12px; }
   label.f { display: block; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
-  input[type=text], input[type=number], select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px;
+  input[type=text], input[type=number], input[type=password], select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px;
          background: var(--bg); color: var(--text); font: inherit; min-height: 46px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-top: 10px; }
   .age { display: flex; gap: 6px; } .age input { flex: 1; min-width: 0; } .age select { width: 92px; }
@@ -168,6 +168,22 @@
   .disclaimer { font-size: 13px; color: var(--muted); margin-top: 16px; }
   .ok { color: var(--green); font-weight: 600; }
 
+
+  .who { display: none; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .who.on { display: inline-flex; }
+  .who b { color: var(--text); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .who button { border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 8px; padding: 5px 10px; cursor: pointer; font: inherit; }
+  #loginOverlay { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: var(--bg); overflow: auto; }
+  #loginOverlay[hidden] { display: none; }
+  #loginOverlay .box { width: 100%; max-width: 380px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px 22px; box-shadow: 0 8px 30px rgba(0,0,0,.12); }
+  #loginOverlay h2 { margin: 0 0 4px; font-size: 22px; }
+  #loginOverlay p { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
+  #loginOverlay input { width: 100%; margin-bottom: 12px; }
+  #loginOverlay .lang { display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 8px; }
+  #loginOverlay .lang button { border: 1px solid var(--border); background: var(--bg2); color: var(--text); border-radius: 8px; padding: 4px 9px; cursor: pointer; font: inherit; font-size: 13px; }
+  #loginOverlay .lang button[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+  #loginErr { color: var(--red, #c62828); font-size: 14px; min-height: 20px; margin-bottom: 8px; }
+
   @media (max-width: 860px) { .cols { grid-template-columns: 1fr; } .hero h1 { font-size: 25px; } }
   @media (max-width: 520px) {
     main { padding: 10px 14px 56px; } .hero { padding: 16px 16px 14px; } .hero h1 { font-size: 22px; }
@@ -199,12 +215,14 @@
         <button type="button" data-lang="ru" aria-pressed="false">RU</button>
         <button type="button" data-lang="en" aria-pressed="false">EN</button>
       </div>
+      <span class="who" id="who"><b id="whoName"></b><button type="button" id="logout" data-i="signOut"></button></span>
       <button type="button" class="theme" id="theme" aria-label="Theme"></button>
     </div>
   </header>
 
   <!-- 1-ekran: forma -->
   <section id="viewForm">
+    <div class="info" id="permNote" hidden><span data-i="noPerm"></span></div>
     <div class="hero">
       <svg class="ecg" viewBox="0 0 520 90" aria-hidden="true">
         <path class="line" pathLength="1" d="M0 50H60L72 50 82 22 96 76 108 40 116 50H218"/>
@@ -295,9 +313,21 @@
   </section>
 </main>
 
+<div id="loginOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+  <form class="box" id="loginForm" autocomplete="on">
+    <div class="lang"><button type="button" data-lang="uz">UZ</button><button type="button" data-lang="ru">RU</button><button type="button" data-lang="en">EN</button></div>
+    <h2 id="loginTitle" data-i="loginTitle"></h2>
+    <p data-i="loginSub"></p>
+    <label class="f" for="lgUser" data-i="username"></label><input id="lgUser" type="text" autocomplete="username" maxlength="64" required>
+    <label class="f" for="lgPass" data-i="password"></label><input id="lgPass" type="password" autocomplete="current-password" maxlength="256" required>
+    <div id="loginErr" role="alert"></div>
+    <button type="submit" class="btn" id="lgGo" style="width:100%" data-i="signIn"></button>
+  </form>
+</div>
 <script>
 const I18N = {
   uz: {
+    loginTitle: "Tizimga kirish", loginSub: "Davom etish uchun hisobingiz bilan kiring.", username: "Foydalanuvchi nomi", password: "Parol", signIn: "Kirish", signOut: "Chiqish", loginBad: "Foydalanuvchi nomi yoki parol noto'g'ri.", loginLocked: "Juda ko'p urinish. Bir ozdan keyin qayta urining.", loginNet: "Serverga ulanib bo'lmadi.", sessionEnded: "Seans tugadi. Qaytadan kiring.", noPerm: "Sizning rolingiz skrining o'tkazishga ruxsat bermaydi. Boshqa bo'limlardan foydalaning yoki administratorga murojaat qiling.",
     brandSub: "Bolalar yurak skriningi uchun sun'iy intellekt", tagline: "Har bir bola sog'lom yurakka loyiq",
     heroSub: "Kislorod darajasi, klinik belgilar va yurak tovushi — bir joyda. Dastur tug'ma yurak nuqsoni xavfini baholab, nima qilish kerakligini aytadi.",
     chip1: "Tezkor skrining", chip2: "Tushunarli natija", chip3: "Qaror — shifokorda",
@@ -334,6 +364,7 @@ const I18N = {
     disclaimer: "Bu natija sun'iy intellekt va klinik qoidalar yordamchisi tomonidan tayyorlangan va YAKUNIY TASHXIS EMAS. Qaror faqat shifokor tomonidan qabul qilinadi. Tadqiqot rejimi.",
   },
   ru: {
+    loginTitle: "Вход в систему", loginSub: "Войдите в свою учётную запись, чтобы продолжить.", username: "Имя пользователя", password: "Пароль", signIn: "Войти", signOut: "Выйти", loginBad: "Неверное имя пользователя или пароль.", loginLocked: "Слишком много попыток. Повторите немного позже.", loginNet: "Не удалось подключиться к серверу.", sessionEnded: "Сеанс завершён. Войдите снова.", noPerm: "Ваша роль не позволяет проводить скрининг. Обратитесь к администратору.",
     brandSub: "ИИ для скрининга сердца у детей", tagline: "Каждый ребёнок достоин здорового сердца",
     heroSub: "Насыщение кислородом, клинические признаки и тоны сердца — в одном месте. Программа оценивает риск врождённого порока и подсказывает, что делать.",
     chip1: "Быстрый скрининг", chip2: "Понятный результат", chip3: "Решает врач",
@@ -370,6 +401,7 @@ const I18N = {
     disclaimer: "Результат подготовлен помощником на основе ИИ и клинических правил и НЕ ЯВЛЯЕТСЯ ОКОНЧАТЕЛЬНЫМ ДИАГНОЗОМ. Решение принимает только врач. Исследовательский режим.",
   },
   en: {
+    loginTitle: "Sign in", loginSub: "Sign in with your account to continue.", username: "Username", password: "Password", signIn: "Sign in", signOut: "Sign out", loginBad: "Wrong username or password.", loginLocked: "Too many attempts. Please try again in a moment.", loginNet: "Could not reach the server.", sessionEnded: "Your session ended. Please sign in again.", noPerm: "Your role is not allowed to run screening. Please contact an administrator.",
     brandSub: "AI for paediatric heart screening", tagline: "Every child deserves a healthy heart",
     heroSub: "Oxygen saturation, clinical signs and heart sounds in one place. The app estimates the risk of congenital heart disease and tells you what to do next.",
     chip1: "Quick screening", chip2: "Clear result", chip3: "Clinician decides",
@@ -496,14 +528,14 @@ function applyLang() {
   document.querySelectorAll("[data-i]").forEach((el) => { el.textContent = t(el.dataset.i); });
   document.querySelectorAll("[data-ph]").forEach((el) => { el.placeholder = t(el.dataset.ph); });
   document.querySelectorAll("[data-html]").forEach((el) => { el.innerHTML = t(el.dataset.html); });
-  document.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+  document.querySelectorAll("[data-lang]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
   $("submit").innerHTML = `<span class="wv" aria-hidden="true"><span></span><span></span><span></span><span></span></span> ${esc(t("analyze"))}`;
   LOCS.forEach(paintLoc);
   paintBanner();
   loadFlags();
   if (last) render();
 }
-document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => { lang = b.dataset.lang; store.set("lang", lang); applyLang(); }));
+document.querySelectorAll("[data-lang]").forEach((b) => b.addEventListener("click", () => { lang = b.dataset.lang; store.set("lang", lang); applyLang(); }));
 
 async function loadFlags() {
   const checked = new Set([...document.querySelectorAll("#flags input:checked")].map((c) => c.value));
@@ -616,6 +648,60 @@ function render() {
 }
 applyTheme();
 applyLang();
+/* ---- kirish (CARDIOPATH_AUTH=on bo'lsa) */
+let session = null;
+try { session = JSON.parse(sessionStorage.getItem("auth") || "null"); } catch (e) { session = null; }
+const rawFetch = window.fetch.bind(window);
+window.fetch = (url, opts = {}) => {
+  const authed = session && !String(url).startsWith("/auth/login");
+  if (authed) opts = { ...opts, headers: { ...(opts.headers || {}), Authorization: "Bearer " + session.token } };
+  return rawFetch(url, opts).then((r) => { if (r.status === 401 && authed) endSession(true); return r; });
+};
+function saveSession() { try { session ? sessionStorage.setItem("auth", JSON.stringify(session)) : sessionStorage.removeItem("auth"); } catch (e) { /* private mode */ } }
+function can(p) { return !session || session.permissions.includes(p); }
+function paintSession() {
+  $("who").classList.toggle("on", !!session);
+  if (session) {
+    $("whoName").textContent = `${session.user.display_name || session.user.username} · ${session.user.role}`;
+    $("actor").value = session.user.username; $("actor").readOnly = true;      // server baribir haqiqiy foydalanuvchini yozadi
+  } else { $("actor").readOnly = false; }
+  $("permNote").hidden = can("screening.run");
+  $("submit").disabled = !can("screening.run");
+  if (session) loadFlags();
+}
+function showLogin(msgKey) {
+  $("loginOverlay").hidden = false; $("lgPass").value = "";
+  $("loginErr").textContent = msgKey ? t(msgKey) : "";
+  setTimeout(() => $("lgUser").focus(), 0);
+}
+function endSession(expired) { session = null; saveSession(); paintSession(); showLogin(expired ? "sessionEnded" : null); }
+$("loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault(); $("loginErr").textContent = ""; $("lgGo").disabled = true;
+  try {
+    const r = await rawFetch("/auth/login", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: $("lgUser").value.trim(), password: $("lgPass").value }) });
+    if (r.ok) {
+      const b = await r.json();
+      session = { token: b.token, user: b.user, permissions: b.permissions }; saveSession();
+      $("loginOverlay").hidden = true; $("lgPass").value = ""; paintSession();
+    } else { $("loginErr").textContent = t(r.status === 429 ? "loginLocked" : "loginBad"); }
+  } catch (err) { $("loginErr").textContent = t("loginNet"); }
+  $("lgGo").disabled = false;
+});
+$("logout").addEventListener("click", async () => { try { await fetch("/auth/logout", { method: "POST" }); } catch (e) { /* baribir chiqamiz */ } endSession(false); });
+async function initAuth() {
+  try {
+    const st = await (await rawFetch("/auth/status")).json();
+    if (!st.enabled) { session = null; saveSession(); paintSession(); return; }
+    if (session) {
+      const r = await fetch("/auth/me");
+      if (r.ok) { const b = await r.json(); session.user = b.user; session.permissions = b.permissions; saveSession(); paintSession(); return; }
+      session = null; saveSession();
+    }
+    paintSession(); showLogin(null);
+  } catch (e) { /* server o'chiq — forma ochiq qoladi, yuborishda xabar chiqadi */ }
+}
+initAuth();
 </script>
 </body>
 </html>

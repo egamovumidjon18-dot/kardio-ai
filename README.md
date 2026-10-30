@@ -125,7 +125,7 @@ python -m learning.promote --rollback --approved-by "Ismingiz" --note "sabab"
 - **Ma'lumot darvozasi** (o'qitishdan oldin): yetarli bola, har sinfdan yetarli, yig'ish tartibi va qurilma tashxis bilan aralashib ketmagan. O'tmasa, o'qitish boshlanmaydi.
 - **Model darvozalari:** mahalliy testda ishonchli yaxshilanish, CirCor'da yomonlashmaslik, sezgirlik va «javob bermadi» ulushi yomonlashmasligi, aralashtirilgan belgilar bilan salbiy nazorat.
 - Holat: `GET /learning/status`. Tasdiqlangan versiya dastur qayta ishga tushirilgach yuklanadi.
-- Tasdiqlash ataylab veb-API'da yo'q (kirish tizimi hali yo'q). Batafsil: [docs/CardioPath-AI-loyiha-tavsifi.md](docs/CardioPath-AI-loyiha-tavsifi.md), 3.4.1-bo'lim.
+- Tasdiqlash ataylab veb-API'da yo'q: kirish tizimi endi bor, lekin tasdiqlash ekrani hali qurilmagan (hozir faqat `python -m learning.promote`). Batafsil: [docs/CardioPath-AI-loyiha-tavsifi.md](docs/CardioPath-AI-loyiha-tavsifi.md), 3.4.1-bo'lim.
 - Haqiqiy mahalliy bemor ma'lumotida hali sinalmagan: faqat mexanika tekshirilgan.
 
 ## 2-modul: operatsiya oldi xavf (`risk/`)
@@ -158,7 +158,29 @@ C:\Users\user\.venvs\cardiopath-ai\Scripts\python -m pytest -q
 C:\Users\user\.venvs\cardiopath-ai\Scripts\python -m uvicorn api.main:default_app --factory --port 8010
 ```
 
-API hujjatlari: http://localhost:8010/docs
+API hujjatlari: http://localhost:8010/docs (kirish yoqilganda `/docs` o'chiriladi).
+
+### Kirish va rollar (`CARDIOPATH_AUTH`)
+
+Standart: **o'chiq** (`CARDIOPATH_AUTH=off`) — mahalliy ishlash va testlar o'zgarmaydi. Yoqish:
+
+```bash
+C:\Users\user\.venvs\cardiopath-ai\Scripts\python -m core.auth_cli create-user --username admin1 --role admin
+set CARDIOPATH_AUTH=on
+```
+
+Standart parol yo'q; parol kamida 10 belgi (so'raladi, ekranda ko'rinmaydi). Administrator bo'lmasa, kirish yoqilgan server **ishga tushmaydi** (tizim qulflanib qolmasin).
+
+| Rol | Nima qila oladi |
+|---|---|
+| `admin` | Foydalanuvchilarni boshqarish, xavfsizlik jurnali (`/audit/security`), ko'rish. Klinik amal yo'q |
+| `clinician` | Epizod yaratish, skrining, ExoKG tashxisi, bosqichga o'tkazish, fayl yuklash |
+| `cardiologist` | + xavf baholash, Heart Team protokoli, epizod jurnali |
+| `surgeon` | + signalni tasdiqlash (`alerts.ack`) |
+| `icu` | Ko'rish, bosqichga o'tkazish, xavf baholash |
+| `patient` | Faqat **o'z** epizodiga uy-nazorat ma'lumotini yuboradi |
+
+Xavfsizlik: scrypt parol xeshi; token bazada faqat SHA-256 xeshi, 12 soat; 5 xato → 5 daqiqa bloklash (mavjud bo'lmagan nom uchun ham); oxirgi faol administratorni o'chirib bo'lmaydi; huquq jadvalida yo'q yo'l avtomatik **taqiqlanadi**; auditdagi `actor`, yo'llanma muallifi va signalni tasdiqlovchi — so'rovda yozilgan nom emas, **haqiqiy kirgan foydalanuvchi**. Boshqaruv: `python -m core.auth_cli list-users | disable | enable | set-role | reset-password`.
 
 ## Modelni o'qitish (CirCor, RTX 5060)
 
@@ -255,7 +277,7 @@ NeuroSon-AI (`uttai/heart`, EchoNet-Dynamic, R(2+1)D-18) ONNX og'irligi `Evidenc
 ## Keyingi qadamlar
 - PCG modelini haqiqiy CirCor ma'lumotida o'qitish (`research/train_pcg.py`)
 - CSA-AKI modeli: MIMIC-IV kogortasi + `weights/aki` (PhysioNet credentialing kerak)
-- Telegram Mini App (bemor) va Next.js shifokor paneli
+- Nomzod modelni tasdiqlash ekrani (kirish tizimi tayyor), Telegram Mini App (bemor) va Next.js shifokor paneli
 - MNO OCR'ni haqiqiy laboratoriya qog'ozlarida baholash; EKG/angio tashqi validatsiyasi
 - Postgres adapteri (`EpisodeStore` interfeysi orqali)
 

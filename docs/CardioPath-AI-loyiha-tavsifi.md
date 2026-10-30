@@ -1,6 +1,6 @@
 # CardioPath AI — loyiha tavsifi (dizayner AI uchun texnik va funksional hujjat)
 
-Holat: 2026-yil 30-oktabr. Manba: loyiha kodi (`main` branch, 207 ta test; `feat/ai-models` branch'i 2026-10-30 da `main` bilan birlashtirildi), muallifning o'z maqsad hujjati va o'qitish/baholash hisobotlari.
+Holat: 2026-yil 30-oktabr. Manba: loyiha kodi (`main` branch, 240 ta test; `feat/ai-models` branch'i 2026-10-30 da `main` bilan birlashtirildi), muallifning o'z maqsad hujjati va o'qitish/baholash hisobotlari.
 
 ## 0. Bu hujjatni qanday o'qish kerak
 
@@ -158,7 +158,8 @@ Boshqa o'tishlar server tomonidan rad etiladi (HTTP 409). Yo'llanmada ko'rsatilg
 Bosqichga bog'liq cheklovlar: skrining faqat `screening` bosqichida; xavf baholash faqat `heart_team` yoki `icu`; Guardian faqat `guardian_30d`; ExoKG tashxisi faqat `screening` yoki `workup`.
 
 ### 2.5. Foydalanuvchi rollari
-- **Kodda rollar va autentifikatsiya YO'Q [NOMA'LUM — amalga oshirilmagan].** Har bir amalda `actor` (yoki `author`) — shifokor tomonidan qo'lda yoziladigan oddiy matn. Parol, kirish, huquq nazorati yo'q.
+- **Kirish va rollar [MAVJUD, ixtiyoriy]:** `CARDIOPATH_AUTH=on` bo'lsa, har bir so'rov huquq jadvali bo'yicha tekshiriladi (E16). O'chiq bo'lsa (standart), `actor` (yoki `author`) — oldingidek qo'lda yoziladigan matn.
+- Kodlangan rollar: `admin`, `clinician`, `cardiologist`, `surgeon`, `icu`, `patient` (batafsil E16).
 - Muallif hujjatiga ko'ra mo'ljallangan **kontseptual rollar**:
   - **Tuman/birlamchi shifokor yoki pediatr**: skrining.
   - **Kardiolog**: ExoKG tahlili, Heart Team.
@@ -282,7 +283,7 @@ Maqsad: model yangi klinika va stetoskopga moslashishi uchun ExoKG bilan tasdiql
 7. Dastur qayta ishga tushirilgach, tasdiqlangan joriy versiyani yuklaydi (aniq `CARDIOPATH_WEIGHTS` ko'rsatilgan bo'lsa, o'sha ustun). `GET /learning/status` ishlayotgan va joriy versiya farq qilsa, `restart_needed: true` deydi.
 
 **Ataylab qilingan cheklovlar:**
-- Tasdiqlash **veb-API'da yo'q**: kirish tizimi (autentifikatsiya) yo'qligi sababli API orqali tasdiqlansa, istalgan odam modelni almashtira olardi. Kirish tizimi bo'lgach, tasdiqlash ekran orqali ham mumkin bo'ladi [REJADA].
+- Tasdiqlash **veb-API'da yo'q**: kirish tizimi (autentifikatsiya) yo'qligi sababli API orqali tasdiqlansa, istalgan odam modelni almashtira olardi. Kirish tizimi endi bor (E16), shuning uchun tasdiqlash ekrani qurilishi mumkin [REJADA]; hozircha tasdiqlash faqat buyruq satrida.
 - Qayta o'qitilgan model dataseti «CirCor + mahalliy ma'lumot» deb yoziladi va **mahsulot rejimida bloklanadi**, chunki mahalliy ma'lumotning tijorat huquqi tasdiqlanmagan (rozilik tadqiqot uchun).
 
 **Cheklovlar (halol):**
@@ -492,7 +493,7 @@ Quyidagi ro'yxat **mahsulot uchun zarur bo'lgan ekranlar**ning to'liq majmuasi. 
 | E13 | Jarroh va navbatchi: signallar paneli | FAQAT API |
 | E14 | Audit jurnali | FAQAT API |
 | E15 | Tizim va modellar holati | FAQAT API (`/health`, `/models`) |
-| E16 | Kirish va rollar | REJADA |
+| E16 | Kirish va rollar | MAVJUD (ixtiyoriy, standart o'chiq) |
 | E17 | Ma'lumot yig'ish va eksport boshqaruvi | FAQAT buyruq satri |
 | E18 | Validatsiya va tadqiqot hisobotlari | Faqat fayllar (Markdown/JSON) |
 | E19 | O'rganish holati va nomzod modelni tasdiqlash | FAQAT API (holat); tasdiqlash faqat buyruq satrida |
@@ -567,8 +568,14 @@ Epizod bo'yicha amallar ro'yxati: kim, nima, qachon, qisqa tafsilot.
 ### E15. Tizim va modellar holati [FAQAT API]
 `/health`: rejim, ishlayotgan PCG model versiyasi va ulangan modellar kartalari. `/models`: modullar, bloklanganlar va sabablari.
 
-### E16. Kirish va rollar [REJADA]
-Hozir yo'q. Muallif konsepsiyasida rollar bor (2.5), lekin amalga oshirilmagan.
+### E16. Kirish va rollar [MAVJUD, ixtiyoriy]
+- **Yoqish:** `CARDIOPATH_AUTH=on`. Standart `off` (mahalliy ishlash o'zgarmaydi). Yoqilganda faol administrator bo'lmasa, server ishga tushmaydi; birinchi administrator `python -m core.auth_cli create-user --username <nom> --role admin` bilan yaratiladi. Standart parol yo'q.
+- **Ekran:** sahifa `/auth/status` ni so'raydi; kirish yoqilgan bo'lsa, 3 tilda (uz/ru/en) kirish oynasi chiqadi. Token faqat `sessionStorage` da (brauzer yopilsa o'chadi). Ish joyidagi ism maydoni haqiqiy foydalanuvchi bilan to'ldiriladi; skrining huquqi bo'lmagan rolga tushuntirish chiqadi.
+- **Endpointlar:** `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `POST /auth/change-password`, `GET /auth/status` (ochiq), `GET/POST /users`, `POST /users/{nom}/disable|enable|role|password`, `GET /audit/security`. Ochiq yo'llar faqat: `/`, `/health`, `/auth/status`, `/auth/login`.
+- **Rollar va huquqlar:** `admin` (foydalanuvchilar, xavfsizlik jurnali, ko'rish; klinik amal yo'q), `clinician` (epizod, skrining, ExoKG tashxisi, bosqich, fayl yuklash), `cardiologist` (+ xavf baholash, Heart Team protokoli, epizod jurnali), `surgeon` (+ signalni tasdiqlash), `icu` (ko'rish, bosqich, xavf), `patient` (faqat O'Z epizodiga uy-nazorat ma'lumoti).
+- **Xavfsizlik qarorlari:** scrypt parol xeshi (kamida 10 belgi); token tasodifiy, bazada faqat SHA-256 xeshi, 12 soat; 5 xato → 5 daqiqa bloklash (mavjud bo'lmagan nom uchun ham, xato matni bir xil); oxirgi faol administratorni o'chirib/roldan mahrum qilib bo'lmaydi; foydalanuvchi o'chirilsa yoki roli o'zgarsa, amal darhol (har so'rovda bazadan o'qiladi); parol almashtirilsa boshqa seanslar bekor; huquq jadvalida YO'Q yo'l taqiqlanadi (test har bir yo'l jadvalda borligini tekshiradi); kirish yoqilganda `/docs`, `/redoc`, `/openapi.json` o'chiriladi.
+- **Audit:** `actor`, yo'llanma muallifi (`author`) va signalni tasdiqlovchi (`ack_by`) so'rovda yozilgan matn emas, kirgan foydalanuvchi bo'ladi. Kirish, chiqish, muvaffaqiyatsiz urinish va foydalanuvchilar boshqaruvi `audit_log` da (episode_id = `system`); parol va tokenlar yozilmaydi.
+- **Cheklov:** bitta server jarayoni uchun mo'ljallangan (urinishlar hisobi xotirada); HTTPS ni o'zi bermaydi (ochiq tarmoqqa chiqarishdan oldin teskari proksi + TLS kerak); ikki bosqichli tasdiq (2FA) yo'q; foydalanuvchilarni boshqarish ekrani yo'q (API va buyruq satri).
 
 ### E17. Ma'lumot yig'ish boshqaruvi [FAQAT buyruq satri]
 Eksport va moslashtirish buyruqlari (3.4). Foydalanuvchi ekrani yo'q.
@@ -627,12 +634,12 @@ Asosiy foydalanuvchi: **tuman va viloyatdagi shifokor** (ExoKG imkoniyati chekla
 | Bildirishnoma | Telegram Bot API (`httpx`), muhit o'zgaruvchilari orqali | Kod bor, haqiqiy bot bilan **sinalmagan** |
 | Tashqi OCR | `rapidocr-onnxruntime` (ixtiyoriy) | MAVJUD |
 | Tilda xulosa | Deterministik shablonlar, LLM yo'q | MAVJUD |
-| Testlar | pytest: 207 | MAVJUD |
+| Testlar | pytest: 240 | MAVJUD |
 | Ishga tushirish | `Start.bat` (Windows) | MAVJUD |
 | Frontend freymvork (Next.js), PostgreSQL | Dastlabki rejada bor edi | **REJADA**, qurilmagan |
 
 ### 8.2. Sozlash (muhit o'zgaruvchilari)
-`CARDIOPATH_DB` (baza fayli), `CARDIOPATH_WEIGHTS` (PCG og'irliklari papkasi), `CARDIOPATH_AKI_WEIGHTS`, `CARDIOPATH_MODE` (`research`/`product`), `CARDIOPATH_RECORDINGS` (rozilik bilan saqlanadigan yozuvlar), `CARDIOPATH_TG_TOKEN` va `CARDIOPATH_TG_CHAT` (Telegram), `CARDIOPATH_PORT` (`Start.bat`, standart 8010). Yana `CARDIOPATH_EF_WEIGHTS` (ExoKG EF og'irligi) va `CARDIOPATH_MODELS` (model versiyalari papkasi, standart `models/pcg`).
+`CARDIOPATH_DB` (baza fayli), `CARDIOPATH_WEIGHTS` (PCG og'irliklari papkasi), `CARDIOPATH_AKI_WEIGHTS`, `CARDIOPATH_MODE` (`research`/`product`), `CARDIOPATH_RECORDINGS` (rozilik bilan saqlanadigan yozuvlar), `CARDIOPATH_TG_TOKEN` va `CARDIOPATH_TG_CHAT` (Telegram), `CARDIOPATH_PORT` (`Start.bat`, standart 8010). Yana `CARDIOPATH_EF_WEIGHTS` (ExoKG EF og'irligi) va `CARDIOPATH_MODELS` (model versiyalari papkasi, standart `models/pcg`). Yana `CARDIOPATH_AUTH` (`on`/`off`, standart `off`: kirish va rollar).
 
 ### 8.3. Ma'lumot saqlash
 - Jadvallar: `episodes` (id, JSON hujjat, yangilangan vaqt), `audit_log` (faqat qo'shiladi).
@@ -641,7 +648,7 @@ Asosiy foydalanuvchi: **tuman va viloyatdagi shifokor** (ExoKG imkoniyati chekla
 
 ### 8.4. Mavjud cheklovlar (halol ro'yxat)
 **Xavfsizlik va infratuzilma**
-- Autentifikatsiya, rollar, huquq nazorati **yo'q**.
+- Kirish ixtiyoriy va standart **o'chiq**; HTTPS, 2FA, foydalanuvchilarni boshqarish ekrani yo'q (E16 cheklovlari).
 - HTTPS yo'q; server faqat `127.0.0.1` da tinglaydi (bir kompyuter, bir foydalanuvchi).
 - Baza shifrlanmagan, zaxira nusxa yo'q.
 - Fayl yuklash hajmi: yurak tovushi (skrining) endpointida cheklov yo'q; EKG, angiografiya va MNO rasmida 25 MB, ExoKG videoda 100 MB.
@@ -678,7 +685,7 @@ Quyidagilar muallifning maqsad hujjati va kelishilgan rejadan olingan. Hammasi *
 **O'rta muddat**
 4. Ekranlar: bemorlar ro'yxati, epizod tafsiloti va bosqichga o'tkazish, Heart Team kiritish va protokol, jarroh/navbatchi signallari paneli.
 5. Bemor ilovasi (Telegram Mini App yoki PWA): kundalik check-in, MNO qog'ozini rasmga olish, uchala tilda xabarlar.
-6. Foydalanuvchi kirishi va rollar; PostgreSQL ga o'tish (saqlash qatlami shuni ko'zda tutib interfeys orqali yozilgan). Kirish tizimi bo'lgach: nomzod modelni tasdiqlashni ekranga chiqarish, «soya rejimi» (nomzod joriy model bilan yonma-yon, natijasi ko'rsatilmay sinaladi), sikl rejalashtirgichi.
+6. PostgreSQL ga o'tish (saqlash qatlami shuni ko'zda tutib interfeys orqali yozilgan). Kirish tizimi tayyor: nomzod modelni tasdiqlashni ekranga chiqarish, «soya rejimi» (nomzod joriy model bilan yonma-yon, natijasi ko'rsatilmay sinaladi), sikl rejalashtirgichi.
 7. RACHS-1 (bolalar xavfi); STS ballini qo'lda kiritish; mexanik klapan bemorlari uchun Guardian qoidalarini kengaytirish.
 8. ExoKG: regional devor harakati (RWMA), klapan regurgitatsiyasi, pediatrik EF; ExoKG foundation modellarini mahalliy apparatda tashqi validatsiya qilish.
 9. Yara rasmi uchun CV modeli (Guardian orqali rozilik bilan yig'ilgan rasm va jarroh yorlig'i bilan).
