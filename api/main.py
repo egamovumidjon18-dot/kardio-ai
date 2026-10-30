@@ -114,6 +114,7 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
         foot_spo2: Optional[float] = Form(None),
         attempt: int = Form(1),
         age_hours: Optional[float] = Form(None),
+        age_days: Optional[float] = Form(None, ge=0, le=365 * 21),
         resting: Optional[float] = Form(None, alias="resting_spo2"),
         flags: str = Form("", alias="red_flags", description="vergul bilan: cyanosis,hepatomegaly"),
         recordings: list[UploadFile] = File(default=[]),
@@ -134,8 +135,10 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
         pcg_ev = None
         if recordings and pcg is not None:
             recs = [Recording(_location(f.filename), await f.read()) for f in recordings]
+            if age_days is None and age_hours is not None:
+                age_days = age_hours / 24
             try:
-                pcg_ev = pcg.analyze(recs)
+                pcg_ev = pcg.analyze(recs, age_days=age_days)
             except ValueError as exc:  # buzilgan WAV
                 raise HTTPException(422, f"audio faylni o'qib bo'lmadi: {exc}") from None
 

@@ -49,6 +49,14 @@ def test_full_screening_flow_with_pcg_and_handoff(client, wav_factory):
     assert kinds == ["screening.cchd", "screening.red_flags", "screening.rule", "screening.pcg", "screening.triage"]
 
 
+def test_newborn_audio_goes_to_rules_only(client, wav_factory):
+    eid = new_episode(client)
+    r = client.post(f"/episodes/{eid}/screening",
+                    data={"actor": "dr", "right_hand_spo2": "98", "foot_spo2": "98", "age_hours": "30"},
+                    files=[("recordings", ("MV.wav", wav_factory(), "audio/wav"))]).json()
+    assert r["concordance"]["status"] == "ai_abstained" and r["final_risk"] == "low"
+
+
 def test_cchd_fail_without_audio(client):
     eid = new_episode(client)
     r = client.post(f"/episodes/{eid}/screening",

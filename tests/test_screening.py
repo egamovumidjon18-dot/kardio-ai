@@ -105,6 +105,14 @@ def test_model_abstains_on_window_disagreement(wav_factory):
     assert e.abstained and "kelishmadi" in e.explanation[0]
 
 
+def test_model_abstains_for_neonates(wav_factory):
+    model = PCGModel(CARD, const_backend(0.9))
+    e = model.analyze([Recording("AV", wav_factory())], age_days=10)
+    assert e.abstained and "validatsiya qilinmagan" in e.explanation[0]
+    assert not model.analyze([Recording("AV", wav_factory())], age_days=40).abstained
+    assert not model.analyze([Recording("AV", wav_factory())]).abstained      # yosh noma'lum
+
+
 def test_model_abstains_without_quality_recordings(wav_factory):
     e = PCGModel(CARD, const_backend(0.9)).analyze([Recording("AV", wav_factory(seconds=2))])
     assert e.abstained and "sifatli yozuv yo'q" in e.explanation[0]

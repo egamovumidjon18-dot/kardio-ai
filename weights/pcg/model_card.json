@@ -7,7 +7,8 @@
   "thresholds": {
     "murmur_low": 0.318729,
     "murmur_high": 0.318729,
-    "window_agreement": 0.6
+    "window_agreement": 0.6,
+    "min_age_days": 29
   },
   "metrics": {
     "val": {
@@ -49,5 +50,15 @@
     "min_sens": 0.95,
     "min_spec": 0.9,
     "device": "cuda"
+  },
+  "external_validation": {
+    "dataset": "ZCHSound clean (Xitoy, 941 bola)",
+    "auroc_chd_vs_normal": 0.676,
+    "auroc_chd_no_pfo": 0.737,
+    "vsd_flag_rate": 0.854,
+    "asd_flag_rate": 0.467,
+    "normal_flag_rate": 0.313,
+    "note": "neonatlar (shovqinli to'plam) AUROC 0.568 -> min_age_days=29",
+    "report": "external_zchsound.md"
   }
 }

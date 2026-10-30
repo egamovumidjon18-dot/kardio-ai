@@ -47,6 +47,24 @@ SCREENING → WORKUP → HEART_TEAM → PROCEDURE → ICU → DISCHARGE → GUAR
 
 To'liq hisobot: [weights/pcg/eval_report_test.md](weights/pcg/eval_report_test.md).
 
+### Tashqi validatsiya: ZCHSound (Xitoy, haqiqiy TYN tashxislari, qayta o'qitishsiz)
+
+| | Toza (941 bola) | Shovqinli, faqat neonatlar (318) |
+|---|---|---|
+| AUROC, TYN vs normal | 0.676 (0.639–0.715) | 0.568 |
+| AUROC, PFO'siz | 0.737 (0.696–0.776) | 0.521 |
+| VSD topildi | 85% | 39% |
+| ASD topildi | 47% | 21% |
+| Sog'ga noto'g'ri "shovqin bor" | 31% | 18% |
+
+**Xulosa:**
+- Boshqa mamlakat va boshqa stetoskopda sifat sezilarli pasayadi (domain shift).
+- Model baland shovqinli nuqsonlarni (VSD, PDA) yaxshi topadi, yumshoq shovqinlilarni (ASD) va shovqinsizlarni (PFO) yomon topadi.
+- **Chaqaloqlarda (≤28 kun) ishlamaydi.** Shuning uchun `min_age_days=29`: undan kichiklarda AI javob bermaydi, faqat pulsoksimetriya va klinik qoidalar ishlaydi.
+- Klinikada ishlatishdan oldin **mahalliy ma'lumotda qayta kalibrlash yoki fine-tuning** majburiy.
+
+Hisobot: [weights/pcg/external_zchsound.md](weights/pcg/external_zchsound.md). Bu hisobot yosh chegarasi qo'shilishidan oldin olingan xom natijalarni ko'rsatadi.
+
 **Cheklovlar:**
 - Model shovqin bor-yo'qligini aniqlaydi, nuqson turini emas. Shovqinlarning bir qismi zararsiz (innocent) bo'ladi.
 - Ma'lumot bitta manbadan (Braziliya skrining kampaniyalari). Shuning uchun mahalliy stetoskopda validatsiya majburiy.

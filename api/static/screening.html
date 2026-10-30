@@ -69,7 +69,13 @@
       <div class="grid">
         <div><label for="ref">Psevdonim (F.I.Sh. emas)</label><input id="ref" type="text" required maxlength="64" placeholder="masalan, SAM-2026-001"></div>
         <div><label for="actor">Shifokor</label><input id="actor" type="text" required placeholder="dr.familiya"></div>
+        <div><label for="age">Yoshi</label>
+          <div style="display:flex;gap:6px"><input id="age" type="number" min="0" step="1" required style="flex:1">
+            <select id="ageUnit" style="border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font:inherit">
+              <option value="1">kun</option><option value="30.44">oy</option><option value="365.25" selected>yil</option>
+            </select></div></div>
       </div>
+      <p class="hint">AI (yurak tovushi) 1 oydan kichik chaqaloqlarda ishlatilmaydi — ularda pulsoksimetriya asosiy.</p>
     </div>
 
     <div class="card">
@@ -136,6 +142,7 @@ $("form").addEventListener("submit", async (e) => {
     fd.append("actor", $("actor").value.trim());
     if ($("rh").value || $("foot").value) { fd.append("right_hand_spo2", $("rh").value); fd.append("foot_spo2", $("foot").value); }
     fd.append("attempt", $("attempt").value || "1");
+    fd.append("age_days", String(Math.round(Number($("age").value) * Number($("ageUnit").value))));
     if ($("resting").value) fd.append("resting_spo2", $("resting").value);
     fd.append("red_flags", [...document.querySelectorAll("#flags input:checked")].map((c) => c.value).join(","));
     for (const inp of document.querySelectorAll("#locs input[type=file]")) {

@@ -59,6 +59,8 @@ class PCGModel:
         self.low = float(th.get("murmur_low", 0.3))         # ≤ low → shovqin yo'q
         self.high = float(th.get("murmur_high", 0.7))       # ≥ high → shovqin bor
         self.min_agreement = float(th.get("window_agreement", 0.6))
+        # CirCor'da neonatlar deyarli yo'q (6 ta); ZCHSound tashqi sinovida neonatlarda ishlamadi.
+        self.min_age_days = float(th.get("min_age_days", 29))
 
     @classmethod
     def from_dir(cls, weights_dir: str | Path) -> Optional["PCGModel"]:
@@ -74,8 +76,12 @@ class PCGModel:
                           reference=f"{self.card.task}; {self.card.dataset}",
                           dataset_license=self.card.dataset_license)
 
-    def analyze(self, recordings: list[Recording]) -> Evidence:
+    def analyze(self, recordings: list[Recording], age_days: Optional[float] = None) -> Evidence:
         prov = self._provenance()
+        if age_days is not None and age_days < self.min_age_days:
+            return Evidence.abstain("screening.pcg", Source.MODEL, prov,
+                                    f"yosh {age_days:.0f} kun: model {self.min_age_days:.0f} kundan kichiklarda "
+                                    "validatsiya qilinmagan — pulsoksimetriya va klinik ko'rik asosiy")
         per_rec, skipped = [], []
         for rec in recordings:
             raw, sr, clip = load_wav(rec.wav)
