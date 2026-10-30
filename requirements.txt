@@ -1,0 +1,9 @@
+fastapi>=0.115
+pydantic>=2.7
+python-multipart>=0.0.9
+uvicorn>=0.30
+numpy>=1.26
+onnxruntime>=1.18
+httpx>=0.27
+pytest>=8
+# o'qitish uchun (ixtiyoriy): torch>=2.7 (RTX 50xx: cu128 index)

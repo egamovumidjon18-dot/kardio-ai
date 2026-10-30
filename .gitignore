@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.db
+weights/**/*.onnx
+weights/**/split.json
+.pytest_cache/
