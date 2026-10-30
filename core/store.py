@@ -47,6 +47,9 @@ class EpisodeStore(ABC):
     @abstractmethod
     def audit(self, episode_id: str) -> list[dict]: ...
 
+    @abstractmethod
+    def ids(self) -> list[str]: ...
+
 
 class SqliteEpisodeStore(EpisodeStore):
     def __init__(self, path: str = "cardiopath.db") -> None:
@@ -81,3 +84,7 @@ class SqliteEpisodeStore(EpisodeStore):
                 "SELECT actor, action, detail, at FROM audit_log WHERE episode_id = ? ORDER BY seq",
                 (episode_id,)).fetchall()
         return [{"actor": a, "action": b, "detail": json.loads(c), "at": d} for a, b, c, d in rows]
+
+    def ids(self) -> list[str]:
+        with self._lock:
+            return [r[0] for r in self._conn.execute("SELECT id FROM episodes ORDER BY updated_at")]

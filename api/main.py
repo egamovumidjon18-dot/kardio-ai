@@ -3,7 +3,8 @@
 Ishga tushirish:  uvicorn api.main:default_app --factory --port 8010
 Muhit: CARDIOPATH_DB (sqlite fayl), CARDIOPATH_WEIGHTS (PCG og'irliklari papkasi),
        CARDIOPATH_AKI_WEIGHTS, CARDIOPATH_MODE=research|product,
-       CARDIOPATH_TG_TOKEN + CARDIOPATH_TG_CHAT (Guardian eskalatsiyasi)
+       CARDIOPATH_TG_TOKEN + CARDIOPATH_TG_CHAT (Guardian eskalatsiyasi),
+       CARDIOPATH_RECORDINGS (rozilik bilan saqlanadigan PCG yozuvlari papkasi)
 """
 from __future__ import annotations
 
@@ -23,6 +24,7 @@ from core.registry import deploy_mode
 from core.store import EpisodeStore, SqliteEpisodeStore, episode_to_dict
 from guardian.escalation import LogNotifier, Notifier, TelegramNotifier
 from risk.aki import AKIModel
+from screening.collection import ECHO_DIAGNOSES, echo_diagnosis, save_recordings
 from screening.model import LOCATIONS, PCGModel, Recording
 from screening.rules import RED_FLAGS, newborn_pulse_ox, red_flags, resting_spo2
 from screening.triage import triage
@@ -52,8 +54,14 @@ def _location(filename: str) -> str:
                              f"(kutilgan: {', '.join(LOCATIONS)})")
 
 
+class EchoIn(BaseModel):
+    actor: str
+    diagnosis: str = Field(description=", ".join(ECHO_DIAGNOSES))
+    notes: str = Field("", max_length=500)
+
+
 def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional[AKIModel] = None,
-               notifier: Optional[Notifier] = None) -> FastAPI:
+               notifier: Optional[Notifier] = None, recordings_dir: Optional[Path] = None) -> FastAPI:
     app = FastAPI(title="CardioPath AI", version="0.1.0",
                   description="Kardiologiya va kardioxirurgiya yagona AI-CDSS platformasi. " + DISCLAIMER)
 
@@ -117,6 +125,8 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
         age_days: Optional[float] = Form(None, ge=0, le=365 * 21),
         resting: Optional[float] = Form(None, alias="resting_spo2"),
         flags: str = Form("", alias="red_flags", description="vergul bilan: cyanosis,hepatomegaly"),
+        research_consent: bool = Form(False, description="ota-ona yozma roziligi — yozuvlar saqlanadi"),
+        device: str = Form("", max_length=80, description="stetoskop modeli"),
         recordings: list[UploadFile] = File(default=[]),
     ) -> dict:
         ep = _get(eid)
@@ -132,30 +142,50 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
             rule_items.append(resting_spo2(resting))
         rule_items.append(red_flags([c.strip() for c in flags.split(",") if c.strip()]))
 
+        raw = [(_location(f.filename), await f.read()) for f in recordings]
+        if age_days is None and age_hours is not None:
+            age_days = age_hours / 24
         pcg_ev = None
-        if recordings and pcg is not None:
-            recs = [Recording(_location(f.filename), await f.read()) for f in recordings]
-            if age_days is None and age_hours is not None:
-                age_days = age_hours / 24
+        if raw and pcg is not None:
             try:
-                pcg_ev = pcg.analyze(recs, age_days=age_days)
+                pcg_ev = pcg.analyze([Recording(loc, data) for loc, data in raw], age_days=age_days)
             except ValueError as exc:  # buzilgan WAV
                 raise HTTPException(422, f"audio faylni o'qib bo'lmadi: {exc}") from None
 
+        saved = None
+        if raw and research_consent:
+            if recordings_dir is None:
+                raise HTTPException(409, "yozuvlarni saqlash o'chirilgan (CARDIOPATH_RECORDINGS sozlanmagan)")
+            saved = save_recordings(recordings_dir, ep.id, raw, age_days, device)
+
         result = triage(rule_items, pcg_ev)
-        added = [*rule_items, result.rule, *([pcg_ev] if pcg_ev else []), result.summary]
+        added = [*rule_items, result.rule, *([pcg_ev] if pcg_ev else []), result.summary, *([saved] if saved else [])]
         for ev in added:
             ep.add(ev)
         store.save(ep, actor, "screening.triage",
                    {"final_risk": result.concordance.final_risk.value,
                     "concordance": result.concordance.status.value,
-                    "pcg_uploaded": len(recordings), "pcg_model": pcg is not None})
+                    "pcg_uploaded": len(recordings), "pcg_model": pcg is not None,
+                    "saved_for_research": saved is not None})
         out = result.to_dict()
         out["episode_id"] = ep.id
         out["evidence_ids"] = [e.id for e in added]
         if recordings and pcg is None:
             out["warning"] = "PCG modeli ulanmagan — audio tahlil qilinmadi, faqat qoidalar ishladi."
+        out["saved_for_research"] = saved is not None
         return out
+
+    @app.post("/episodes/{eid}/echo-diagnosis")
+    def echo_dx(eid: str, body: EchoIn) -> dict:
+        ep = _get(eid)
+        if ep.stage not in (Stage.SCREENING, Stage.WORKUP):
+            raise HTTPException(409, f"ExoKG tashxisi SCREENING/WORKUP bosqichida kiritiladi (hozir: {ep.stage.value})")
+        try:
+            ev = ep.add(echo_diagnosis(body.diagnosis, body.notes))
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+        store.save(ep, body.actor, "workup.echo_dx", {"diagnosis": ev.value})
+        return ev.to_dict()
 
     return app
 
@@ -165,4 +195,6 @@ def default_app() -> FastAPI:
     store = SqliteEpisodeStore(os.environ.get("CARDIOPATH_DB", "cardiopath.db"))
     pcg = PCGModel.from_dir(os.environ.get("CARDIOPATH_WEIGHTS", "weights/pcg"))
     aki = AKIModel.from_dir(os.environ.get("CARDIOPATH_AKI_WEIGHTS", "weights/aki"))
-    return create_app(store, pcg, aki, TelegramNotifier.from_env() or LogNotifier())
+    rec_dir = os.environ.get("CARDIOPATH_RECORDINGS")
+    return create_app(store, pcg, aki, TelegramNotifier.from_env() or LogNotifier(),
+                      Path(rec_dir) if rec_dir else None)

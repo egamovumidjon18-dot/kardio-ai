@@ -37,6 +37,7 @@ def read_subset(data_dir: Path, subset: str) -> list[dict]:
         path = data_dir / wav_dir / r["fileName"].strip()
         if path.exists():
             out.append({"id": r["fileName"].strip(), "dx": r["diagnosis"].strip().upper(),
+                        "subject": (r.get("subject") or r["fileName"]).strip(),   # mahalliy eksport: bola ID
                         "age_days": float(r["age(days)"]) if r["age(days)"].strip() else None, "path": path})
     return out
 

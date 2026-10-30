@@ -98,6 +98,12 @@
       <h2>4. Yurak tovushi yozuvlari (WAV)</h2>
       <p class="hint">Har bir auskultatsiya nuqtasida kamida 5 soniya (tavsiya 15–20 s). Hech bo'lmaganda bitta nuqta.</p>
       <div class="locs" id="locs"></div>
+      <div class="grid" style="margin-top:12px">
+        <div><label for="device">Stetoskop modeli</label><input id="device" type="text" maxlength="80" placeholder="masalan, Eko Core 500"></div>
+      </div>
+      <label class="flags" style="display:flex;gap:8px;margin-top:10px;color:var(--text)">
+        <input type="checkbox" id="consent"> <span>Ota-ona/vasiy <b>yozma roziligi</b> olingan — yozuvlar modelni mahalliy sharoitga moslashtirish uchun saqlansin (faqat psevdonim bilan)</span>
+      </label>
     </div>
 
     <div class="row">
@@ -145,6 +151,8 @@ $("form").addEventListener("submit", async (e) => {
     fd.append("age_days", String(Math.round(Number($("age").value) * Number($("ageUnit").value))));
     if ($("resting").value) fd.append("resting_spo2", $("resting").value);
     fd.append("red_flags", [...document.querySelectorAll("#flags input:checked")].map((c) => c.value).join(","));
+    fd.append("research_consent", $("consent").checked ? "true" : "false");
+    fd.append("device", $("device").value.trim());
     for (const inp of document.querySelectorAll("#locs input[type=file]")) {
       if (inp.files[0]) fd.append("recordings", inp.files[0], `${inp.dataset.loc}.wav`);
     }
@@ -185,7 +193,26 @@ function render(b, id) {
     </div>
     <div class="card"><h2>Qoidalar (deterministik)</h2><ul>${c.rule.explanation.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>
     <div class="card"><h2>AI: yurak tovushi</h2>${aiHtml}</div>
+    ${b.saved_for_research ? `
+    <div class="card"><h2>ExoKG tashxisi (keyinroq kiritiladi)</h2>
+      <p class="hint">Yozuvlar saqlandi. ExoKG natijasi kiritilgach, ular modelni moslashtirish uchun ishlatiladi.</p>
+      <div class="row">
+        <select id="echoDx" style="padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font:inherit">
+          ${["NORMAL","ASD","VSD","PDA","PFO","AVSD","TOF","COA","PS","AS","OTHER"].map((d) => `<option>${d}</option>`).join("")}
+        </select>
+        <input id="echoNotes" type="text" placeholder="izoh (ixtiyoriy)" style="flex:1;min-width:140px">
+        <button type="button" id="echoSave">Saqlash</button>
+        <span class="hint" id="echoStatus"></span>
+      </div>
+    </div>` : ""}
     <p class="disclaimer">${esc(b.disclaimer)} · Epizod: ${esc(id)}</p>`;
+  if (b.saved_for_research) {
+    $("echoSave").onclick = async () => {
+      const r = await fetch(`/episodes/${id}/echo-diagnosis`, { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actor: $("actor").value.trim(), diagnosis: $("echoDx").value, notes: $("echoNotes").value }) });
+      $("echoStatus").textContent = r.ok ? "saqlandi ✓" : "xato: " + (await r.text());
+    };
+  }
   $("out").scrollIntoView({ behavior: "smooth" });
 }
 </script>

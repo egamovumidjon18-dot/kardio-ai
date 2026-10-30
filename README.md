@@ -72,6 +72,24 @@ Hisobot: [weights/pcg/external_zchsound.md](weights/pcg/external_zchsound.md). B
 
 Shifokor sahifasi: `http://localhost:8010/` (server ishga tushirilganda).
 
+### Modelni o'z klinikangizga moslashtirish
+
+ZCHSound tajribasiga ko'ra ([docs/experiments/zchsound_adaptation.md](docs/experiments/zchsound_adaptation.md)), ~50–100 ta mahalliy, ExoKG bilan tasdiqlangan bola AUROC ni 0.75 dan ~0.97 ga ko'taradi.
+
+1. Serverni `CARDIOPATH_RECORDINGS=<papka>` bilan ishga tushiring.
+2. Sahifada "yozma roziligi olingan" belgisini qo'ying va stetoskop modelini yozing. Yozuvlar psevdonim bilan saqlanadi.
+3. ExoKG natijasini o'sha sahifada yoki `POST /episodes/{id}/echo-diagnosis` orqali kiriting.
+4. Eksport qilib, moslashtiring:
+```bash
+python -m research.export_local --db cardiopath.db --recordings <papka> --out <eksport>
+python -m research.adapt_zchsound --data-dir <eksport> --base <pcg.pt papkasi> --out docs/experiments/local
+```
+
+**Yig'ish qoidalari:**
+- TYN'li va sog' bolalar **bir xil stetoskop va xonada** yozilsin.
+- Yoshlari mos bo'lsin.
+- Test uchun keyinroq yig'ilgan alohida guruh qoldirilsin.
+
 ## 2-modul: operatsiya oldi xavf (`risk/`)
 
 - **EuroSCORE II** (`euroscore2.py`): Nashef 2012 formulasi, Cockcroft-Gault (kreatinin µmol/L da). Rasmiy kalkulyatordagi namunaviy holatga (89.32%) qarshi test qilingan.

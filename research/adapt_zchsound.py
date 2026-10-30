@@ -39,30 +39,47 @@ def load_items(data_dir: Path) -> list[dict]:
         win = windows(preprocess(raw, sr))
         if len(win):
             y = int(r["dx"] in POSITIVE)
-            items.append({"pid": r["id"], "dx": r["dx"], "murmur": y, "outcome": y,
+            items.append({"pid": r["id"], "subject": r["subject"], "dx": r["dx"], "murmur": y, "outcome": y,
                           "x": log_mel(win).astype(np.float16)})
     return items
 
 
-def stratified_split(items: list[dict], test_frac: float, seed: int) -> tuple[list[dict], list[dict]]:
+def by_subject(items: list[dict]) -> list[list[dict]]:
+    """Bitta bolaning barcha yozuvlari bitta guruh (ZCHSound'da 1 bola = 1 yozuv)."""
+    groups: dict[str, list[dict]] = {}
+    for it in items:
+        groups.setdefault(it["subject"], []).append(it)
+    return list(groups.values())
+
+
+def stratified_split(subjects: list[list[dict]], test_frac: float, seed: int) -> tuple[list, list]:
+    """Bola darajasida, tashxis bo'yicha stratifikatsiya."""
     rng = random.Random(seed)
     test, pool = [], []
-    for dx in sorted({it["dx"] for it in items}):
-        g = [it for it in items if it["dx"] == dx]
-        rng.shuffle(g)
-        k = int(round(len(g) * test_frac))
-        test += g[:k]
-        pool += g[k:]
+    for dx in sorted({g[0]["dx"] for g in subjects}):
+        gs = [g for g in subjects if g[0]["dx"] == dx]
+        rng.shuffle(gs)
+        k = int(round(len(gs) * test_frac))
+        test += gs[:k]
+        pool += gs[k:]
     return test, pool
 
 
+def flat(subjects: list[list[dict]]) -> list[dict]:
+    return [it for g in subjects for it in g]
+
+
 @torch.no_grad()
-def scores(model: nn.Module, items: list[dict], device) -> np.ndarray:
+def scores(model: nn.Module, subjects: list[list[dict]], device) -> np.ndarray:
+    """Bola bali = yozuvlar maksimumi (platformadagi kabi), yozuv = oynalar o'rtachasi."""
     model.eval()
     out = []
-    for it in items:
-        lm, _ = model(torch.from_numpy(it["x"].astype(np.float32)).to(device))
-        out.append(float(torch.softmax(lm, 1)[:, 1].mean()))
+    for g in subjects:
+        rec = []
+        for it in g:
+            lm, _ = model(torch.from_numpy(it["x"].astype(np.float32)).to(device))
+            rec.append(float(torch.softmax(lm, 1)[:, 1].mean()))
+        out.append(max(rec))
     return np.array(out)
 
 
@@ -106,10 +123,10 @@ def main() -> None:
     args = ap.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    items = load_items(args.data_dir)
-    test, pool = stratified_split(items, 0.4, args.seed)
-    y_test = np.array([it["murmur"] for it in test])
-    print(f"bolalar: {len(items)} (test {len(test)}, pool {len(pool)}); test TYN {int(y_test.sum())}")
+    subjects = by_subject(load_items(args.data_dir))
+    test, pool = stratified_split(subjects, 0.4, args.seed)
+    y_test = np.array([g[0]["murmur"] for g in test])
+    print(f"bolalar: {len(subjects)} (test {len(test)}, pool {len(pool)}); test TYN {int(y_test.sum())}")
 
     base = torch.load(args.base / "pcg.pt", map_location=device)
     model0 = PCGNet().to(device)
@@ -125,9 +142,9 @@ def main() -> None:
         for rep in range(reps):
             rng = random.Random(1000 * n_eff + rep)
             sample = rng.sample(pool, n_eff) if n_eff < len(pool) else list(pool)
-            if len({it["murmur"] for it in sample}) < 2:
+            if len({g[0]["murmur"] for g in sample}) < 2:
                 continue
-            m = finetune(base, sample, device, args.epochs, args.lr, seed=rep)
+            m = finetune(base, flat(sample), device, args.epochs, args.lr, seed=rep)
             s = scores(m, test, device)
             aucs.append(auroc(y_test, s)); sens.append(sens_at_spec(y_test, s))
         results.append({"n": n_eff, "auroc": aucs, "sens_at_spec80": sens})
