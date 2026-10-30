@@ -4,6 +4,22 @@ Kardiologiya va kardioxirurgiya uchun yagona AI + CDSS platformasi. Bemorning sk
 
 > **Muhim:** har bir natija yakuniy tashxis EMAS, shifokor uchun yordamchi. Tadqiqot rejimi (research use only).
 
+## Tez boshlash (shifokor uchun)
+
+**O'zbekcha:** `Start.bat` faylini ikki marta bosing. Brauzer o'zi ochiladi (oyna ochiq turishi kerak). Sahifa yuqorida tilni tanlash tugmalari bor: O'zbekcha, Русский, English. Ma'lumotlarni kiriting va «Tahlil qilish» ni bosing.
+**Русский:** дважды щёлкните `Start.bat` — браузер откроется сам (окно программы не закрывайте). Язык переключается кнопками вверху страницы.
+**English:** double-click `Start.bat`; the browser opens by itself (keep the console window open). Switch language with the buttons at the top.
+
+Birinchi marta ishga tushirishdan oldin Python muhitini bir marta o'rnating (`Start.bat` o'zi yo'l-yo'riq beradi).
+
+**Natijani qanday o'qish kerak:**
+- 🔴 **qizil** — shoshilinch; pastdagi «nima qilish kerak» qatorini bajaring;
+- 🟡 **sariq** — ExoKG yoki qayta o'lchash tavsiya etiladi;
+- 🟢 **yashil** — xavf belgilari aniqlanmadi;
+- ⚪ **kulrang** — ma'lumot yetarli emas yoki AI javob bermadi (sababi va nima qilish kerakligi yoziladi).
+
+AI "bilmayman" desa, bu xato emas: yozuv sifatsiz yoki natija noaniq bo'lgan, shifokor o'zi baholaydi.
+
 ## Arxitektura
 
 ```

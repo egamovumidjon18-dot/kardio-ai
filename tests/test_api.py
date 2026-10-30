@@ -57,6 +57,25 @@ def test_newborn_audio_goes_to_rules_only(client, wav_factory):
     assert r["concordance"]["status"] == "ai_abstained" and r["final_risk"] == "low"
 
 
+def test_plain_report_in_three_languages(client, wav_factory):
+    eid = new_episode(client)
+    r = client.post(f"/episodes/{eid}/screening", data={"actor": "dr", "lang": "ru", "right_hand_spo2": "85", "foot_spo2": "95"})
+    body = r.json()
+    assert body["plain"]["lang"] == "ru" and body["plain"]["level"] == "red"
+    assert "критический" in body["plain"]["headline"]
+    assert set(body["plain_i18n"]) == {"uz", "ru", "en"}
+    assert body["plain_i18n"]["en"]["headline"] == "Suspected critical congenital heart disease"
+    assert client.post(f"/episodes/{eid}/screening", data={"actor": "dr", "lang": "de"}).status_code in (422, 409)
+    flags = client.get("/screening/red-flags", params={"lang": "en"}).json()
+    assert flags["cyanosis"] == {"name": "central cyanosis", "major": True}
+    assert client.get("/screening/red-flags", params={"lang": "xx"}).json()["cyanosis"]["name"] == "markaziy sianoz"
+
+
+def test_page_is_served_with_language_switcher(client):
+    html = client.get("/").text
+    assert 'data-lang="uz"' in html and 'data-lang="ru"' in html and 'data-lang="en"' in html
+
+
 def test_cchd_fail_without_audio(client):
     eid = new_episode(client)
     r = client.post(f"/episodes/{eid}/screening",
