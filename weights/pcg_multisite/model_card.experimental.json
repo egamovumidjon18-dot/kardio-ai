@@ -1,0 +1,81 @@
+{
+  "name": "pcg_murmur_cnn_multisite",
+  "version": "2026.10.30",
+  "task": "pediatrik PCG: shovqin / yurak nuqsoni (ExoKG kerak) — ko'p manbali",
+  "dataset": "CirCor DigiScope + ZCHSound",
+  "weights": "pcg.onnx",
+  "thresholds": {
+    "murmur_low": 0.072119,
+    "murmur_high": 0.163373,
+    "window_agreement": 0.6,
+    "min_age_days": 29
+  },
+  "metrics": {
+    "circor_test": {
+      "n": 132,
+      "n_pos": 27,
+      "auroc": 0.9368606701940035,
+      "abstain_rate": 0.20454545454545459,
+      "tp": 20,
+      "fn": 1,
+      "tn": 77,
+      "fp": 7,
+      "sensitivity": 0.9523809523809523,
+      "specificity": 0.9166666666666666,
+      "ci95": {
+        "auroc": [
+          0.8678336323318506,
+          0.9822811264822134
+        ],
+        "sensitivity": [
+          0.8421052631578947,
+          1.0
+        ],
+        "specificity": [
+          0.8494586831639417,
+          0.967391304347826
+        ]
+      }
+    },
+    "zch_test": {
+      "n": 197,
+      "n_pos": 75,
+      "auroc": 0.9707103825136612,
+      "abstain_rate": 0.040609137055837574,
+      "tp": 65,
+      "fn": 7,
+      "tn": 108,
+      "fp": 9,
+      "sensitivity": 0.9027777777777778,
+      "specificity": 0.9230769230769231,
+      "ci95": {
+        "auroc": [
+          0.9491249580077936,
+          0.9875467230856575
+        ],
+        "sensitivity": [
+          0.8289473684210527,
+          0.9649420160570918
+        ],
+        "specificity": [
+          0.872,
+          0.9669811934665191
+        ]
+      }
+    },
+    "verdict": {
+      "A_circor_not_worse": true,
+      "B1_zch_gain_ge_0.10": true,
+      "B2_beyond_age_ge_0.05": true,
+      "accepted": true
+    }
+  },
+  "training": {
+    "seed": 42,
+    "epochs": 40,
+    "sr": 2000,
+    "win_s": 4.0,
+    "site_balanced_loss": true,
+    "device": "cuda"
+  }
+}

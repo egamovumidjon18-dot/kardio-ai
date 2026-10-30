@@ -1,6 +1,6 @@
 # CardioPath AI — loyiha tavsifi (dizayner AI uchun texnik va funksional hujjat)
 
-Holat: 2026-yil 30-oktabr. Manba: loyiha kodi (`main` branch, 167 ta test; `feat/ai-models` branch'i 2026-10-30 da `main` bilan birlashtirildi), muallifning o'z maqsad hujjati va o'qitish/baholash hisobotlari.
+Holat: 2026-yil 30-oktabr. Manba: loyiha kodi (`main` branch, 179 ta test; `feat/ai-models` branch'i 2026-10-30 da `main` bilan birlashtirildi), muallifning o'z maqsad hujjati va o'qitish/baholash hisobotlari.
 
 ## 0. Bu hujjatni qanday o'qish kerak
 
@@ -103,7 +103,7 @@ Dastur **modulli monolit**: bitta jarayon, bitta server. Mikroservislar yo'q.
 | `guardian/` | MNO tahlili, vazn/puls/belgi/yara qoidalari, eskalatsiya va Telegram | MAVJUD (ekransiz) |
 | `api/main.py`, `risk_routes.py`, `guardian_routes.py` | Endpointlar | MAVJUD |
 | `api/static/screening.html` | Yagona sahifa (skrining formasi va natija) | MAVJUD |
-| `research/` | O'qitish, baholash, tashqi validatsiya, moslashtirish tajribasi, mahalliy ma'lumot eksporti | MAVJUD |
+| `research/` | O'qitish, baholash, tashqi validatsiya, moslashtirish va ko'p manbali tajribalar, yozuv-blok izini tekshiruvchi nazorat (`control_zch_batch.py`), mahalliy ma'lumot eksporti (tartib/qurilma aralashuvi ogohlantirishi bilan) | MAVJUD |
 | `Start.bat` | Ikki marta bosib ishga tushirish (Windows) | MAVJUD |
 | `ecg/`, `angio/`, `adapters/echo_ef.py`, `guardian/ocr.py`, `guardian/wound_cv.py`, `api/ai_routes.py`, `api/ai_plain.py` | Qo'shimcha AI modullari (EKG, angiografiya, MNO rasmi, ExoKG EF) | MAVJUD (ekransiz) |
 
@@ -334,10 +334,12 @@ Maqsad: model yangi klinika va stetoskopga moslashishi uchun ExoKG bilan tasdiql
 | **Ichki test:** CirCor (Braziliya), 132 bola, model ko'rmagan | AUROC 0.958 (95% CI 0.909–0.990); sezgirlik 0.913 (0.778–1.000); spetsifiklik 0.923 (0.870–0.971); NPV 0.980; PPV 0.724; abstain 3.8%. Shovqinli 23 bolaning 21 tasi topildi, sog' 104 tadan 96 tasi to'g'ri. Test to'plami kichik, ishonch oralig'i keng. |
 | **Tashqi sinov:** ZCHSound (Xitoy, 941 toza yozuv, qayta o'qitishsiz; yosh chegarasi qo'yilishidan oldingi xom natija) | AUROC **0.676** (0.639–0.715); PFO'siz 0.737. VSD ning 85% topildi, ASD ning 47%; sog' bolalarning 31% ga noto'g'ri «shovqin bor». |
 | **Tashqi sinov, chaqaloqlar (≤28 kun)** | AUROC 0.568. Shu sabab 29 kunlik yosh chegarasi qo'yildi. |
-| **Moslashtirish tajribasi** (ZCHSound'ni «yangi klinika» deb olib, 315 bolalik qat'iy testda) | Moslashtirishsiz AUROC 0.748; 50 bola bilan 0.968; 100 bilan 0.968; 200 bilan 0.976; 474 bilan 0.982. |
-| **Yashirin omil tekshiruvi** | ZCHSound'da nuqsonli bolalar sog'lardan yoshroq: faqat yoshning o'zi AUROC 0.747 beradi. Moslashtirilgan model yosh guruhlari ichida ham 0.966–0.986, ya'ni yoshni emas, tovushni o'rganadi. Qurilma/xona farqi bu ma'lumotdan tekshirilmagan. |
+| **Moslashtirish tajribasi** (ZCHSound'ni «yangi klinika» deb olib, 315 bolalik testda) — **BEKOR QILINGAN** | Moslashtirishsiz AUROC 0.748; 50 bola bilan 0.968; 200 bilan 0.976. Bu raqamlarga ishonib bo'lmaydi: ZCHSound yozuvlari tashxis bo'yicha ketma-ket yig'ilgan (pastga qarang). |
+| **Yashirin omil tekshiruvi (yosh)** | ZCHSound'da nuqsonli bolalar sog'lardan yoshroq: faqat yoshning o'zi AUROC 0.75 beradi. «Yosh guruhlari ichida ham yuqori, demak tovushni o'rganadi» degan avvalgi xulosa **bekor qilindi** (pastdagi topilma sababli). |
+| **Yozuv-blok izi (topilma)** | ZCHSound fayllari tashxis bo'yicha ketma-ket: normal 0001–0533, ASD 0534–0652, PDA 0653–0684, PFO 0685–0754, VSD 0755–0941; fayl raqami bilan tashxis AUROC 1.0. Salbiy nazorat: faqat sog' bolalar ichida model «erta vs kech yozilgan»ni AUROC ≈0.67 bilan ajratdi (yosh bilan 0.55): yozuvlarda sharoit izi bor. |
+| **Ko'p manbali model (CirCor + ZCHSound)** — **RAD ETILDI** | Oldindan belgilangan mezon bo'yicha «qabul» bo'lgan edi (ZCHSound testida AUROC 0.97), lekin yuqoridagi topilma mezonni bekor qildi. Qo'shimcha zarar: CirCor testida AUROC 0.960 → 0.937 va abstain 10% → 21%. Mahsulot modeli CirCor'da o'qitilgani bo'lib qoladi. Hisobot: `weights/pcg_multisite/report.md`. |
 
-**Cheklovlar:** model faqat Braziliya skrining kampaniyasi yozuvlarida o'qitilgan; boshqa mamlakat va stetoskopda sifati sezilarli pasayadi; **mahalliy klinik validatsiya o'tkazilmagan**; moslashtirish tajribasi haqiqiy mahalliy bemorlarda emas, sun'iy «yangi klinika» (Xitoy ma'lumoti)da bajarilgan.
+**Cheklovlar:** model faqat Braziliya skrining kampaniyasi yozuvlarida o'qitilgan; boshqa mamlakat va stetoskopda sifati sezilarli pasayadi (qisman yozuv sharoiti farqidan bo'lishi mumkin); **mahalliy klinik validatsiya o'tkazilmagan**; mahalliy moslashtirish uchun kerakli bola soni **noma'lum**.
 
 ### 4.4. Qoidalar treki (AI emas, deterministik) [MAVJUD]
 Qoidalar AI'dan mustaqil, va Concordance'da «qoida tomoni» bo'ladi. Batafsil — 5-bo'lim.
@@ -591,7 +593,7 @@ Asosiy foydalanuvchi: **tuman va viloyatdagi shifokor** (ExoKG imkoniyati chekla
 | Bildirishnoma | Telegram Bot API (`httpx`), muhit o'zgaruvchilari orqali | Kod bor, haqiqiy bot bilan **sinalmagan** |
 | Tashqi OCR | `rapidocr-onnxruntime` (ixtiyoriy) | MAVJUD |
 | Tilda xulosa | Deterministik shablonlar, LLM yo'q | MAVJUD |
-| Testlar | pytest: 167 | MAVJUD |
+| Testlar | pytest: 179 | MAVJUD |
 | Ishga tushirish | `Start.bat` (Windows) | MAVJUD |
 | Frontend freymvork (Next.js), PostgreSQL | Dastlabki rejada bor edi | **REJADA**, qurilmagan |
 
@@ -634,7 +636,7 @@ Asosiy foydalanuvchi: **tuman va viloyatdagi shifokor** (ExoKG imkoniyati chekla
 Quyidagilar muallifning maqsad hujjati va kelishilgan rejadan olingan. Hammasi **[REJADA]**, aks ko'rsatilmagan bo'lsa.
 
 **Yaqin muddat (muallif ustuvorligi)**
-1. Mahalliy ma'lumot yig'ish: etika ruxsati, rozilik shakli, raqamli stetoskop, 50–100 ta ExoKG bilan tasdiqlangan bola yozuvi; keyin modelni moslashtirish. (Dasturdagi yig'ish mexanizmi tayyor.)
+1. Mahalliy ma'lumot yig'ish: etika ruxsati, rozilik shakli, raqamli stetoskop, ExoKG bilan tasdiqlangan bola yozuvlari (kerakli soni noma'lum); **sog' va kasal bolalarni aralash tartibda, bir xil qurilma va kunlarda yozish shart**; keyin modelni moslashtirish. (Dasturdagi yig'ish mexanizmi tayyor; eksport tartib/qurilma aralashuvini tekshiradi.)
 2. ~~Qo'shimcha AI modullarni birlashtirish~~ **Bajarildi:** `feat/ai-models` 2026-10-30 da `main` bilan birlashtirildi (EKG, angiografiya, MNO OCR, ExoKG EF). Qolgani: ularni ekranga ulash.
 3. PhysioNet credentialing (CITI kursi) olish (holati [NOMA'LUM]); shundan keyin: AKI uchun ML modeli (MIMIC-IV, eICU tashqi tekshiruv), operatsiyadan keyingi bo'lmachalar fibrillyatsiyasi (POAF), AI-EKG orqali past EF.
 

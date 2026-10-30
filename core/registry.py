@@ -13,6 +13,10 @@ from pathlib import Path
 # Ma'lum datasetlar litsenziyasi (2026-10 holatiga) — model o'qitishdan oldin tekshiring.
 DATASET_LICENSES: dict[str, tuple[str, bool]] = {
     "CirCor DigiScope": ("ODC-By 1.0", True),
+    # ZCHSound: repozitoriy shartlarni maqola va rasmiy saytga havola qiladi; bir manbada CC BY 4.0 deb yozilgan,
+    # lekin tasdiqlanmagan. Tasdiqlanmaguncha tijoratga YO'Q deb olinadi (xavfsiz tomon).
+    "ZCHSound": ("shartlari tasdiqlanmagan (CC BY 4.0 bo'lishi mumkin)", False),
+    "CirCor DigiScope + ZCHSound": ("CirCor ODC-By 1.0 + ZCHSound (shartlari tasdiqlanmagan)", False),
     "PTB-XL": ("CC-BY 4.0", True),
     "ARCADE": ("CC-BY 4.0", True),
     "CACTUS": ("CC-BY 4.0", True),

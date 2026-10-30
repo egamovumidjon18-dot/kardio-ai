@@ -74,7 +74,7 @@ To'liq hisobot: [weights/pcg/eval_report_test.md](weights/pcg/eval_report_test.m
 | Sog'ga noto'g'ri "shovqin bor" | 31% | 18% |
 
 **Xulosa:**
-- Boshqa mamlakat va boshqa stetoskopda sifat sezilarli pasayadi (domain shift).
+- Boshqa mamlakat va boshqa stetoskopda sifat sezilarli pasayadi (domain shift). Bu pasayishning bir qismi yozuv sharoiti farqidan bo'lishi mumkin (ZCHSound'da tashxis bloklari alohida yozilgan), shuning uchun 0.68 aniq «klinik» ko'rsatkich emas.
 - Model baland shovqinli nuqsonlarni (VSD, PDA) yaxshi topadi, yumshoq shovqinlilarni (ASD) va shovqinsizlarni (PFO) yomon topadi.
 - **Chaqaloqlarda (≤28 kun) ishlamaydi.** Shuning uchun `min_age_days=29`: undan kichiklarda AI javob bermaydi, faqat pulsoksimetriya va klinik qoidalar ishlaydi.
 - Klinikada ishlatishdan oldin **mahalliy ma'lumotda qayta kalibrlash yoki fine-tuning** majburiy.
@@ -90,7 +90,9 @@ Shifokor sahifasi: `http://localhost:8010/` (server ishga tushirilganda).
 
 ### Modelni o'z klinikangizga moslashtirish
 
-ZCHSound tajribasiga ko'ra ([docs/experiments/zchsound_adaptation.md](docs/experiments/zchsound_adaptation.md)), ~50–100 ta mahalliy, ExoKG bilan tasdiqlangan bola AUROC ni 0.75 dan ~0.97 ga ko'taradi.
+> **Diqqat (tuzatish, 2026-10-30):** ilgari bu yerda «~50–100 ta mahalliy bola AUROC ni 0.75 dan 0.97 ga ko'taradi» deb yozilgan edi. **Bu xulosa bekor qilindi:** ZCHSound'da yozuvlar tashxis bo'yicha ketma-ket yig'ilgan va yozuvlarda kun/sharoit izi topildi ([docs/experiments/zchsound_adaptation.md](docs/experiments/zchsound_adaptation.md)). Kerakli mahalliy ma'lumot hajmi hozircha **noma'lum**.
+>
+> Ko'p manbali (CirCor + ZCHSound) model ham sinab ko'rildi va **rad etildi** ([weights/pcg_multisite/report.md](weights/pcg_multisite/report.md)). Mahsulot modeli CirCor'da o'qitilgan model bo'lib qoladi.
 
 1. Serverni `CARDIOPATH_RECORDINGS=<papka>` bilan ishga tushiring.
 2. Sahifada "yozma roziligi olingan" belgisini qo'ying va stetoskop modelini yozing. Yozuvlar psevdonim bilan saqlanadi.
@@ -103,6 +105,7 @@ python -m research.adapt_zchsound --data-dir <eksport> --base <pcg.pt papkasi> -
 
 **Yig'ish qoidalari:**
 - TYN'li va sog' bolalar **bir xil stetoskop va xonada** yozilsin.
+- **Aralash tartibda yozing:** sog' va kasal bolalarni bir xil kunlarda, navbatma-navbat. Avval hamma sog'larni, keyin hamma kasallarni yozmang: model kasallikni emas, yozilgan kunni o'rganib oladi. `export_local` buni tekshirib, ogohlantiradi.
 - Yoshlari mos bo'lsin.
 - Test uchun keyinroq yig'ilgan alohida guruh qoldirilsin.
 
