@@ -99,9 +99,9 @@ class ECGModel:
                             uncertainty=round(1.0 - abs(2 * p_af - 1), 4),
                             explanation=["bo'lmachalar fibrillyatsiyasi ehtimoli yuqori — shifokor EKGni ko'rib tasdiqlaydi"]
                                         + expl)
-        found = [PATHOLOGY_NAMES[c] for c in PATHOLOGY_NAMES
-                 if c in probs and probs[c] >= float(self.class_th.get(c, 0.5))]
-        value["other_findings"] = found
+        codes = [c for c in PATHOLOGY_NAMES if c in probs and probs[c] >= float(self.class_th.get(c, 0.5))]
+        found = [PATHOLOGY_NAMES[c] for c in codes]
+        value["other_findings"], value["other_codes"] = found, codes
         if found:
             return Evidence(kind=kind, value=value, source=Source.MODEL, provenance=prov, risk=RiskLevel.MODERATE,
                             uncertainty=round(1.0 - abs(2 * p_af - 1), 4),

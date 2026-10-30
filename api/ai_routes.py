@@ -10,6 +10,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 
 from adapters.echo_ef import EchoEFAdapter
 from angio.model import AngioModel
+from api.ai_plain import plain_ai
 from api.guardian_routes import _postop_day
 from core.episode import Episode, Stage
 from core.evidence import Evidence
@@ -66,7 +67,7 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
         }
 
     @app.post("/episodes/{eid}/ecg")
-    async def ecg_endpoint(eid: str, actor: str = Form(...), fs: float = Form(500, gt=50, le=2000),
+    async def ecg_endpoint(eid: str, actor: str = Form(...), lang: str = Form("uz", pattern="^(uz|ru|en)$"), fs: float = Form(500, gt=50, le=2000),
                            age_years: Optional[float] = Form(None, ge=0, le=120),
                            file: UploadFile = File(..., description="CSV: 1-qator tarmoq nomlari (I,II,...,V6), mV")) -> dict:
         ep = get(eid)
@@ -76,7 +77,7 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
         except ValueError as exc:
             raise HTTPException(422, f"EKG faylini o'qib bo'lmadi: {exc}") from None
         ev = ecg.analyze(sig, fs, leads, age_years)
-        out = {"evidence": _save(ep, actor, "ecg.analyze", ev)}
+        out = {"evidence": _save(ep, actor, "ecg.analyze", ev), "plain": plain_ai(ev, lang)}
         if ep.stage == Stage.GUARDIAN_30D:           # POAF / operatsiyadan keyingi nazorat
             esc = escalate(ep.patient_ref, _postop_day(ep, datetime.now(timezone.utc)), [ev], notifier)
             store.save(ep, actor, "guardian.ecg", {"alert": esc.alert.value, "notified": esc.notified})
@@ -84,17 +85,17 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
         return out
 
     @app.post("/episodes/{eid}/angio")
-    async def angio_endpoint(eid: str, actor: str = Form(...), file: UploadFile = File(...)) -> dict:
+    async def angio_endpoint(eid: str, actor: str = Form(...), lang: str = Form("uz", pattern="^(uz|ru|en)$"), file: UploadFile = File(...)) -> dict:
         ep = get(eid)
         _need(angio, "Angiografiya")
         try:
             ev = angio.analyze(await _read(file, MAX_UPLOAD))
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from None
-        return {"evidence": _save(ep, actor, "angio.analyze", ev)}
+        return {"evidence": _save(ep, actor, "angio.analyze", ev), "plain": plain_ai(ev, lang)}
 
     @app.post("/episodes/{eid}/guardian/inr-image")
-    async def inr_image(eid: str, actor: str = Form(...), indication: Indication = Form(...),
+    async def inr_image(eid: str, actor: str = Form(...), lang: str = Form("uz", pattern="^(uz|ru|en)$"), indication: Indication = Form(...),
                         file: UploadFile = File(...)) -> dict:
         ep = get(eid)
         if ep.stage != Stage.GUARDIAN_30D:
@@ -103,10 +104,10 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
         ep.add(ev)
         esc = escalate(ep.patient_ref, _postop_day(ep, datetime.now(timezone.utc)), [ev], notifier)
         store.save(ep, actor, "guardian.inr_image", {"alert": esc.alert.value, "notified": esc.notified})
-        return {"escalation": esc.to_dict(), "evidence": [ev.to_dict()]}
+        return {"escalation": esc.to_dict(), "evidence": [ev.to_dict()], "plain": plain_ai(ev, lang)}
 
     @app.post("/episodes/{eid}/echo-ef")
-    async def echo_ef(eid: str, actor: str = Form(...), age_years: Optional[float] = Form(None, ge=0, le=120),
+    async def echo_ef(eid: str, actor: str = Form(...), lang: str = Form("uz", pattern="^(uz|ru|en)$"), age_years: Optional[float] = Form(None, ge=0, le=120),
                       file: UploadFile = File(..., description="ExoKG videosi (apikal 4 kamera)")) -> dict:
         ep = get(eid)
         _need(ef, "ExoKG EF")
@@ -115,4 +116,4 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
             path = Path(tmp) / "clip.avi"
             path.write_bytes(data)
             ev = ef.analyze(path, age_years)
-        return {"evidence": _save(ep, actor, "echo.ef", ev)}
+        return {"evidence": _save(ep, actor, "echo.ef", ev), "plain": plain_ai(ev, lang)}
