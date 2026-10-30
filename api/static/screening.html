@@ -3,218 +3,422 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TYN skriningi — CardioPath AI</title>
+<title>CardioPath AI</title>
 <style>
   :root {
-    --bg: #f6f7f9; --card: #fff; --text: #1b1f24; --muted: #5b6470; --border: #d9dde3;
-    --accent: #0b6bcb; --green: #1a7f37; --amber: #9a6700; --red: #cf222e; --darkred: #82071e;
-    --green-bg: #e6f4ea; --amber-bg: #fff4d6; --red-bg: #ffebe9;
+    --bg: #f4f6f9; --card: #fff; --text: #17202a; --muted: #5a6573; --border: #d6dbe2; --accent: #0b6bcb;
+    --green: #17803d; --green-bg: #e7f5ec; --yellow: #8a5a00; --yellow-bg: #fff3d1;
+    --red: #c62828; --red-bg: #fdeaea; --grey: #5a6573; --grey-bg: #eceff3;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #0f1216; --card: #171b21; --text: #e6e9ee; --muted: #9aa4b2; --border: #2c333d;
-      --accent: #4c9aff; --green: #4ac26b; --amber: #d4a72c; --red: #ff6a69; --darkred: #ff8182;
-      --green-bg: #12261a; --amber-bg: #2b2412; --red-bg: #2d1416;
+      --bg: #0f1318; --card: #171c23; --text: #e8ebf0; --muted: #9aa5b3; --border: #2b333d; --accent: #5aa5ff;
+      --green: #55c777; --green-bg: #12281b; --yellow: #e0b341; --yellow-bg: #2c2512;
+      --red: #ff7b7b; --red-bg: #2e1517; --grey: #9aa5b3; --grey-bg: #232a33;
     }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text);
-         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 860px; margin: 0 auto; padding: 24px 16px 64px; }
-  h1 { font-size: 22px; margin: 0 0 4px; }
-  .sub { color: var(--muted); margin: 0 0 20px; }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 16px; }
-  .card h2 { font-size: 16px; margin: 0 0 12px; }
-  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
-  input[type=number], input[type=text] { width: 100%; padding: 8px 10px; border: 1px solid var(--border);
-         border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
-  .flags { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 6px 16px; }
-  .flags label { display: flex; gap: 8px; align-items: flex-start; color: var(--text); font-size: 14px; margin: 0; }
-  .major { font-size: 11px; color: var(--red); border: 1px solid var(--red); border-radius: 4px; padding: 0 4px; margin-left: 4px; }
-  .locs { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
-  .loc { border: 1px dashed var(--border); border-radius: 8px; padding: 10px; }
-  .loc b { display: block; margin-bottom: 6px; }
-  .loc input { width: 100%; font-size: 12px; }
-  button { background: var(--accent); color: #fff; border: 0; border-radius: 8px; padding: 10px 18px;
-           font: inherit; font-weight: 600; cursor: pointer; }
-  button:disabled { opacity: .6; cursor: wait; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 820px; margin: 0 auto; padding: 16px 16px 72px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+  h1 { font-size: 22px; margin: 8px 0 2px; }
+  .lang { display: flex; gap: 4px; }
+  .lang button { background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px;
+                 font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; min-height: 44px; }
+  .lang button[aria-pressed=true] { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .sub { color: var(--muted); margin: 0 0 4px; }
+  .steps { margin: 8px 0 12px; padding-left: 20px; color: var(--muted); font-size: 15px; }
+  .model { font-size: 13px; color: var(--muted); margin: 0 0 14px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+  .card h2 { font-size: 17px; margin: 0 0 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .tag { font-size: 12px; font-weight: 500; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 0 8px; }
+  .tag.req { color: var(--red); border-color: var(--red); }
+  .hint { font-size: 14px; color: var(--muted); margin: 2px 0 12px; }
+  label.f { display: block; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  input[type=text], input[type=number], select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
+         background: var(--bg); color: var(--text); font: inherit; min-height: 44px; }
+  input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; }
+  .age { display: flex; gap: 6px; }
+  .age input { flex: 1; min-width: 0; } .age select { width: 96px; }
+  .flags { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 4px 16px; }
+  .chk { display: flex; gap: 10px; align-items: flex-start; padding: 8px 4px; font-size: 15px; cursor: pointer; }
+  .chk input { width: 20px; height: 20px; margin-top: 2px; flex: none; }
+  .major { font-size: 11px; color: var(--red); border: 1px solid var(--red); border-radius: 4px; padding: 0 5px; margin-left: 6px; white-space: nowrap; }
+  .locs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .loc { border: 1px dashed var(--border); border-radius: 10px; padding: 12px; }
+  .loc b { display: block; } .loc .where { font-size: 13px; color: var(--muted); margin: 2px 0 8px; }
+  .file { display: flex; align-items: center; gap: 8px; }
+  .file .pick { border: 1px solid var(--accent); color: var(--accent); border-radius: 8px; padding: 8px 12px; font-weight: 600; font-size: 14px; cursor: pointer; background: transparent; min-height: 40px; }
+  .file .name { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+  .file .x { border: 0; background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; padding: 4px 8px; }
+  .btn { background: var(--accent); color: #fff; border: 0; border-radius: 10px; padding: 12px 22px; font: inherit; font-weight: 700; cursor: pointer; min-height: 48px; }
+  .btn.sec { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .btn:disabled { opacity: .6; cursor: wait; }
   .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-  .hint { font-size: 13px; color: var(--muted); }
-  .result { border-left: 6px solid var(--muted); }
-  .result.low, .result.normal { border-color: var(--green); background: var(--green-bg); }
-  .result.moderate { border-color: var(--amber); background: var(--amber-bg); }
-  .result.high { border-color: var(--red); background: var(--red-bg); }
-  .result.very_high { border-color: var(--darkred); background: var(--red-bg); }
-  .action { font-size: 18px; font-weight: 700; margin: 0 0 8px; }
-  .pill { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); margin-right: 6px; }
-  .warn { color: var(--red); font-weight: 600; }
+  .err { border-left: 6px solid var(--red); background: var(--red-bg); }
+  .err b { color: var(--red); }
+  details summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); }
+  /* natija */
+  .verdict { border-left: 8px solid var(--grey); }
+  .verdict.lv-red { border-color: var(--red); background: var(--red-bg); }
+  .verdict.lv-yellow { border-color: var(--yellow); background: var(--yellow-bg); }
+  .verdict.lv-green { border-color: var(--green); background: var(--green-bg); }
+  .verdict.lv-grey { border-color: var(--grey); background: var(--grey-bg); }
+  .vh { display: flex; gap: 14px; align-items: flex-start; }
+  .ico { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-size: 24px; font-weight: 800; color: #fff; background: var(--grey); }
+  .lv-red .ico { background: var(--red); } .lv-yellow .ico { background: var(--yellow); } .lv-green .ico { background: var(--green); }
+  .headline { font-size: 21px; font-weight: 800; line-height: 1.25; margin: 0; }
+  .todo-l { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 14px 0 2px; }
+  .todo { font-size: 18px; margin: 0; }
+  .attn { margin: 14px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--card); border: 1px solid var(--yellow); }
+  .meta { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+  ul.items { list-style: none; margin: 0; padding: 0; }
+  .it { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .it:last-child { border-bottom: 0; }
+  .dot { flex: none; width: 14px; height: 14px; border-radius: 50%; margin-top: 6px; background: var(--grey); }
+  .it.lv-red .dot { background: var(--red); } .it.lv-yellow .dot { background: var(--yellow); } .it.lv-green .dot { background: var(--green); }
   table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
   td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
-  ul { margin: 6px 0; padding-left: 20px; }
-  .disclaimer { font-size: 12px; color: var(--muted); margin-top: 12px; }
-  .err { color: var(--red); white-space: pre-wrap; }
-  @media (max-width: 480px) { main { padding: 16px 16px 48px; } }
+  .disclaimer { font-size: 13px; color: var(--muted); margin-top: 16px; }
+  .ok { color: var(--green); font-weight: 600; }
+  @media (max-width: 480px) { .headline { font-size: 19px; } .todo { font-size: 17px; } }
+  @media print {
+    body { background: #fff; color: #000; }
+    form, .topbar, .actions, #echoBox, .steps, .sub, .model, #err { display: none !important; }
+    .card { border: 1px solid #999; break-inside: avoid; }
+    details { display: block; } details > summary { display: none; }
+  }
 </style>
 </head>
 <body>
 <main>
-  <h1>Tug'ma yurak nuqsoni skriningi</h1>
-  <p class="sub">Pulsoksimetriya + klinik belgilar + yurak tovushi (AI). Natija shifokor uchun yordamchi, yakuniy tashxis emas.</p>
-  <p class="hint" id="modelInfo"></p>
+  <div class="topbar">
+    <h1 data-i="title"></h1>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="uz" aria-pressed="false">O'zbekcha</button>
+      <button type="button" data-lang="ru" aria-pressed="false">Русский</button>
+      <button type="button" data-lang="en" aria-pressed="false">English</button>
+    </div>
+  </div>
+  <p class="sub" data-i="subtitle"></p>
+  <ol class="steps"><li data-i="step1"></li><li data-i="step2"></li><li data-i="step3"></li></ol>
+  <p class="model" id="modelInfo"></p>
 
-  <form id="form">
-    <div class="card">
-      <h2>1. Bemor</h2>
-      <div class="grid">
-        <div><label for="ref">Psevdonim (F.I.Sh. emas)</label><input id="ref" type="text" required maxlength="64" placeholder="masalan, SAM-2026-001"></div>
-        <div><label for="actor">Shifokor</label><input id="actor" type="text" required placeholder="dr.familiya"></div>
-        <div><label for="age">Yoshi</label>
-          <div style="display:flex;gap:6px"><input id="age" type="number" min="0" step="1" required style="flex:1">
-            <select id="ageUnit" style="border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font:inherit">
-              <option value="1">kun</option><option value="30.44">oy</option><option value="365.25" selected>yil</option>
-            </select></div></div>
+  <form id="form" novalidate>
+    <section class="card">
+      <h2><span data-i="s1"></span><span class="tag req" data-i="required"></span></h2>
+      <div class="grid" style="margin-top:10px">
+        <div><label class="f" for="ref" data-i="ref"></label><input id="ref" type="text" required maxlength="64" data-ph="refPh" autocomplete="off">
+          <div class="hint" data-i="refHint" style="margin:4px 0 0"></div></div>
+        <div><label class="f" for="actor" data-i="actor"></label><input id="actor" type="text" required maxlength="64" data-ph="actorPh" autocomplete="off"></div>
+        <div><label class="f" for="age" data-i="age"></label>
+          <div class="age"><input id="age" type="number" inputmode="numeric" min="0" step="1" required>
+            <select id="ageUnit" aria-label="unit"><option value="1" data-i="unitDay"></option><option value="30.44" data-i="unitMonth"></option><option value="365.25" data-i="unitYear" selected></option></select></div></div>
       </div>
-      <p class="hint">AI (yurak tovushi) 1 oydan kichik chaqaloqlarda ishlatilmaydi — ularda pulsoksimetriya asosiy.</p>
-    </div>
+    </section>
 
-    <div class="card">
-      <h2>2. Pulsoksimetriya</h2>
-      <p class="hint">Yangi tug'ilgan (24–48 soat): o'ng qo'l va oyoq. Katta bolalar: tinch holatdagi SpO₂. Ikkalasi ham ixtiyoriy.</p>
+    <section class="card">
+      <h2><span data-i="s2"></span><span class="tag" data-i="optional"></span></h2>
+      <p class="hint" data-i="s2hint"></p>
       <div class="grid">
-        <div><label for="rh">O'ng qo'l SpO₂, %</label><input id="rh" type="number" min="50" max="100" step="1"></div>
-        <div><label for="foot">Oyoq SpO₂, %</label><input id="foot" type="number" min="50" max="100" step="1"></div>
-        <div><label for="attempt">Urinish</label><input id="attempt" type="number" min="1" max="2" value="1"></div>
-        <div><label for="resting">Tinch holatdagi SpO₂, %</label><input id="resting" type="number" min="50" max="100" step="1"></div>
+        <div><label class="f" for="rh" data-i="rh"></label><input id="rh" type="number" inputmode="numeric" min="50" max="100" step="1" placeholder="98"></div>
+        <div><label class="f" for="foot" data-i="foot"></label><input id="foot" type="number" inputmode="numeric" min="50" max="100" step="1" placeholder="97"></div>
+        <div><label class="f" for="attempt" data-i="attempt"></label><select id="attempt"><option value="1">1</option><option value="2">2</option></select></div>
+        <div><label class="f" for="resting" data-i="resting"></label><input id="resting" type="number" inputmode="numeric" min="50" max="100" step="1" placeholder="98"></div>
       </div>
-    </div>
+    </section>
 
-    <div class="card">
-      <h2>3. Klinik belgilar</h2>
-      <div class="flags" id="flags"><span class="hint">yuklanmoqda…</span></div>
-    </div>
+    <section class="card">
+      <h2><span data-i="s3"></span><span class="tag" data-i="optional"></span></h2>
+      <p class="hint" data-i="s3hint"></p>
+      <div class="flags" id="flags"></div>
+    </section>
 
-    <div class="card">
-      <h2>4. Yurak tovushi yozuvlari (WAV)</h2>
-      <p class="hint">Har bir auskultatsiya nuqtasida kamida 5 soniya (tavsiya 15–20 s). Hech bo'lmaganda bitta nuqta.</p>
+    <section class="card">
+      <h2><span data-i="s4"></span><span class="tag" data-i="optional"></span></h2>
+      <p class="hint" data-i="s4hint"></p>
       <div class="locs" id="locs"></div>
-      <div class="grid" style="margin-top:12px">
-        <div><label for="device">Stetoskop modeli</label><input id="device" type="text" maxlength="80" placeholder="masalan, Eko Core 500"></div>
+      <div class="grid" style="margin-top:14px">
+        <div><label class="f" for="device" data-i="device"></label><input id="device" type="text" maxlength="80" data-ph="devicePh" autocomplete="off"></div>
       </div>
-      <label class="flags" style="display:flex;gap:8px;margin-top:10px;color:var(--text)">
-        <input type="checkbox" id="consent"> <span>Ota-ona/vasiy <b>yozma roziligi</b> olingan — yozuvlar modelni mahalliy sharoitga moslashtirish uchun saqlansin (faqat psevdonim bilan)</span>
-      </label>
-    </div>
+      <label class="chk" style="margin-top:8px"><input type="checkbox" id="consent"><span data-html="consent"></span></label>
+    </section>
 
+    <div id="err"></div>
     <div class="row">
-      <button id="submit" type="submit">Tahlil qilish</button>
-      <span class="hint" id="status"></span>
+      <button class="btn" id="submit" type="submit" data-i="analyze"></button>
+      <span class="hint" id="status" style="margin:0"></span>
     </div>
   </form>
 
-  <div id="out"></div>
+  <div id="out" aria-live="polite"></div>
 </main>
 
 <script>
-const LOCS = [["AV", "Aorta"], ["PV", "O'pka arteriyasi"], ["TV", "Trikuspidal"], ["MV", "Mitral"], ["Phc", "Boshqa"]];
-const RISK_UZ = { normal: "me'yorda", low: "past", moderate: "o'rta", high: "yuqori", very_high: "juda yuqori", unknown: "noma'lum" };
-const CONC_UZ = { agree: "qoida va AI mos", disagree: "qoida va AI zid", ai_abstained: "AI xulosa bermadi", rule_only: "faqat qoidalar" };
+const I18N = {
+  uz: {
+    title: "Yurak nuqsoni skriningi", subtitle: "Bolalarda tug'ma yurak nuqsonini erta aniqlash uchun yordamchi dastur.",
+    step1: "Bemor ma'lumotlarini kiriting (nimani bilsangiz, shuni).", step2: "«Tahlil qilish» tugmasini bosing.",
+    step3: "Natija va tavsiyani o'qing. Yakuniy qarorni siz qabul qilasiz.",
+    required: "majburiy", optional: "ixtiyoriy",
+    s1: "1. Bemor", ref: "Bemor kodi", refPh: "masalan, SAM-001", refHint: "Ism-familiya yozmang — faqat kod.",
+    actor: "Shifokor", actorPh: "familiyangiz", age: "Yoshi", unitDay: "kun", unitMonth: "oy", unitYear: "yosh",
+    s2: "2. Kislorod darajasi (pulsoksimetriya)",
+    s2hint: "Yangi tug'ilgan chaqaloqda (24–48 soat) ikkala joyni o'lchang. Katta bolada faqat «tinch holatda» qatorini to'ldiring.",
+    rh: "O'ng qo'l, %", foot: "Oyoq, %", attempt: "Urinish", resting: "Tinch holatda, %",
+    s3: "3. Klinik belgilar", s3hint: "Bolada ko'rgan belgilaringizni belgilang. Hech narsa bo'lmasa, bo'sh qoldiring.",
+    s4: "4. Yurak tovushi yozuvlari",
+    s4hint: "Raqamli stetoskopdan olingan WAV fayl. Har bir nuqtada kamida 5 soniya (yaxshisi 15–20 soniya), bola tinch turganda. Bitta nuqta ham yetarli.",
+    "loc.AV": "Aorta", "loc.AV.where": "to'sh suyagining o'ng chetida, 2-qovurg'a oralig'i",
+    "loc.PV": "O'pka arteriyasi", "loc.PV.where": "to'sh suyagining chap chetida, 2-qovurg'a oralig'i",
+    "loc.TV": "Trikuspidal", "loc.TV.where": "to'sh suyagining chap chetida, 4-qovurg'a oralig'i",
+    "loc.MV": "Mitral (cho'qqi)", "loc.MV.where": "chap o'rta o'mrov chizig'i, 5-qovurg'a oralig'i",
+    choose: "Fayl tanlash", none: "fayl tanlanmagan",
+    device: "Stetoskop modeli", devicePh: "masalan, Eko Core 500",
+    consent: "Ota-onaning <b>yozma roziligi</b> olingan — yozuvlar dasturni mahalliy sharoitga moslashtirish uchun saqlansin (faqat bemor kodi bilan).",
+    analyze: "Tahlil qilish", analyzing: "Tahlil qilinmoqda…",
+    needAny: "Kamida bitta ma'lumot kiriting: kislorod darajasi, klinik belgi yoki yurak tovushi yozuvi.",
+    needPair: "Yangi tug'ilgan chaqaloq uchun o'ng qo'l VA oyoq qiymatlarini birga kiriting.",
+    needWav: "Faqat WAV (.wav) fayl yuklash mumkin:", needFields: "Majburiy maydonlarni to'ldiring: bemor kodi, shifokor, yoshi.",
+    errNet: "Serverga ulanib bo'lmadi. Dastur oynasi ochiqligini tekshiring.", err422: "Kiritilgan ma'lumotda xato bor.",
+    err409: "Bu bemor uchun amal hozir mumkin emas.", err500: "Dastur ichida xato yuz berdi. Qayta urinib ko'ring.",
+    errTitle: "Xato", more: "Batafsil",
+    result: "Natija", todoL: "Nima qilish kerak", patient: "Bemor", details: "Texnik tafsilotlar (shifokor uchun)",
+    pt: "Nuqta", chance: "Shovqin ehtimoli", consistency: "Barqarorlik", windows: "Bo'laklar",
+    modelOn: "AI modeli", modelOff: "AI modeli ulanmagan — faqat klinik qoidalar ishlaydi.",
+    mode: "Tadqiqot rejimi",
+    newPatient: "Yangi bemor", print: "Chop etish",
+    echoTitle: "ExoKG tashxisini kiriting", echoHint: "Yozuvlar saqlandi. ExoKG natijasi aniq bo'lgach kiriting — dastur shu orqali o'rganadi.",
+    echoNotes: "izoh (ixtiyoriy)", echoSave: "Saqlash", echoSaved: "saqlandi ✓", echoErr: "saqlanmadi",
+    disclaimer: "Bu natija sun'iy intellekt va klinik qoidalar yordamchisi tomonidan tayyorlangan va YAKUNIY TASHXIS EMAS. Qaror faqat shifokor tomonidan qabul qilinadi. Tadqiqot rejimi.",
+  },
+  ru: {
+    title: "Скрининг порока сердца", subtitle: "Помощник для раннего выявления врождённых пороков сердца у детей.",
+    step1: "Введите данные пациента (то, что известно).", step2: "Нажмите «Анализировать».",
+    step3: "Прочитайте результат и рекомендацию. Окончательное решение принимаете вы.",
+    required: "обязательно", optional: "по желанию",
+    s1: "1. Пациент", ref: "Код пациента", refPh: "например, SAM-001", refHint: "Не вводите ФИО — только код.",
+    actor: "Врач", actorPh: "ваша фамилия", age: "Возраст", unitDay: "дн.", unitMonth: "мес.", unitYear: "лет",
+    s2: "2. Насыщение кислородом (пульсоксиметрия)",
+    s2hint: "У новорождённого (24–48 часов) измерьте в обоих местах. У старших детей заполните только строку «в покое».",
+    rh: "Правая рука, %", foot: "Нога, %", attempt: "Попытка", resting: "В покое, %",
+    s3: "3. Клинические признаки", s3hint: "Отметьте замеченные признаки. Если ничего нет — оставьте пустым.",
+    s4: "4. Записи тонов сердца",
+    s4hint: "WAV-файл с цифрового стетоскопа. В каждой точке не меньше 5 секунд (лучше 15–20), пока ребёнок спокоен. Достаточно одной точки.",
+    "loc.AV": "Аорта", "loc.AV.where": "у правого края грудины, 2-е межреберье",
+    "loc.PV": "Лёгочная артерия", "loc.PV.where": "у левого края грудины, 2-е межреберье",
+    "loc.TV": "Трикуспидальная", "loc.TV.where": "у левого края грудины, 4-е межреберье",
+    "loc.MV": "Митральная (верхушка)", "loc.MV.where": "левая среднеключичная линия, 5-е межреберье",
+    choose: "Выбрать файл", none: "файл не выбран",
+    device: "Модель стетоскопа", devicePh: "например, Eko Core 500",
+    consent: "Получено <b>письменное согласие</b> родителей — сохранить записи для адаптации программы к местным условиям (только с кодом пациента).",
+    analyze: "Анализировать", analyzing: "Идёт анализ…",
+    needAny: "Введите хотя бы один показатель: насыщение кислородом, клинический признак или запись тонов сердца.",
+    needPair: "Для новорождённого введите значения правой руки И ноги вместе.",
+    needWav: "Можно загружать только WAV (.wav):", needFields: "Заполните обязательные поля: код пациента, врач, возраст.",
+    errNet: "Не удалось связаться с сервером. Проверьте, что окно программы открыто.", err422: "В введённых данных ошибка.",
+    err409: "Это действие сейчас недоступно для данного пациента.", err500: "Внутренняя ошибка программы. Повторите попытку.",
+    errTitle: "Ошибка", more: "Подробнее",
+    result: "Результат", todoL: "Что делать", patient: "Пациент", details: "Технические детали (для врача)",
+    pt: "Точка", chance: "Вероятность шума", consistency: "Стабильность", windows: "Фрагменты",
+    modelOn: "Модель ИИ", modelOff: "Модель ИИ не подключена — работают только клинические правила.",
+    mode: "Исследовательский режим",
+    newPatient: "Новый пациент", print: "Печать",
+    echoTitle: "Введите диагноз по ЭхоКГ", echoHint: "Записи сохранены. Введите результат ЭхоКГ, когда он будет готов — программа учится на нём.",
+    echoNotes: "примечание (по желанию)", echoSave: "Сохранить", echoSaved: "сохранено ✓", echoErr: "не сохранено",
+    disclaimer: "Результат подготовлен помощником на основе ИИ и клинических правил и НЕ ЯВЛЯЕТСЯ ОКОНЧАТЕЛЬНЫМ ДИАГНОЗОМ. Решение принимает только врач. Исследовательский режим.",
+  },
+  en: {
+    title: "Heart defect screening", subtitle: "An assistant for early detection of congenital heart disease in children.",
+    step1: "Enter what you know about the patient.", step2: "Press “Analyse”.",
+    step3: "Read the result and recommendation. The final decision is yours.",
+    required: "required", optional: "optional",
+    s1: "1. Patient", ref: "Patient code", refPh: "e.g. SAM-001", refHint: "Do not enter a name — code only.",
+    actor: "Clinician", actorPh: "your surname", age: "Age", unitDay: "days", unitMonth: "months", unitYear: "years",
+    s2: "2. Oxygen saturation (pulse oximetry)",
+    s2hint: "For a newborn (24–48 hours) measure both sites. For older children fill in only the “at rest” field.",
+    rh: "Right hand, %", foot: "Foot, %", attempt: "Attempt", resting: "At rest, %",
+    s3: "3. Clinical signs", s3hint: "Tick the signs you noticed. Leave empty if none.",
+    s4: "4. Heart sound recordings",
+    s4hint: "A WAV file from a digital stethoscope. At least 5 seconds per site (ideally 15–20) while the child is calm. One site is enough.",
+    "loc.AV": "Aortic", "loc.AV.where": "right sternal border, 2nd intercostal space",
+    "loc.PV": "Pulmonary", "loc.PV.where": "left sternal border, 2nd intercostal space",
+    "loc.TV": "Tricuspid", "loc.TV.where": "left sternal border, 4th intercostal space",
+    "loc.MV": "Mitral (apex)", "loc.MV.where": "left mid-clavicular line, 5th intercostal space",
+    choose: "Choose file", none: "no file chosen",
+    device: "Stethoscope model", devicePh: "e.g. Eko Core 500",
+    consent: "Parents’ <b>written consent</b> obtained — keep the recordings to adapt the software to local conditions (patient code only).",
+    analyze: "Analyse", analyzing: "Analysing…",
+    needAny: "Enter at least one finding: oxygen saturation, a clinical sign or a heart sound recording.",
+    needPair: "For a newborn, enter the right-hand AND foot values together.",
+    needWav: "Only WAV (.wav) files can be uploaded:", needFields: "Fill in the required fields: patient code, clinician, age.",
+    errNet: "Could not reach the server. Make sure the program window is still open.", err422: "There is a problem with the entered data.",
+    err409: "This action is not available for this patient right now.", err500: "Internal program error. Please try again.",
+    errTitle: "Error", more: "Details",
+    result: "Result", todoL: "What to do", patient: "Patient", details: "Technical details (for clinicians)",
+    pt: "Site", chance: "Murmur likelihood", consistency: "Consistency", windows: "Segments",
+    modelOn: "AI model", modelOff: "AI model not connected — only clinical rules are active.",
+    mode: "Research mode",
+    newPatient: "New patient", print: "Print",
+    echoTitle: "Enter the echocardiography diagnosis", echoHint: "Recordings saved. Enter the echo result when it is available — the software learns from it.",
+    echoNotes: "note (optional)", echoSave: "Save", echoSaved: "saved ✓", echoErr: "not saved",
+    disclaimer: "This result was prepared by an AI and clinical-rules assistant and is NOT A FINAL DIAGNOSIS. Only a clinician makes the decision. Research mode.",
+  },
+};
+const ECHO_DX = {
+  NORMAL: { uz: "Normal (nuqson yo'q)", ru: "Норма (порока нет)", en: "Normal (no defect)" },
+  ASD: { uz: "Bo'lmachalararo to'siq nuqsoni (ASD)", ru: "Дефект межпредсердной перегородки (ДМПП)", en: "Atrial septal defect (ASD)" },
+  VSD: { uz: "Qorinchalararo to'siq nuqsoni (VSD)", ru: "Дефект межжелудочковой перегородки (ДМЖП)", en: "Ventricular septal defect (VSD)" },
+  PDA: { uz: "Ochiq arterial oqim (PDA)", ru: "Открытый артериальный проток (ОАП)", en: "Patent ductus arteriosus (PDA)" },
+  PFO: { uz: "Ochiq oval teshik (PFO)", ru: "Открытое овальное окно (ООО)", en: "Patent foramen ovale (PFO)" },
+  AVSD: { uz: "Atrioventrikulyar kanal (AVSD)", ru: "Атриовентрикулярный канал (АВК)", en: "AV septal defect (AVSD)" },
+  TOF: { uz: "Fallo tetradasi (TOF)", ru: "Тетрада Фалло", en: "Tetralogy of Fallot" },
+  COA: { uz: "Aorta koarktatsiyasi", ru: "Коарктация аорты", en: "Coarctation of the aorta" },
+  PS: { uz: "O'pka arteriyasi stenozi", ru: "Стеноз лёгочной артерии", en: "Pulmonary stenosis" },
+  AS: { uz: "Aorta stenozi", ru: "Стеноз аорты", en: "Aortic stenosis" },
+  OTHER: { uz: "Boshqa", ru: "Другое", en: "Other" },
+};
+const LOCS = ["AV", "PV", "TV", "MV"];
+const ICONS = { red: "✕", yellow: "!", green: "✓", grey: "?" };
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private mode */ } } };
+const guess = () => { const l = (navigator.language || "uz").slice(0, 2); return l === "ru" ? "ru" : l === "en" ? "en" : "uz"; };
+let lang = store.get("lang") in I18N ? store.get("lang") : guess();
+let health = null, last = null, echoState = null;
+const t = (k) => I18N[lang][k] ?? I18N.uz[k] ?? k;
 
-$("locs").innerHTML = LOCS.map(([code, name]) =>
-  `<div class="loc"><b>${code} <span class="hint">${name}</span></b><input type="file" accept=".wav,audio/wav" data-loc="${code}"></div>`).join("");
-
-fetch("/screening/red-flags").then((r) => r.json()).then((flags) => {
-  $("flags").innerHTML = Object.entries(flags).map(([code, f]) =>
-    `<label><input type="checkbox" value="${esc(code)}"> <span>${esc(f.name)}${f.major ? '<span class="major">katta</span>' : ""}</span></label>`).join("");
+// ---- bir marta chiziladigan joylar
+$("locs").innerHTML = LOCS.map((c) => `
+  <div class="loc"><b>${c} · <span data-i="loc.${c}"></span></b><div class="where" data-i="loc.${c}.where"></div>
+    <div class="file"><label class="pick" for="f_${c}" data-i="choose"></label>
+      <input type="file" id="f_${c}" data-loc="${c}" accept=".wav,audio/wav,audio/x-wav" hidden>
+      <span class="name" id="n_${c}"></span><button type="button" class="x" id="x_${c}" aria-label="remove" hidden>✕</button></div></div>`).join("");
+LOCS.forEach((c) => {
+  const inp = $("f_" + c), name = $("n_" + c), x = $("x_" + c);
+  const show = () => { name.textContent = inp.files[0] ? inp.files[0].name : t("none"); x.hidden = !inp.files[0]; };
+  inp.addEventListener("change", show);
+  x.addEventListener("click", () => { inp.value = ""; show(); });
+  inp._show = show;
 });
-fetch("/health").then((r) => r.json()).then((h) => {
-  $("modelInfo").textContent = h.pcg_model
-    ? `AI modeli: ${h.pcg_model.name} v${h.pcg_model.version} (${h.pcg_model.dataset}, ${h.pcg_model.dataset_license}) · rejim: ${h.mode}`
-    : "AI modeli ulanmagan — faqat qoidalar ishlaydi.";
-});
 
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = t("title") + " — CardioPath AI";
+  document.querySelectorAll("[data-i]").forEach((el) => { el.textContent = t(el.dataset.i); });
+  document.querySelectorAll("[data-ph]").forEach((el) => { el.placeholder = t(el.dataset.ph); });
+  document.querySelectorAll("[data-html]").forEach((el) => { el.innerHTML = t(el.dataset.html); });
+  document.querySelectorAll(".lang button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+  LOCS.forEach((c) => $("f_" + c)._show());
+  $("modelInfo").textContent = health
+    ? (health.pcg_model ? `${t("modelOn")}: ${health.pcg_model.name} v${health.pcg_model.version} · ${t("mode")}` : t("modelOff")) : "";
+  loadFlags();
+  if (last) render();
+}
+document.querySelectorAll(".lang button").forEach((b) => b.addEventListener("click", () => {
+  lang = b.dataset.lang; store.set("lang", lang); applyLang();
+}));
+
+async function loadFlags() {
+  const checked = new Set([...document.querySelectorAll("#flags input:checked")].map((c) => c.value));
+  try {
+    const flags = await (await fetch(`/screening/red-flags?lang=${lang}`)).json();
+    $("flags").innerHTML = Object.entries(flags).map(([code, f]) =>
+      `<label class="chk"><input type="checkbox" value="${esc(code)}" ${checked.has(code) ? "checked" : ""}><span>${esc(f.name)}${f.major ? `<span class="major">${{ uz: "jiddiy", ru: "серьёзный", en: "major" }[lang]}</span>` : ""}</span></label>`).join("");
+  } catch (e) { /* server o'chiq — submit paytida xabar chiqadi */ }
+}
+fetch("/health").then((r) => r.json()).then((h) => { health = h; applyLang(); }).catch(() => applyLang());
+
+// ---- yuborish
+function showErr(msg, detail) {
+  $("err").innerHTML = `<div class="card err" role="alert"><b>${esc(t("errTitle"))}:</b> ${esc(msg)}${detail ? `<details><summary>${esc(t("more"))}</summary><pre style="white-space:pre-wrap;font-size:12px">${esc(detail)}</pre></details>` : ""}</div>`;
+  $("err").scrollIntoView({ behavior: "smooth", block: "center" });
+}
 $("form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  $("submit").disabled = true; $("status").textContent = "tahlil qilinmoqda…"; $("out").innerHTML = "";
+  $("err").innerHTML = ""; $("out").innerHTML = ""; last = null;
+  const ref = $("ref").value.trim(), actor = $("actor").value.trim(), age = $("age").value;
+  if (!ref || !actor || age === "" || Number(age) < 0) return showErr(t("needFields"));
+  const rh = $("rh").value, foot = $("foot").value, resting = $("resting").value;
+  if (!!rh !== !!foot) return showErr(t("needPair"));
+  const flags = [...document.querySelectorAll("#flags input:checked")].map((c) => c.value);
+  const files = LOCS.map((c) => $("f_" + c).files[0] ? [c, $("f_" + c).files[0]] : null).filter(Boolean);
+  const bad = files.find(([, f]) => !/\.wav$/i.test(f.name));
+  if (bad) return showErr(`${t("needWav")} ${bad[1].name}`);
+  if (!rh && !resting && !flags.length && !files.length) return showErr(t("needAny"));
+
+  $("submit").disabled = true; $("status").textContent = t("analyzing");
   try {
     const ep = await fetch("/episodes", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ patient_ref: $("ref").value.trim(), actor: $("actor").value.trim() }) });
-    if (!ep.ok) throw new Error(await ep.text());
+      body: JSON.stringify({ patient_ref: ref, actor }) });
+    if (!ep.ok) throw { status: ep.status, detail: await ep.text() };
     const { id } = await ep.json();
-
     const fd = new FormData();
-    fd.append("actor", $("actor").value.trim());
-    if ($("rh").value || $("foot").value) { fd.append("right_hand_spo2", $("rh").value); fd.append("foot_spo2", $("foot").value); }
-    fd.append("attempt", $("attempt").value || "1");
-    fd.append("age_days", String(Math.round(Number($("age").value) * Number($("ageUnit").value))));
-    if ($("resting").value) fd.append("resting_spo2", $("resting").value);
-    fd.append("red_flags", [...document.querySelectorAll("#flags input:checked")].map((c) => c.value).join(","));
+    fd.append("actor", actor); fd.append("lang", lang);
+    fd.append("age_days", String(Math.round(Number(age) * Number($("ageUnit").value))));
+    if (rh) { fd.append("right_hand_spo2", rh); fd.append("foot_spo2", foot); fd.append("attempt", $("attempt").value); }
+    if (resting) fd.append("resting_spo2", resting);
+    fd.append("red_flags", flags.join(","));
     fd.append("research_consent", $("consent").checked ? "true" : "false");
     fd.append("device", $("device").value.trim());
-    for (const inp of document.querySelectorAll("#locs input[type=file]")) {
-      if (inp.files[0]) fd.append("recordings", inp.files[0], `${inp.dataset.loc}.wav`);
-    }
+    files.forEach(([c, f]) => fd.append("recordings", f, `${c}.wav`));
     const r = await fetch(`/episodes/${id}/screening`, { method: "POST", body: fd });
-    const body = await r.json();
-    if (!r.ok) throw new Error(body.detail ? JSON.stringify(body.detail, null, 1) : r.statusText);
-    render(body, id);
-    $("status").textContent = "";
+    if (!r.ok) throw { status: r.status, detail: await r.text() };
+    last = { body: await r.json(), id, ref, at: new Date() };
+    echoState = null;
+    render();
+    $("out").scrollIntoView({ behavior: "smooth" });
   } catch (err) {
-    $("out").innerHTML = `<div class="card err">Xato: ${esc(err.message)}</div>`;
-    $("status").textContent = "";
+    const s = err && err.status;
+    showErr(!s ? t("errNet") : s === 422 ? t("err422") : s === 409 ? t("err409") : t("err500"), s ? `HTTP ${s}\n${err.detail}` : String(err));
   } finally {
-    $("submit").disabled = false;
+    $("submit").disabled = false; $("status").textContent = "";
   }
 });
 
-function render(b, id) {
-  const c = b.concordance;
-  const ai = c.ai;
-  let aiHtml = "<p class='hint'>Yurak tovushi yuklanmagan yoki model ulanmagan.</p>";
-  if (ai) {
-    const v = ai.value || {};
-    const rows = (v.recordings || []).map((r) =>
-      `<tr><td>${esc(r.location)}</td><td>${(r.p_murmur * 100).toFixed(0)}%</td><td>${(r.window_agreement * 100).toFixed(0)}%</td><td>${r.n_windows}</td></tr>`).join("");
-    aiHtml = `
-      <p>${ai.abstained ? "<span class='warn'>AI xulosa bermadi:</span> " : ""}${esc(ai.explanation.join("; "))}</p>
-      ${rows ? `<table><tr><th>Nuqta</th><th>Shovqin ehtimoli</th><th>Oynalar kelishuvi</th><th>Oynalar</th></tr>${rows}</table>` : ""}
-      ${(v.skipped || []).length ? `<p class="hint">O'tkazib yuborilgan: ${esc(v.skipped.join(" | "))}</p>` : ""}`;
-  }
+// ---- natija
+function render() {
+  const { body: b, id, ref, at } = last;
+  const p = (b.plain_i18n && b.plain_i18n[lang]) || b.plain;
+  const items = p.items.map((i) => `<li class="it lv-${esc(i.level)}"><span class="dot"></span><div><b>${esc(i.title)}</b><div>${esc(i.text)}</div></div></li>`).join("");
+  const ai = b.concordance.ai, v = (ai && ai.value) || {};
+  const rows = (v.recordings || []).map((r) => `<tr><td>${esc(r.location)}</td><td>${Math.round(r.p_murmur * 100)}%</td><td>${Math.round(r.window_agreement * 100)}%</td><td>${r.n_windows}</td></tr>`).join("");
+  const detail = rows
+    ? `<table><tr><th>${esc(t("pt"))}</th><th>${esc(t("chance"))}</th><th>${esc(t("consistency"))}</th><th>${esc(t("windows"))}</th></tr>${rows}</table>` : "";
+  const echo = b.saved_for_research ? `
+    <section class="card" id="echoBox"><h2>${esc(t("echoTitle"))}</h2><p class="hint">${esc(t("echoHint"))}</p>
+      <div class="row"><select id="echoDx" style="max-width:340px">${Object.entries(ECHO_DX).map(([k, n]) => `<option value="${k}">${esc(n[lang])}</option>`).join("")}</select>
+        <input id="echoNotes" type="text" maxlength="500" placeholder="${esc(t("echoNotes"))}" style="flex:1;min-width:160px">
+        <button type="button" class="btn" id="echoSave">${esc(t("echoSave"))}</button><span id="echoStatus" class="hint" style="margin:0"></span></div></section>` : "";
   $("out").innerHTML = `
-    <div class="card result ${esc(b.final_risk)}">
-      <p class="action">${esc(b.action)}</p>
-      <span class="pill">xavf: ${RISK_UZ[b.final_risk] || esc(b.final_risk)}</span>
-      <span class="pill">${CONC_UZ[c.status] || esc(c.status)}</span>
-      ${c.needs_discussion ? "<span class='pill warn'>muhokama talab qilinadi</span>" : ""}
-      <p>${esc(c.message)}</p>
-      ${b.warning ? `<p class="warn">${esc(b.warning)}</p>` : ""}
-    </div>
-    <div class="card"><h2>Qoidalar (deterministik)</h2><ul>${c.rule.explanation.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>
-    <div class="card"><h2>AI: yurak tovushi</h2>${aiHtml}</div>
-    ${b.saved_for_research ? `
-    <div class="card"><h2>ExoKG tashxisi (keyinroq kiritiladi)</h2>
-      <p class="hint">Yozuvlar saqlandi. ExoKG natijasi kiritilgach, ular modelni moslashtirish uchun ishlatiladi.</p>
-      <div class="row">
-        <select id="echoDx" style="padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font:inherit">
-          ${["NORMAL","ASD","VSD","PDA","PFO","AVSD","TOF","COA","PS","AS","OTHER"].map((d) => `<option>${d}</option>`).join("")}
-        </select>
-        <input id="echoNotes" type="text" placeholder="izoh (ixtiyoriy)" style="flex:1;min-width:140px">
-        <button type="button" id="echoSave">Saqlash</button>
-        <span class="hint" id="echoStatus"></span>
-      </div>
-    </div>` : ""}
-    <p class="disclaimer">${esc(b.disclaimer)} · Epizod: ${esc(id)}</p>`;
+    <section class="card verdict lv-${esc(p.level)}">
+      <div class="vh"><div class="ico" aria-hidden="true">${ICONS[p.level] || "?"}</div>
+        <div><p class="headline">${esc(p.headline)}</p></div></div>
+      <p class="todo-l">${esc(t("todoL"))}</p><p class="todo">${esc(p.todo)}</p>
+      ${p.attention ? `<p class="attn">${esc(p.attention)}</p>` : ""}
+      <p class="meta">${esc(t("patient"))}: <b>${esc(ref)}</b> · ${esc(at.toLocaleString(lang === "uz" ? "uz-UZ" : lang === "ru" ? "ru-RU" : "en-GB"))}</p>
+    </section>
+    <section class="card"><ul class="items">${items}</ul>
+      ${detail ? `<details style="margin-top:10px"><summary>${esc(t("details"))}</summary>${detail}</details>` : ""}</section>
+    ${echo}
+    <div class="row actions" style="margin-top:6px">
+      <button class="btn" type="button" id="again">${esc(t("newPatient"))}</button>
+      <button class="btn sec" type="button" id="print">${esc(t("print"))}</button></div>
+    <p class="disclaimer">${esc(t("disclaimer"))}</p>`;
+  $("again").onclick = () => { $("form").reset(); LOCS.forEach((c) => { $("f_" + c).value = ""; $("f_" + c)._show(); }); last = null; $("out").innerHTML = ""; $("err").innerHTML = ""; window.scrollTo({ top: 0, behavior: "smooth" }); $("ref").focus(); };
+  $("print").onclick = () => window.print();
   if (b.saved_for_research) {
+    if (echoState === "ok") $("echoStatus").innerHTML = `<span class="ok">${esc(t("echoSaved"))}</span>`;
     $("echoSave").onclick = async () => {
       const r = await fetch(`/episodes/${id}/echo-diagnosis`, { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ actor: $("actor").value.trim(), diagnosis: $("echoDx").value, notes: $("echoNotes").value }) });
-      $("echoStatus").textContent = r.ok ? "saqlandi ✓" : "xato: " + (await r.text());
+      echoState = r.ok ? "ok" : "err";
+      $("echoStatus").innerHTML = r.ok ? `<span class="ok">${esc(t("echoSaved"))}</span>` : esc(t("echoErr"));
     };
   }
-  $("out").scrollIntoView({ behavior: "smooth" });
 }
+applyLang();
 </script>
 </body>
 </html>

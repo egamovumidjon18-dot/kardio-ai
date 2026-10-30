@@ -26,7 +26,7 @@ from guardian.escalation import LogNotifier, Notifier, TelegramNotifier
 from risk.aki import AKIModel
 from screening.collection import ECHO_DIAGNOSES, echo_diagnosis, save_recordings
 from screening.model import LOCATIONS, PCGModel, Recording
-from screening.plain import flag_name, lang_of, plain_report
+from screening.plain import LANGS, flag_name, lang_of, plain_report
 from screening.rules import RED_FLAGS, newborn_pulse_ox, red_flags, resting_spo2
 from screening.triage import triage
 
@@ -177,6 +177,8 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
             out["warning"] = "PCG modeli ulanmagan — audio tahlil qilinmadi, faqat qoidalar ishladi."
         out["saved_for_research"] = saved is not None
         out["plain"] = plain_report(result, rule_items, pcg_ev, len(raw), pcg is not None, lang)
+        # sahifada til almashtirilganda qayta so'rov kerak bo'lmasin
+        out["plain_i18n"] = {L: plain_report(result, rule_items, pcg_ev, len(raw), pcg is not None, L) for L in LANGS}
         return out
 
     @app.post("/episodes/{eid}/echo-diagnosis")
