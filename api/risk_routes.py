@@ -25,6 +25,10 @@ SILENT_DEFAULTS = {
 }
 
 
+FIELD_NAMES = {"nyha": "NYHA sinfi", "urgency": "shoshilinchlik", "weight_of_intervention": "aralashuv og'irligi",
+               "pa_systolic_mmhg": "o'pka arteriyasi bosimi"}
+
+
 class Rachs1In(BaseModel):
     actor: str
     procedures: list[str] = Field(min_length=1, max_length=10, description="GET /rachs1/procedures dagi kodlar")
@@ -62,7 +66,7 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], a
             added.append(Evidence(kind="risk.assumptions", value=missing, source=Source.RULE,
                                   provenance=Provenance(name="euroscore2_defaults", reference="EuroSCORE II"),
                                   risk=RiskLevel.UNKNOWN,
-                                  explanation=[f"{k}: kiritilmadi → {SILENT_DEFAULTS[k]} deb olindi" for k in missing]))
+                                  explanation=[f"{FIELD_NAMES[k]}: kiritilmadi → {SILENT_DEFAULTS[k]} deb olindi" for k in missing]))
         for ev in added:
             ep.add(ev)
         conc, ef_conc = aki_concordance(ep), ef_concordance(ep)

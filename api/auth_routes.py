@@ -17,7 +17,7 @@ from core.identity import current_user
 from core.store import EpisodeStore
 
 # ochiq yo'llar: kirishsiz ham (sahifaning o'zi, holat, kirish)
-PUBLIC = {("GET", "/"), ("GET", "/models-ui"), ("GET", "/shadow-ui"), ("GET", "/health"), ("GET", "/auth/status"), ("POST", "/auth/login")}
+PUBLIC = {("GET", "/"), ("GET", "/screening"), ("GET", "/models-ui"), ("GET", "/shadow-ui"), ("GET", "/health"), ("GET", "/auth/status"), ("POST", "/auth/login")}
 
 _ANY = "auth.any"          # istalgan kirgan foydalanuvchi
 ROUTE_PERMS: dict[tuple[str, str], str] = {

@@ -72,13 +72,20 @@ def test_plain_report_in_three_languages(client, wav_factory):
 
 
 def test_page_is_served_with_language_switcher(client):
-    html = client.get("/").text
+    html = client.get("/screening").text
     assert 'data-lang="uz"' in html and 'data-lang="ru"' in html and 'data-lang="en"' in html
     # dizayn elementlari: tema tugmasi, natija ekrani, "oxirgi natija" banneri, prefers-reduced-motion
     assert 'id="theme"' in html and 'id="viewResult"' in html and 'id="lastBanner"' in html
     assert "prefers-reduced-motion" in html
     # shaxsiy ma'lumot maydonlari yo'q: ism-familiya va tug'ilgan sana so'ralmaydi
     assert 'id="birth' not in html and "Ism, familiya" not in html
+
+
+def test_clinician_app_shell_is_served(client):
+    html = client.get("/").text
+    assert 'id="nav"' in html and "/static/app.js" in html and "/static/cardiopath.css" in html
+    js = client.get("/static/app.js").text
+    assert "data-clinical-urgent" in js                    # qizil natijalar animatsiyadan himoyalangan
 
 
 def test_cchd_fail_without_audio(client):

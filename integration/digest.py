@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Optional
 
 from core.episode import ALLOWED, Episode, Stage
-from core.evidence import Evidence
+from core.evidence import Evidence, risk_rank
 from integration.concordances import aki_concordance, ecg_lvef_concordance, ef_concordance
 
 # AI modullari: ichki nom → Evidence turi
@@ -21,6 +21,14 @@ def brief(ev: Evidence) -> dict:
     return {"id": ev.id, "kind": ev.kind, "value": ev.value, "unit": ev.unit, "risk": ev.risk.value,
             "source": ev.source.value, "abstained": ev.abstained, "explanation": ev.explanation,
             "created_at": ev.created_at, "model": ev.provenance.name, "model_version": ev.provenance.version}
+
+
+def overall_risk(latest: dict[str, Evidence]) -> Optional[str]:
+    """Eng yuqori xavf: har bir turdagi oxirgi, abstain qilinmagan natijalar orasidan (AI pasaytira olmaydi — faqat maksimum).
+    Hech qanday baholangan natija bo'lmasa None (bu «xavf yo'q» degani EMAS)."""
+    ranks = [(risk_rank(ev.risk), ev.risk.value) for k, ev in latest.items()
+             if not ev.abstained and k != "risk.assumptions" and risk_rank(ev.risk) is not None]
+    return max(ranks)[1] if ranks else None
 
 
 def _ai_state(ev: Optional[Evidence]) -> dict:
@@ -110,6 +118,7 @@ def episode_digest(ep: Episode, alerts: Optional[list[dict]] = None) -> dict:
         "episode": {"id": ep.id, "patient_ref": ep.patient_ref, "population": ep.population, "stage": ep.stage.value,
                     "created_at": ep.created_at},
         "next_stages": sorted(s.value for s in ALLOWED[ep.stage]),
+        "overall_risk": overall_risk(latest),
         "latest": {k: brief(v) for k, v in latest.items()},
         "ai": {name: _ai_state(latest.get(kind)) for name, kind in AI_KINDS.items()},
         "concordance": concordance,

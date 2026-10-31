@@ -107,6 +107,10 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
         return (Path(__file__).parent / "static" / "models.html").read_text(encoding="utf-8")
 
     @app.get("/", response_class=HTMLResponse, include_in_schema=False)
+    def app_page() -> str:
+        return (Path(__file__).parent / "static" / "app.html").read_text(encoding="utf-8")
+
+    @app.get("/screening", response_class=HTMLResponse, include_in_schema=False)
     def screening_page() -> str:
         return (Path(__file__).parent / "static" / "screening.html").read_text(encoding="utf-8")
 
@@ -143,6 +147,11 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
         if stage is not None and stage not in {s.value for s in Stage}:
             raise HTTPException(422, f"noma'lum bosqich: {stage}")
         total, items = store.summaries(stage=stage, q=q.strip() if q else None, limit=limit, offset=offset)
+        for it in items:                              # ekran uchun: umumiy xavf va muhokama punktlari soni
+            ep = store.get(it["id"])
+            d = episode_digest(ep) if ep else None
+            it["overall_risk"] = d["overall_risk"] if d else None
+            it["n_discussion"] = len(d["discussion"]) if d else 0
         return {"total": total, "limit": limit, "offset": offset, "items": items}
 
     @app.get("/episodes/{eid}")

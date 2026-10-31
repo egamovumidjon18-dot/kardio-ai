@@ -130,9 +130,9 @@ def test_euroscore_uses_aki_lvef_when_omitted_and_flags_other_defaults(env):
     assert r["evidence"][0]["kind"] == "risk.euroscore2"            # mavjud mijozlar tartibi buzilmagan
     assert any("EF 25%" in line for line in r["evidence"][0]["explanation"])     # LVEF AKI blokidan olindi
     d = client.get(f"/episodes/{eid}/digest").json()
-    assert any(x["code"] == "assumed_defaults" and "nyha" in x["reason"] for x in d["discussion"])
+    assert any(x["code"] == "assumed_defaults" and "NYHA sinfi" in x["reason"] for x in d["discussion"])
     protocol = client.get(f"/episodes/{eid}/heart-team-protocol").text
-    assert "nyha: kiritilmadi → NYHA I (simptom yo'q) deb olindi" in protocol    # protokolda muhokama punkti sifatida ko'rinadi
+    assert "NYHA sinfi: kiritilmadi → NYHA I (simptom yo'q) deb olindi" in protocol    # protokolda muhokama punkti sifatida ko'rinadi
 
 
 def test_fully_specified_euroscore_has_no_assumptions(env):
