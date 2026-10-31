@@ -1,6 +1,6 @@
 # CardioPath AI — loyiha tavsifi (dizayner AI uchun texnik va funksional hujjat)
 
-Holat: 2026-yil 30-oktabr. Manba: loyiha kodi (`main` branch, 245 ta test; `feat/ai-models` branch'i 2026-10-30 da `main` bilan birlashtirildi), muallifning o'z maqsad hujjati va o'qitish/baholash hisobotlari.
+Holat: 2026-yil 30-oktabr. Manba: loyiha kodi (`main` branch, 252 ta test; `feat/ai-models` branch'i 2026-10-30 da `main` bilan birlashtirildi), muallifning o'z maqsad hujjati va o'qitish/baholash hisobotlari.
 
 ## 0. Bu hujjatni qanday o'qish kerak
 
@@ -394,7 +394,8 @@ Qoidalar AI'dan mustaqil, va Concordance'da «qoida tomoni» bo'ladi. Batafsil �
 
 **MNO qog'ozi OCR** [MAVJUD, ekransiz]: rasm → matn → `parse_inr_text` → baholash. Dvigatel ixtiyoriy kutubxona (`rapidocr-onnxruntime`). Dvigatel yo'q, ishonch past (<0.80) yoki qiymat noaniq bo'lsa, abstain.
 
-**Bloklangan, o'qitilmagan (faqat interfeys, natija o'ylab topilmaydi):** AI-EKG orqali past EF (MIMIC-IV-ECHO kerak); yara rasmidan infeksiya aniqlash (ochiq sternotomiya dataseti yo'q).
+**AI-EKG orqali past EF [MAVJUD, faqat tadqiqot]:** EchoNext (PhysioNet, shartnoma bilan) da o'qitilgan, test AUROC 0.886 (CI 0.874–0.899), oldindan yozilgan 5 qabul mezonidan o'tgan; `/ecg` javobida `low_ef` bo'limi; 18 yoshdan kichik → abstain; product rejimida yuklanmaydi (docs/experiments/ecg_lowef_echonext.md).
+**Bloklangan, o'qitilmagan:** yara rasmidan infeksiya aniqlash (ochiq sternotomiya dataseti yo'q; SurgWound sinovi rad etildi).
 
 ### 4.7. Ma'lumot manbalari va litsenziyalar
 
@@ -405,7 +406,8 @@ Qoidalar AI'dan mustaqil, va Concordance'da «qoida tomoni» bo'ladi. Batafsil �
 | PTB-XL | EKG modeli | CC-BY 4.0 | Ruxsat |
 | ARCADE | Angiografiya | CC-BY 4.0 | Ruxsat |
 | EchoNet-Dynamic | ExoKG EF | Stanford AIMI tadqiqot shartnomasi | **Yo'q** |
-| MIMIC-IV, MIMIC-IV-ECHO, eICU | AKI, AI-EKG past EF | PhysioNet credentialed | Yo'q. Muallifning kirish ruxsati holati [NOMA'LUM] |
+| EchoNext | AI-EKG past EF | PhysioNet Restricted Health Data License (faqat tadqiqot) | Ha, 2026-10-31 dan (shartnoma imzolangan) |
+| MIMIC-IV, eICU | AKI | PhysioNet credentialed | Yo'q. Muallifning kirish ruxsati holati [NOMA'LUM] |
 
 ---
 
@@ -634,12 +636,12 @@ Asosiy foydalanuvchi: **tuman va viloyatdagi shifokor** (ExoKG imkoniyati chekla
 | Bildirishnoma | Telegram Bot API (`httpx`), muhit o'zgaruvchilari orqali | Kod bor, haqiqiy bot bilan **sinalmagan** |
 | Tashqi OCR | `rapidocr-onnxruntime` (ixtiyoriy) | MAVJUD |
 | Tilda xulosa | Deterministik shablonlar, LLM yo'q | MAVJUD |
-| Testlar | pytest: 245 | MAVJUD |
+| Testlar | pytest: 252 | MAVJUD |
 | Ishga tushirish | `Start.bat` (Windows) | MAVJUD |
 | Frontend freymvork (Next.js), PostgreSQL | Dastlabki rejada bor edi | **REJADA**, qurilmagan |
 
 ### 8.2. Sozlash (muhit o'zgaruvchilari)
-`CARDIOPATH_DB` (baza fayli), `CARDIOPATH_WEIGHTS` (PCG og'irliklari papkasi), `CARDIOPATH_AKI_WEIGHTS`, `CARDIOPATH_MODE` (`research`/`product`), `CARDIOPATH_RECORDINGS` (rozilik bilan saqlanadigan yozuvlar), `CARDIOPATH_TG_TOKEN` va `CARDIOPATH_TG_CHAT` (Telegram), `CARDIOPATH_PORT` (`Start.bat`, standart 8010). Yana `CARDIOPATH_EF_WEIGHTS` (ExoKG EF og'irligi) va `CARDIOPATH_MODELS` (model versiyalari papkasi, standart `models/pcg`). Yana `CARDIOPATH_AUTH` (`on`/`off`, standart `off`: kirish va rollar).
+`CARDIOPATH_DB` (baza fayli), `CARDIOPATH_WEIGHTS` (PCG og'irliklari papkasi), `CARDIOPATH_AKI_WEIGHTS`, `CARDIOPATH_MODE` (`research`/`product`), `CARDIOPATH_RECORDINGS` (rozilik bilan saqlanadigan yozuvlar), `CARDIOPATH_TG_TOKEN` va `CARDIOPATH_TG_CHAT` (Telegram), `CARDIOPATH_PORT` (`Start.bat`, standart 8010). Yana `CARDIOPATH_EF_WEIGHTS` (ExoKG EF og'irligi) va `CARDIOPATH_MODELS` (model versiyalari papkasi, standart `models/pcg`). Yana `CARDIOPATH_AUTH` (`on`/`off`, standart `off`: kirish va rollar). `CARDIOPATH_LOWEF_WEIGHTS` (AI-EKG past EF, standart `weights/ecg_lowef`).
 
 ### 8.3. Ma'lumot saqlash
 - Jadvallar: `episodes` (id, JSON hujjat, yangilangan vaqt), `audit_log` (faqat qo'shiladi).
@@ -667,7 +669,7 @@ Asosiy foydalanuvchi: **tuman va viloyatdagi shifokor** (ExoKG imkoniyati chekla
 - Modelning mahalliy klinik validatsiyasi **o'tkazilmagan**; tashqi sinovda sifat pasaygan (AUROC 0.68).
 - Haqiqiy mahalliy bemor ma'lumoti yig'ilmagan.
 - Etika komissiyasi ruxsati va tibbiy qurilma ro'yxatdan o'tishi (SaMD) bo'yicha holat **[NOMA'LUM]**; dastur tadqiqot rejimi deb belgilangan.
-- MIMIC ma'lumotiga kirish bo'lmagani uchun AKI ML va AI-EKG past EF modellari qurilmagan.
+- MIMIC ma'lumotiga kirish bo'lmagani uchun AKI ML modeli qurilmagan. AI-EKG past EF EchoNext'da qurilgan, lekin faqat tadqiqot litsenziyasi va mahalliy aholida tashqi tekshiruv yo'q.
 - Intraoperatsion video uchun ochiq ma'lumot yo'q; yo'nalish muzlatilgan.
 - O'z-o'zini o'rgatish sikli (3.4.1) haqiqiy mahalliy ma'lumotda sinalmagan; yashirin ma'lumot izlarini (yig'ish tartibi/qurilmadan tashqari) ko'ra olmaydi.
 
@@ -680,7 +682,7 @@ Quyidagilar muallifning maqsad hujjati va kelishilgan rejadan olingan. Hammasi *
 **Yaqin muddat (muallif ustuvorligi)**
 1. Mahalliy ma'lumot yig'ish: etika ruxsati, rozilik shakli, raqamli stetoskop, ExoKG bilan tasdiqlangan bola yozuvlari (kerakli soni noma'lum); **sog' va kasal bolalarni aralash tartibda, bir xil qurilma va kunlarda yozish shart**; keyin modelni moslashtirish. (Dasturdagi yig'ish mexanizmi tayyor; eksport tartib/qurilma aralashuvini tekshiradi.)
 2. ~~Qo'shimcha AI modullarni birlashtirish~~ **Bajarildi:** `feat/ai-models` 2026-10-30 da `main` bilan birlashtirildi (EKG, angiografiya, MNO OCR, ExoKG EF). Qolgani: ularni ekranga ulash.
-3. PhysioNet credentialing (CITI kursi) olish (holati [NOMA'LUM]); shundan keyin: AKI uchun ML modeli (MIMIC-IV, eICU tashqi tekshiruv), operatsiyadan keyingi bo'lmachalar fibrillyatsiyasi (POAF), AI-EKG orqali past EF.
+3. PhysioNet credentialing (CITI kursi) olish (holati [NOMA'LUM]); shundan keyin: AKI uchun ML modeli (MIMIC-IV, eICU tashqi tekshiruv), operatsiyadan keyingi bo'lmachalar fibrillyatsiyasi (POAF). AI-EKG past EF EchoNext'da qurilgan (2026-10-31).
 
 **O'rta muddat**
 4. Ekranlar: bemorlar ro'yxati, epizod tafsiloti va bosqichga o'tkazish, Heart Team kiritish va protokol, jarroh/navbatchi signallari paneli.

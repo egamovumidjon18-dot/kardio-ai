@@ -264,12 +264,19 @@ Rasm → `rapidocr-onnxruntime` (ONNX, CPU) → `parse_inr_text` → `assess_inr
 
 NeuroSon-AI (`uttai/heart`, EchoNet-Dynamic, R(2+1)D-18) ONNX og'irligi `Evidence("echo.ef")` ga ulangan (`CARDIOPATH_EF_WEIGHTS`, standart: NeuroSon `weights/heart_echonet.onnx`). **EchoNet litsenziyasi faqat tadqiqot** → registry'da `commercial_use=False`, `CARDIOPATH_MODE=product` da modul yuklanmaydi. NeuroSon hisoboti: MAE 5.83%, R² 0.575 — bu loyihada qayta baholanmagan. Abstain: yosh <18, video o'qilmadi, EF 10–85% dan tashqari. **Cheklov:** "bu ExoKG emas" degan tekshiruv yo'q — shovqin videosiga ham EF beradi. Endpoint: `POST /episodes/{id}/echo-ef`.
 
+## 8-modul: AI-EKG past EF (`ecg/low_ef.py`) — EchoNext, faqat tadqiqot
+
+EKG'dan LVEF ≤ 45% skriningi. EchoNext (PhysioNet, shartnoma bilan) da o'qitilgan, oldindan yozilgan 5 qabul mezonidan o'tdi: test AUROC **0.886** (CI 0.874–0.899), faqat yosh/jins/intervallar bazasi 0.782, abstain 24%, sezgirlik/o'ziga xoslik 0.87/0.87, har bir bo'limda AUROC ≥ 0.86. `/episodes/{eid}/ecg` javobida `low_ef` bo'limi: musbat → «ExoKG qiling» (tashxis emas). 18 yoshdan kichik → abstain. Litsenziya tijoratga ruxsat bermaydi, product rejimida yuklanmaydi. Batafsil: [docs/experiments/ecg_lowef_echonext.md](docs/experiments/ecg_lowef_echonext.md).
+
+```bash
+python -m research.train_lowef --data-dir C:\Users\user\data\echonext --out weights/ecg_lowef
+```
+
 ## Bloklangan modellar (qurilmagan)
 
 | Model | Sabab | Qaerda |
 |---|---|---|
 | CSA-AKI ML | MIMIC-IV — PhysioNet credentialing kerak | `risk/aki.py` `AKIModel` (interfeys tayyor) |
-| AI-EKG past EF | MIMIC-IV-ECHO/ECG — credentialed; muqobil: o'z klinikangizda ExoKG bilan tasdiqlangan EKGlar | `ecg/low_ef.py` (doim abstain) |
 | Yara rasmi CV | ochiq sternotomiya dataseti yo'q; SurgWound (qorin/to'piq/yuz) bilan sinab ko'rildi va RAD ETILDI (AUROC 0.68, 90% sezgirlikda o'ziga xoslik 21%): [docs/experiments/wound_surgwound.md](docs/experiments/wound_surgwound.md) | `guardian/wound_cv.py` (doim abstain) |
 
 `GET /models` hamma modullar holatini va bloklanganlar sababini qaytaradi.

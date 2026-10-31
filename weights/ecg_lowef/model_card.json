@@ -1,0 +1,150 @@
+{
+  "name": "ecg_lowef_echonext",
+  "version": "2026.10.31",
+  "task": "12 tarmoqli EKG (10 s, 100 Hz) → LVEF ≤ 45% ehtimoli (kattalar)",
+  "dataset": "EchoNext",
+  "weights": "ecg_lowef.onnx",
+  "passed": true,
+  "gates": {
+    "auroc": 0.85,
+    "auroc_ci_low": 0.82,
+    "beats_tabular_by": 0.05,
+    "sensitivity": 0.85,
+    "max_abstain": 0.5,
+    "min_auroc_per_location": 0.75
+  },
+  "checks": {
+    "auroc": true,
+    "auroc_ci_low": true,
+    "beats_tabular": true,
+    "sensitivity": true,
+    "abstain": true,
+    "per_location": true
+  },
+  "thresholds": {
+    "low": 0.219395,
+    "high": 0.627964,
+    "fs": 100,
+    "n_samples": 1000,
+    "leads": [
+      "I",
+      "II",
+      "III",
+      "AVR",
+      "AVL",
+      "AVF",
+      "V1",
+      "V2",
+      "V3",
+      "V4",
+      "V5",
+      "V6"
+    ],
+    "min_age_years": 18
+  },
+  "metrics": {
+    "val": {
+      "n": 4626,
+      "auroc": 0.8882,
+      "abstain_rate": 0.2328,
+      "sensitivity": 0.8768,
+      "specificity": 0.8681,
+      "ppv": 0.6194,
+      "npv": 0.9664,
+      "tp": 612,
+      "fn": 86,
+      "tn": 2475,
+      "fp": 376
+    },
+    "test": {
+      "n": 5442,
+      "pos": 962,
+      "auroc": 0.8861,
+      "auroc_ci95": [
+        0.8739,
+        0.8987
+      ],
+      "tabular_baseline_auroc": 0.7819,
+      "abstain_rate": 0.2361,
+      "sensitivity": 0.8701,
+      "specificity": 0.8701,
+      "ppv": 0.6005,
+      "npv": 0.9676,
+      "tp": 663,
+      "fn": 99,
+      "tn": 2954,
+      "fp": 441,
+      "by_location": {
+        "emergency": {
+          "n": 1971,
+          "pos": 310,
+          "auroc": 0.8851
+        },
+        "inpatient": {
+          "n": 2203,
+          "pos": 537,
+          "auroc": 0.86
+        },
+        "outpatient": {
+          "n": 1059,
+          "pos": 70,
+          "auroc": 0.9206
+        },
+        "procedural": {
+          "n": 209,
+          "pos": 45,
+          "auroc": 0.9156
+        }
+      },
+      "by_sex": {
+        "male": 0.872,
+        "female": 0.8984
+      }
+    }
+  },
+  "audit": {
+    "n": {
+      "train": 72475,
+      "val": 4626,
+      "test": 5442
+    },
+    "patient_overlap": {
+      "train_val": 0,
+      "train_test": 0,
+      "val_test": 0
+    },
+    "prevalence": {
+      "train": 0.234,
+      "val": 0.1872,
+      "test": 0.1768
+    },
+    "missing_label": {
+      "train": 0,
+      "val": 0,
+      "test": 0
+    },
+    "train_prevalence_by_location": {
+      "emergency": [
+        22811,
+        0.208
+      ],
+      "inpatient": [
+        34906,
+        0.301
+      ],
+      "outpatient": [
+        12423,
+        0.095
+      ],
+      "procedural": [
+        2335,
+        0.227
+      ]
+    }
+  },
+  "training": {
+    "seed": 42,
+    "epochs": 15,
+    "split": "EchoNext rasmiy split (val/test: bemorning oxirgi EKG'si)"
+  }
+}

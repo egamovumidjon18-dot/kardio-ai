@@ -20,6 +20,7 @@ DATASET_LICENSES: dict[str, tuple[str, bool]] = {
     # Mahalliy ma'lumot ota-ona roziligi bilan TADQIQOT uchun yig'iladi; tijorat huquqi alohida tasdiqlanmaguncha YO'Q.
     "CirCor DigiScope + mahalliy ma'lumot": ("CirCor ODC-By 1.0 + mahalliy rozilikli ma'lumot (tijorat huquqi tasdiqlanmagan)", False),
     "PTB-XL": ("CC-BY 4.0", True),
+    "EchoNext": ("PhysioNet Restricted Health Data License 1.5.0 (faqat tadqiqot)", False),
     "ARCADE": ("CC-BY 4.0", True),
     "CACTUS": ("CC-BY 4.0", True),
     "EchoNet-Dynamic": ("Stanford AIMI research use agreement", False),

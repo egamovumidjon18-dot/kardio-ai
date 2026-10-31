@@ -26,6 +26,21 @@ T: dict[str, dict[str, str]] = {
                  "ru": "Дополнительных мер пока не требуется. При жалобах повторите ЭКГ.",
                  "en": "No further action for now. Repeat the ECG if symptoms appear."},
     "ecg.title": {"uz": "EKG", "ru": "ЭКГ", "en": "ECG"},
+    "lowef.title": {"uz": "EKG bo'yicha yurak qisqarishi (EF)", "ru": "Сократимость сердца (ФВ) по ЭКГ",
+                    "en": "Heart pumping (EF) from the ECG"},
+    "lowef.h": {"uz": "Yurak qisqarishi pasaygan bo'lishi mumkin", "ru": "Возможно снижение сократимости сердца",
+                "en": "The heart's pumping may be reduced"},
+    "lowef.t": {"uz": "ExoKG qiling: EF'ni faqat ExoKG o'lchaydi. Bu tashxis emas, skrining belgisi.",
+                "ru": "Сделайте ЭхоКГ: ФВ измеряет только ЭхоКГ. Это не диагноз, а сигнал скрининга.",
+                "en": "Order an echocardiogram: only echo measures EF. This is a screening signal, not a diagnosis."},
+    "lowef.ok.h": {"uz": "EKGda yurak qisqarishi pasayishi belgisi topilmadi", "ru": "Признаков снижения сократимости на ЭКГ не найдено",
+                   "en": "No sign of reduced pumping on the ECG"},
+    "lowef.ok.t": {"uz": "Bu EF normal ekanini kafolatlamaydi. Shikoyat yoki klinik shubha bo'lsa, ExoKG qiling.",
+                   "ru": "Это не гарантирует нормальную ФВ. При жалобах или клиническом подозрении сделайте ЭхоКГ.",
+                   "en": "This does not guarantee a normal EF. If there are symptoms or clinical doubt, order an echo."},
+    "lowef.age": {"uz": "Bu baho faqat kattalar uchun. Bolada EF'ni ExoKG o'lchaydi.",
+                  "ru": "Эта оценка только для взрослых. У ребёнка ФВ измеряет ЭхоКГ.",
+                  "en": "This estimate is for adults only. In a child, EF is measured by echo."},
     "ecg.q": {"uz": "EKG sifati past yoki yetarli emas — qayta yozing (10 soniya, harakatsiz).",
               "ru": "Качество ЭКГ низкое или недостаточное — запишите заново (10 секунд, без движения).",
               "en": "The ECG quality is too low — record again (10 seconds, lying still)."},
@@ -125,6 +140,17 @@ def _ecg(e: Evidence, L: str) -> dict:
     return _out(L, "green", tr("ecg.ok.h", L), tr("ecg.ok.t", L), title, tr("ecg.ok.h", L))
 
 
+def _lowef(e: Evidence, L: str) -> dict:
+    title = tr("lowef.title", L)
+    if e.abstained:
+        r = e.explanation[0]
+        key = "lowef.age" if "yosh" in r else "ecg.q" if ("sifatsiz" in r or "qisqa" in r or "tarmoq" in r) else "ecg.unsure"
+        return _abstain(L, title, title, tr(key, L))
+    if e.risk == RiskLevel.MODERATE:
+        return _out(L, "yellow", tr("lowef.h", L), tr("lowef.t", L), title, tr("lowef.h", L))
+    return _out(L, "green", tr("lowef.ok.h", L), tr("lowef.ok.t", L), title, tr("lowef.ok.h", L))
+
+
 def _angio(e: Evidence, L: str) -> dict:
     title = tr("angio.title", L)
     if e.abstained:
@@ -166,7 +192,7 @@ def _ef(e: Evidence, L: str) -> dict:
     return _out(L, level, h, tr("ef.t", L), title, h)
 
 
-_BY_KIND = {"ecg.afib": _ecg, "angio.stenosis_assist": _angio, "guardian.inr": _inr, "echo.ef": _ef}
+_BY_KIND = {"ecg.afib": _ecg, "ecg.low_ef": _lowef, "angio.stenosis_assist": _angio, "guardian.inr": _inr, "echo.ef": _ef}
 
 
 def plain_ai(ev: Evidence, lang: str = "uz") -> dict:
