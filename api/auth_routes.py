@@ -17,7 +17,7 @@ from core.identity import current_user
 from core.store import EpisodeStore
 
 # ochiq yo'llar: kirishsiz ham (sahifaning o'zi, holat, kirish)
-PUBLIC = {("GET", "/"), ("GET", "/models-ui"), ("GET", "/health"), ("GET", "/auth/status"), ("POST", "/auth/login")}
+PUBLIC = {("GET", "/"), ("GET", "/models-ui"), ("GET", "/shadow-ui"), ("GET", "/health"), ("GET", "/auth/status"), ("POST", "/auth/login")}
 
 _ANY = "auth.any"          # istalgan kirgan foydalanuvchi
 ROUTE_PERMS: dict[tuple[str, str], str] = {
@@ -41,13 +41,16 @@ ROUTE_PERMS: dict[tuple[str, str], str] = {
     ("POST", "/users/{username}/disable"): "users.manage", ("POST", "/users/{username}/enable"): "users.manage",
     ("POST", "/users/{username}/role"): "users.manage", ("POST", "/users/{username}/password"): "users.manage",
     ("GET", "/audit/security"): "users.manage",
+    ("GET", "/shadow/pending"): "shadow.label", ("POST", "/shadow/{run_id}/label"): "shadow.label",
+    ("GET", "/shadow/report"): "shadow.report",
 }
 
 _CLINICIAN = {"episode.create", "episode.read", "screening.run", "echo.diagnosis", "episode.transition", "ai.upload",
               "guardian.submit", "alerts.read"}
-_CARDIOLOGIST = _CLINICIAN | {"risk.assess", "protocol.read", "episode.audit", "learning.read", "learning.approve"}
+_CARDIOLOGIST = _CLINICIAN | {"risk.assess", "protocol.read", "episode.audit", "learning.read", "learning.approve",
+                             "shadow.label", "shadow.report"}
 ROLE_PERMS: dict[str, set[str]] = {
-    "admin": {_ANY, "episode.read", "episode.audit", "alerts.read", "learning.read", "users.manage"},
+    "admin": {_ANY, "episode.read", "episode.audit", "alerts.read", "learning.read", "users.manage", "shadow.report"},
     "clinician": _CLINICIAN | {_ANY},
     "cardiologist": _CARDIOLOGIST | {_ANY},
     "surgeon": _CARDIOLOGIST | {"alerts.ack", _ANY},

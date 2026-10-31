@@ -4,6 +4,7 @@ from __future__ import annotations
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
+import logging
 from typing import Callable, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
@@ -15,6 +16,7 @@ from api.ai_plain import plain_ai
 from api.guardian_routes import _postop_day
 from core.episode import Episode, Stage
 from core.evidence import Evidence
+from core.shadow import ShadowRhythmModel, ShadowStore, input_hash
 from core.store import EpisodeStore
 from ecg.low_ef import LowEFFromECG
 from ecg.model import ECGModel
@@ -26,6 +28,7 @@ from guardian.ocr import Engine, assess_inr_image
 
 MAX_UPLOAD = 25 * 1024 * 1024
 MAX_VIDEO = 100 * 1024 * 1024
+log = logging.getLogger(__name__)
 
 
 async def _read(f: UploadFile, limit: int) -> bytes:
@@ -46,7 +49,8 @@ def _ocr_available() -> bool:
 def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], notifier: Notifier,
              ecg: Optional[ECGModel], angio: Optional[AngioModel], ef: Optional[EchoEFAdapter],
              ocr_engine: Optional[Engine] = None, low_ef: Optional[LowEFFromECG] = None,
-             shd: Optional[StructuralFromECG] = None) -> None:
+             shd: Optional[StructuralFromECG] = None, shadow_models: Optional[list[ShadowRhythmModel]] = None,
+             shadow_store: Optional[ShadowStore] = None) -> None:
     def _need(model, name: str) -> None:
         if model is None:
             raise HTTPException(503, f"{name} moduli ulanmagan (og'irliklar yo'q) — qoidalar ishlashda davom etadi")
@@ -55,6 +59,25 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
         ep.add(ev)
         store.save(ep, actor, action, {"kind": ev.kind, "abstained": ev.abstained, "risk": ev.risk.value})
         return ev.to_dict()
+
+    def _shadow(ep: Episode, sig, fs: float, leads, age_years: Optional[float], ev: Evidence) -> None:
+        """Shadow modellar: natija faqat shadow jadvaliga yoziladi. Xato asosiy yo'lni hech qachon buzmaydi."""
+        if not shadow_models or shadow_store is None:
+            return
+        try:
+            v = ev.value if isinstance(ev.value, dict) else {}
+            live = {"abstained": True} if ev.abstained else {
+                "afib_call": ev.risk.value in ("high", "very_high"), "p_afib": v.get("p_afib"), "model": ecg.card.name}
+            outs = {}
+            for m in shadow_models:
+                try:
+                    outs[m.key] = m.run(sig, fs, leads)
+                except Exception as exc:              # noqa: BLE001 — bitta shadow model xatosi boshqalarini to'xtatmasin
+                    log.warning("shadow model %s xatosi: %s", m.key, exc)
+                    outs[m.key] = {"error": type(exc).__name__}
+            shadow_store.add_run(ep.id, "ecg.rhythm", input_hash(sig, fs), age_years, live, outs)
+        except Exception as exc:                      # noqa: BLE001
+            log.warning("shadow yozuvi saqlanmadi: %s", exc)
 
     @app.get("/models")
     def models() -> dict:
@@ -85,6 +108,7 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
             raise HTTPException(422, f"EKG faylini o'qib bo'lmadi: {exc}") from None
         ev = ecg.analyze(sig, fs, leads, age_years)
         out = {"evidence": _save(ep, actor, "ecg.analyze", ev), "plain": plain_ai(ev, lang)}
+        _shadow(ep, sig, fs, leads, age_years, ev)      # javob QAYTARILMAYDI, faqat yoziladi
         if low_ef is not None:                       # xuddi shu EKG'dan past EF skriningi (alohida dalil)
             lev = low_ef.analyze(sig, fs, leads, age_years)
             out["low_ef"] = {"evidence": _save(ep, actor, "ecg.low_ef", lev), "plain": plain_ai(lev, lang)}

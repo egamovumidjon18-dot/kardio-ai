@@ -21,6 +21,9 @@ DATASET_LICENSES: dict[str, tuple[str, bool]] = {
     "CirCor DigiScope + mahalliy ma'lumot": ("CirCor ODC-By 1.0 + mahalliy rozilikli ma'lumot (tijorat huquqi tasdiqlanmagan)", False),
     "PTB-XL": ("CC-BY 4.0", True),
     "Chapman-Shaoxing": ("CC0 1.0", True),
+    # PhysioNet Challenge 2021 to'plamlari CC BY 4.0, Chapman CC0
+    "PTB-XL + Chapman-Shaoxing + Ningbo (PhysioNet Challenge 2021)": ("CC-BY 4.0 / CC0 1.0", True),
+    "PTB-XL + Chapman-Shaoxing + CPSC 2018 + Georgia (PhysioNet Challenge 2021)": ("CC-BY 4.0 / CC0 1.0", True),
     "EchoNext": ("PhysioNet Restricted Health Data License 1.5.0 (faqat tadqiqot)", False),
     "ARCADE": ("CC-BY 4.0", True),
     "CACTUS": ("CC-BY 4.0", True),

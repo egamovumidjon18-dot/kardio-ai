@@ -11,6 +11,7 @@ from api.main import create_app, default_app
 from core.auth import MAX_FAILS, AuthError, AuthService, hash_password, verify_password
 from core.identity import current_user
 from core.registry import ModelCard
+from core.shadow import ShadowStore
 from core.store import SqliteEpisodeStore
 from screening.model import PCGModel
 
@@ -34,7 +35,8 @@ def env(tmp_path):
     auth = AuthService(db, log=store.log_event, clock=clock)
     auth.create_user("admin1", PW, "admin", by="test")
     model = PCGModel(CARD, lambda x: (np.full(len(x), 0.9, np.float32), np.full(len(x), 0.1, np.float32)))
-    client = TestClient(create_app(store, model, auth=auth, recordings_dir=tmp_path / "rec", models_dir=tmp_path / "models"))
+    client = TestClient(create_app(store, model, auth=auth, recordings_dir=tmp_path / "rec", models_dir=tmp_path / "models",
+                                   shadow_store=ShadowStore(db)))
     return client, auth, store, clock, db
 
 
@@ -421,3 +423,15 @@ def test_promote_refused_when_auth_is_off(tmp_path):
 def test_models_page_is_served(env):
     r = env[0].get("/models-ui")
     assert r.status_code == 200 and "learning/promote" in r.text and "uz" in r.text
+
+
+def test_shadow_label_and_report_permissions(env):
+    client, auth, *_ = env
+    auth.create_user("nurse1", PW, "clinician", by="test")
+    auth.create_user("card1", PW, "cardiologist", by="test")
+    nurse, card, admin = login(client, "nurse1"), login(client, "card1"), login(client, "admin1")
+    assert client.get("/shadow/pending", headers=nurse).status_code == 403
+    assert client.get("/shadow/report", headers=nurse).status_code == 403
+    assert client.get("/shadow/pending", headers=card).status_code == 200
+    assert client.get("/shadow/report", headers=admin).status_code == 200
+    assert client.post("/shadow/1/label", json={"actor": "x", "rhythm": "SR"}, headers=admin).status_code == 403

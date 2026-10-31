@@ -5,7 +5,8 @@ Muhit: CARDIOPATH_DB (sqlite fayl), CARDIOPATH_WEIGHTS (PCG og'irliklari papkasi
        CARDIOPATH_AKI_WEIGHTS, CARDIOPATH_MODE=research|product,
        CARDIOPATH_TG_TOKEN + CARDIOPATH_TG_CHAT (Guardian eskalatsiyasi),
        CARDIOPATH_RECORDINGS (rozilik bilan saqlanadigan PCG yozuvlari papkasi),
-       CARDIOPATH_ECG_WEIGHTS, CARDIOPATH_ANGIO_WEIGHTS, CARDIOPATH_EF_WEIGHTS (NeuroSon heart_echonet.onnx)
+       CARDIOPATH_ECG_WEIGHTS, CARDIOPATH_ANGIO_WEIGHTS, CARDIOPATH_EF_WEIGHTS (NeuroSon heart_echonet.onnx),
+       CARDIOPATH_SHADOW (vergul bilan shadow model papkalari; bo'sh qiymat — o'chiq)
 """
 from __future__ import annotations
 
@@ -19,7 +20,7 @@ from pydantic import BaseModel, Field
 
 from fastapi import Depends
 
-from api import ai_routes, auth_routes, guardian_routes, learning_routes, risk_routes
+from api import ai_routes, auth_routes, guardian_routes, learning_routes, risk_routes, shadow_routes
 from core.auth import AuthService
 from core.identity import effective_actor
 from learning.versions import resolve_weights_dir
@@ -35,6 +36,7 @@ from adapters.echo_ef import EchoEFAdapter
 from angio.model import AngioModel
 from ecg.low_ef import LowEFFromECG
 from ecg.model import ECGModel
+from core.shadow import ShadowRhythmModel, ShadowStore
 from ecg.shd import StructuralFromECG
 from guardian.ocr import Engine
 from risk.aki import AKIModel
@@ -81,7 +83,8 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
                ef_model: Optional[EchoEFAdapter] = None, ocr_engine: Optional[Engine] = None,
                models_dir: Optional[Path] = None, running_version: str = "baseline",
                auth: Optional[AuthService] = None, low_ef_model: Optional[LowEFFromECG] = None,
-               shd_model: Optional[StructuralFromECG] = None) -> FastAPI:
+               shd_model: Optional[StructuralFromECG] = None, shadow_models: Optional[list[ShadowRhythmModel]] = None,
+               shadow_store: Optional[ShadowStore] = None) -> FastAPI:
     # Kirish yoqilgan bo'lsa: har bir so'rov huquq jadvali bo'yicha tekshiriladi; API hujjatlari (/docs) ochiq qolmaydi.
     app = FastAPI(title="CardioPath AI", version="0.1.0",
                   description="Kardiologiya va kardioxirurgiya yagona AI-CDSS platformasi. " + DISCLAIMER,
@@ -106,7 +109,10 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
     risk_routes.register(app, store, _get, aki_model)
     notifier = notifier or LogNotifier()
     guardian_routes.register(app, store, _get, notifier)
-    ai_routes.register(app, store, _get, notifier, ecg_model, angio_model, ef_model, ocr_engine, low_ef=low_ef_model, shd=shd_model)
+    ai_routes.register(app, store, _get, notifier, ecg_model, angio_model, ef_model, ocr_engine, low_ef=low_ef_model, shd=shd_model,
+                       shadow_models=shadow_models, shadow_store=shadow_store)
+    if shadow_store is not None:
+        shadow_routes.register(app, shadow_store, [m.key for m in shadow_models or []])
     alerts_api.register(app, store, _get)
     auth_routes.register_status(app, auth is not None)
     if auth is not None:
@@ -276,6 +282,21 @@ def _load_shd() -> Optional[StructuralFromECG]:
         return None
 
 
+def _load_shadow() -> list[ShadowRhythmModel]:
+    """Shadow modellar: javobi hech kimga ko'rsatilmaydi, faqat shifokor yorlig'i bilan solishtirish uchun yoziladi."""
+    from core.registry import LicenseError
+
+    out = []
+    for d in filter(None, (x.strip() for x in os.environ.get("CARDIOPATH_SHADOW", "weights/ecg_afib_multi2").split(","))):
+        try:
+            m = ShadowRhythmModel.from_dir(d)
+        except LicenseError:
+            m = None
+        if m is not None:
+            out.append(m)
+    return out
+
+
 def _load_auth(db_path: str, store: EpisodeStore) -> Optional[AuthService]:
     """CARDIOPATH_AUTH=on bo'lsa kirish yoqiladi. Administrator bo'lmasa, ishga tushmaydi (tizim qulflanib qolmasin)."""
     if os.environ.get("CARDIOPATH_AUTH", "off").strip().lower() not in ("on", "1", "true", "yes"):
@@ -302,4 +323,5 @@ def default_app() -> FastAPI:
                       Path(rec_dir) if rec_dir else None, models_dir=models_dir, running_version=running,
                       ecg_model=ECGModel.from_dir(os.environ.get("CARDIOPATH_ECG_WEIGHTS", "weights/ecg")),
                       angio_model=AngioModel.from_dir(os.environ.get("CARDIOPATH_ANGIO_WEIGHTS", "weights/angio")),
-                      ef_model=_load_ef(), auth=auth, low_ef_model=_load_low_ef(), shd_model=_load_shd())
+                      ef_model=_load_ef(), auth=auth, low_ef_model=_load_low_ef(), shd_model=_load_shd(),
+                      shadow_models=_load_shadow(), shadow_store=ShadowStore(db_path))

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CardioPath AI — Shadow</title>
+<style>
+  :root { --bg:#f4f8fc; --card:#fff; --text:#13223a; --muted:#5b6b82; --border:#d9e3ef; --accent:#1769e0; --green:#1b8a4a; --green-bg:#e4f6ec;
+          --red:#c62828; --red-bg:#fdeaea; --yellow-bg:#fff6dc; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0c1524; --card:#142038; --text:#e8eef8; --muted:#9db0c9; --border:#26395a;
+          --accent:#4c9bff; --green:#55c777; --green-bg:#11291d; --red:#ff7b7b; --red-bg:#321719; --yellow-bg:#2d2713; } }
+  :root[data-theme="dark"] { --bg:#0c1524; --card:#142038; --text:#e8eef8; --muted:#9db0c9; --border:#26395a; --accent:#4c9bff; --green:#55c777;
+          --green-bg:#11291d; --red:#ff7b7b; --red-bg:#321719; --yellow-bg:#2d2713; }
+  * { box-sizing: border-box; } [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 system-ui, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 880px; margin: 0 auto; padding: 14px 16px 64px; }
+  header { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 6px 0 14px; }
+  header a.back { color: var(--accent); text-decoration: none; font-weight: 700; }
+  .tools { display: flex; gap: 6px; }
+  .tools button { border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 8px; min-height: 40px; min-width: 44px; padding: 0 10px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .tools button[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+  h1 { font-size: 26px; margin: 4px 0 4px; } .sub { color: var(--muted); margin: 0 0 16px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }
+  .card h2 { font-size: 17px; margin: 0 0 10px; }
+  .kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+  .kv div { background: var(--bg); border-radius: 10px; padding: 8px 12px; } .kv small { display: block; color: var(--muted); font-size: 12.5px; } .kv b { word-break: break-all; }
+  .gate { display: flex; gap: 10px; padding: 8px 0; border-top: 1px solid var(--border); } .gate:first-of-type { border-top: 0; }
+  .mark { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+  .mark.ok { background: var(--green-bg); color: var(--green); } .mark.no { background: var(--red-bg); color: var(--red); }
+  .gate small { display: block; color: var(--muted); }
+  .note { padding: 10px 12px; border-radius: 10px; background: var(--yellow-bg); font-size: 14px; margin-top: 10px; }
+  textarea, input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); font: inherit; margin: 6px 0 10px; }
+  .btn { border: 0; border-radius: 10px; padding: 11px 20px; font: inherit; font-weight: 700; cursor: pointer; background: var(--accent); color: #fff; min-height: 44px; }
+  .btn.warn { background: var(--red); } .btn:disabled { opacity: .6; cursor: wait; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; } td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .msg { margin-top: 8px; font-weight: 600; } .msg.err { color: var(--red); } .msg.ok { color: var(--green); }
+  code { background: var(--bg); padding: 2px 6px; border-radius: 6px; word-break: break-all; }
+  @media (max-width: 520px) { h1 { font-size: 22px; } }
+  select { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; min-height: 40px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+</style>
+
+</head>
+<body>
+<main>
+  <header>
+    <a class="back" href="/" data-i="back"></a>
+    <div class="tools" id="langs"><button type="button" data-lang="uz">UZ</button><button type="button" data-lang="ru">RU</button><button type="button" data-lang="en">EN</button></div>
+  </header>
+  <h1 data-i="title"></h1>
+  <p class="sub" data-i="sub"></p>
+  <div class="card" id="needLogin" hidden><span data-i="needLogin"></span> <a href="/" data-i="signInLink"></a></div>
+  <div id="content" hidden>
+    <section class="card" id="labelCard"><h2 data-i="pending"></h2><p class="sub" data-i="howto"></p>
+      <div id="actorBox"><label for="actor" data-i="actor"></label><input id="actor" maxlength="80"></div>
+      <div id="pend"></div><div class="msg" id="pMsg" role="status"></div></section>
+    <section class="card" id="repCard" hidden><h2 data-i="report"></h2><div id="rep"></div></section>
+  </div>
+</main>
+<script>
+const I = {
+  uz: { back: "← Bosh sahifa", title: "Shadow rejimi: EKG ritmini ko'r baholash", sub: "Yangi model haqiqiy EKG'larda jim ishlaydi. Uning javobi hech kimga ko'rsatilmaydi. Siz EKG'ni o'zingiz o'qib ritmni kiriting — keyin model siz bilan solishtiriladi.",
+        needLogin: "Avval tizimga kiring.", signInLink: "Kirish", pending: "Yorliq kutayotgan EKG'lar", howto: "Har bir EKG uchun asl yozuvga qarab ritmni tanlang va «Saqlash»ni bosing. Model javobi bu yerda ataylab ko'rsatilmaydi.",
+        actor: "Ismingiz", save: "Saqlash", saved: "Saqlandi", none: "Yorliq kutayotgan EKG yo'q", episode: "Epizod", at: "Vaqt", failed: "Xato", needActor: "Ismingizni kiriting",
+        report: "Hisobot (faqat umumlashgan)", runs: "Jami EKG", labeled: "Yorliqli", model: "Model", live: "Ulangan model", shadow: "Shadow model", sens: "AFIB sezgirligi", spec: "O'ziga xoslik",
+        fast: "Tez ritm → AFIB", agree: "Ritm mosligi", early: "Hali erta: kamida 30 AFIB va 100 AFIB'siz yorliq kerak", ready: "Yetarli holat to'plandi", noModels: "Hali solishtiriladigan yorliq yo'q",
+        SR: "Sinus ritmi", SBRAD: "Sinus bradikardiyasi", STACH: "Sinus taxikardiyasi", AFIB: "Bo'lmachalar fibrillyatsiyasi", AFL: "Bo'lmachalar titrashi (flutter)", SVT: "SVT / bo'lmacha taxikardiyasi", OTHER: "Boshqa / aniqlab bo'lmaydi" },
+  ru: { back: "← Главная", title: "Теневой режим: слепая оценка ритма ЭКГ", sub: "Новая модель тихо работает на реальных ЭКГ. Её ответ никому не показывается. Прочитайте ЭКГ сами и укажите ритм — затем модель сравнивается с вами.",
+        needLogin: "Сначала войдите в систему.", signInLink: "Вход", pending: "ЭКГ, ожидающие разметки", howto: "Для каждой ЭКГ выберите ритм по исходной записи и нажмите «Сохранить». Ответ модели здесь намеренно скрыт.",
+        actor: "Ваше имя", save: "Сохранить", saved: "Сохранено", none: "Нет ЭКГ для разметки", episode: "Эпизод", at: "Время", failed: "Ошибка", needActor: "Введите имя",
+        report: "Отчёт (только сводный)", runs: "Всего ЭКГ", labeled: "Размечено", model: "Модель", live: "Подключённая модель", shadow: "Теневая модель", sens: "Чувствительность ФП", spec: "Специфичность",
+        fast: "Быстрый ритм → ФП", agree: "Совпадение ритма", early: "Рано: нужно ≥30 ФП и ≥100 без ФП", ready: "Набрано достаточно случаев", noModels: "Пока нет размеченных для сравнения",
+        SR: "Синусовый ритм", SBRAD: "Синусовая брадикардия", STACH: "Синусовая тахикардия", AFIB: "Фибрилляция предсердий", AFL: "Трепетание предсердий", SVT: "СВТ / предсердная тахикардия", OTHER: "Другое / не определить" },
+  en: { back: "← Home", title: "Shadow mode: blinded ECG rhythm reading", sub: "A new model runs silently on real ECGs. Its output is never shown to anyone. Read the ECG yourself and enter the rhythm — the model is then compared with you.",
+        needLogin: "Please sign in first.", signInLink: "Sign in", pending: "ECGs awaiting a label", howto: "For each ECG, pick the rhythm from the original tracing and press Save. The model's answer is deliberately hidden here.",
+        actor: "Your name", save: "Save", saved: "Saved", none: "No ECGs awaiting a label", episode: "Episode", at: "Time", failed: "Error", needActor: "Enter your name",
+        report: "Report (aggregate only)", runs: "ECGs", labeled: "Labelled", model: "Model", live: "Live model", shadow: "Shadow model", sens: "AF sensitivity", spec: "Specificity",
+        fast: "Fast rhythm → AF", agree: "Rhythm agreement", early: "Too early: need ≥30 AF and ≥100 non-AF labels", ready: "Enough cases collected", noModels: "No labelled cases to compare yet",
+        SR: "Sinus rhythm", SBRAD: "Sinus bradycardia", STACH: "Sinus tachycardia", AFIB: "Atrial fibrillation", AFL: "Atrial flutter", SVT: "SVT / atrial tachycardia", OTHER: "Other / cannot tell" },
+};
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+let lang = store.get("lang") in I ? store.get("lang") : "uz";
+const t = (k) => I[lang][k] ?? I.uz[k] ?? k;
+let session = null, authOn = false, pend = null, rep = null, labels = [];
+try { session = JSON.parse(sessionStorage.getItem("auth") || "null"); } catch (e) {}
+const th = store.get("theme"); if (th === "light" || th === "dark") document.documentElement.dataset.theme = th;
+const can = (p) => !authOn || (!!session && session.permissions.includes(p));
+const api = (url, opts = {}) => fetch(url, { ...opts, headers: { "Content-Type": "application/json", ...(session ? { Authorization: "Bearer " + session.token } : {}) } });
+const pct = (v) => v === null || v === undefined ? "—" : (100 * v).toFixed(1) + "%";
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-i]").forEach((el) => { el.textContent = t(el.dataset.i); });
+  document.querySelectorAll("#langs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+  paint();
+}
+document.querySelectorAll("#langs button").forEach((b) => b.addEventListener("click", () => { lang = b.dataset.lang; store.set("lang", lang); applyLang(); }));
+
+function paint() {
+  if (pend) {
+    $("pend").innerHTML = pend.length ? `<table><tr><th>${esc(t("episode"))}</th><th>${esc(t("at"))}</th><th></th></tr>${pend.map((p) =>
+      `<tr><td><code>${esc(p.episode_id)}</code></td><td>${esc(String(p.created_at).slice(0, 19).replace("T", " "))}</td><td><div class="row">
+       <select id="sel${p.run_id}" aria-label="rhythm"><option value=""></option>${labels.map((l) => `<option value="${l}">${esc(t(l))}</option>`).join("")}</select>
+       <button class="btn" type="button" data-run="${p.run_id}">${esc(t("save"))}</button></div></td></tr>`).join("")}</table>` : `<p class="sub">${esc(t("none"))}</p>`;
+    document.querySelectorAll("[data-run]").forEach((b) => b.addEventListener("click", () => save(b.dataset.run, b)));
+  }
+  if (rep) {
+    const ms = Object.entries(rep.models);
+    const row = (k, a, b) => `<tr><td>${esc(t(k))}</td><td>${a}</td><td>${b}</td></tr>`;
+    $("rep").innerHTML = `<div class="kv"><div><small>${esc(t("runs"))}</small><b>${rep.runs}</b></div><div><small>${esc(t("labeled"))}</small><b>${rep.labeled}</b></div></div>` +
+      (ms.length ? ms.map(([key, m]) => `<h2 style="margin-top:14px">${esc(t("model"))}: <code>${esc(key)}</code></h2>
+        <table><tr><th></th><th>${esc(t("live"))}</th><th>${esc(t("shadow"))}</th></tr>
+        ${row("labeled", m.live_model.n, m.shadow_model.n)}${row("sens", pct(m.live_model.sensitivity), pct(m.shadow_model.sensitivity))}
+        ${row("spec", pct(m.live_model.specificity), pct(m.shadow_model.specificity))}${row("fast", pct(m.live_model.fast_called_afib), pct(m.shadow_model.fast_called_afib))}
+        ${row("agree", "—", pct(m.rhythm_agreement))}</table><div class="note">${esc(t(m.ready ? "ready" : "early"))}</div>`).join("") : `<p class="sub">${esc(t("noModels"))}</p>`);
+  }
+}
+async function save(runId, btn) {
+  const msg = $("pMsg"); msg.className = "msg"; msg.textContent = "";
+  const rhythm = $("sel" + runId).value; if (!rhythm) return;
+  const actor = session ? session.user.username : $("actor").value.trim();
+  if (!actor) { msg.className = "msg err"; msg.textContent = t("needActor"); return; }
+  store.set("shadowActor", actor); btn.disabled = true;
+  try {
+    const r = await api(`/shadow/${runId}/label`, { method: "POST", body: JSON.stringify({ actor, rhythm }) });
+    if (r.ok) { await load(); msg.className = "msg ok"; msg.textContent = t("saved"); return; }
+    let d = ""; try { d = (await r.json()).detail; } catch (e) {}
+    msg.className = "msg err"; msg.textContent = `${t("failed")}: ${typeof d === "string" ? d : JSON.stringify(d)}`;
+  } catch (e) { msg.className = "msg err"; msg.textContent = t("failed"); }
+  btn.disabled = false;
+}
+async function load() {
+  $("labelCard").hidden = !can("shadow.label"); $("repCard").hidden = !can("shadow.report");
+  if (can("shadow.label")) {
+    const r = await api("/shadow/pending?limit=200");
+    if (r.status === 401) { $("content").hidden = true; $("needLogin").hidden = false; return; }
+    if (r.ok) { const d = await r.json(); pend = d.items; labels = d.labels; }
+  }
+  if (can("shadow.report")) { const r = await api("/shadow/report"); if (r.ok) rep = await r.json(); }
+  $("needLogin").hidden = true; $("content").hidden = false; paint();
+}
+(async () => {
+  try { authOn = (await (await fetch("/auth/status")).json()).enabled; } catch (e) {}
+  $("actorBox").hidden = !!session; $("actor").value = store.get("shadowActor") || "";
+  applyLang();
+  if (authOn && !session) { $("needLogin").hidden = false; return; }
+  await load();
+})();
+</script>
+</body>
+</html>
