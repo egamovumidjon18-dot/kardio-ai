@@ -1,0 +1,87 @@
+{
+ "n": 5772,
+ "skipped": {
+  "no_rhythm_or_paced": 4572,
+  "unreadable": 0
+ },
+ "class_counts": {
+  "SR": 2083,
+  "SBRAD": 1656,
+  "STACH": 1239,
+  "AFIB": 570,
+  "AFL": 171,
+  "SVT": 53
+ },
+ "abstain_rate": 0.0085,
+ "afib_alone": {
+  "sensitivity": 0.8559,
+  "specificity": 0.8963,
+  "auroc": 0.9296,
+  "auroc_ci95": [
+   0.9165,
+   0.9421
+  ],
+  "fast_called_afib": 0.3128,
+  "called_afib_by_true_class": {
+   "SR": "26/2061",
+   "SBRAD": "53/1642",
+   "STACH": "279/1235",
+   "AFIB": "481/562",
+   "AFL": "131/171",
+   "SVT": "46/52"
+  }
+ },
+ "rhythm_model": {
+  "afib_auroc": 0.9321,
+  "per_class_auroc": {
+   "SR": 0.9889,
+   "SBRAD": 0.9937,
+   "STACH": 0.9913,
+   "AFIB": 0.9321,
+   "AFL": 0.9188,
+   "SVT": 0.9354
+  }
+ },
+ "combined": {
+  "sensitivity": 0.71,
+  "specificity": 0.9767,
+  "fast_called_afib": 0.0357,
+  "flag_sensitivity": 0.8559,
+  "called_afib_by_true_class": {
+   "SR": "18/2061",
+   "SBRAD": "50/1642",
+   "STACH": "17/1235",
+   "AFIB": "399/562",
+   "AFL": "24/171",
+   "SVT": "11/52"
+  },
+  "fast_flag_by_true_class": {
+   "SR": "8/2061",
+   "SBRAD": "3/1642",
+   "STACH": "262/1235",
+   "AFIB": "82/562",
+   "AFL": "107/171",
+   "SVT": "35/52"
+  }
+ },
+ "rhythm_threshold": 0.279951274394989,
+ "gates": {
+  "sensitivity": 0.85,
+  "specificity": 0.92,
+  "max_fast_called_afib": 0.25,
+  "flag_sensitivity": 0.95,
+  "min_specificity_gain": 0.02,
+  "max_sensitivity_loss": 0.05,
+  "max_abstain": 0.2
+ },
+ "checks": {
+  "sensitivity": false,
+  "specificity": true,
+  "fast_called_afib": true,
+  "flag_sensitivity": false,
+  "specificity_gain": true,
+  "sensitivity_loss": false,
+  "abstain": true
+ },
+ "passed": false
+}

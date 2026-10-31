@@ -9,6 +9,8 @@ Bu jadval maqola va taqdimot uchun yagona manba. Har bir raqam o'z hisobotiga bo
 | EKG: AFIB + 5 toifa | PTB-XL (CC-BY) | ichki test (rasmiy 10-fold, bemor darajasida) | AFIB test AUROC 0.981 (0.963–0.992), sezgirlik 0.941, o'ziga xoslik 0.971; MI 0.934, STTC 0.934, CD 0.920, HYP 0.842 | ✅ ulangan | `weights/ecg/model_card.json` |
 | EKG AFIB: tashqi tekshiruv | — | Chapman–Shaoxing (Xitoy, 10 646) | AUROC 0.950, sezgirlik 0.996, o'ziga xoslik 0.844 (talab 0.85) | ⚠️ mezondan o'tmadi; matnga «titrash/SVT bo'lishi mumkin» qo'shildi | `docs/experiments/ecg_chapman_external.md` |
 | EKG ritm (6 sinf) | Chapman–Shaoxing (CC0) | PTB-XL (tashqi, 20 484) | AFIB AUROC 0.988, o'ziga xoslik 0.993, sezgirlik 0.843 (talab 0.85) | ❌ ulanmagan | `docs/experiments/ecg_rhythm_chapman.md` |
+| EKG AFIB: 2-tashqi tekshiruv | — | Georgia (AQSh, 5 772) | AUROC 0.930 (0.917–0.942), sezgirlik 0.856, o'ziga xoslik 0.896 | ℹ️ ma'lumot uchun | `docs/experiments/ecg_georgia_combined.md` |
+| AFIB + ritm modeli birikmasi | — | Georgia (uchinchi mustaqil) | o'ziga xoslik 0.896 → 0.977, lekin sezgirlik 0.856 → 0.710 | ❌ ulanmagan | `docs/experiments/ecg_georgia_combined.md` |
 | AI-EKG past EF (LVEF ≤ 45%) | EchoNext (PhysioNet, tadqiqot) | rasmiy test, bemor kesishmasi 0 | AUROC 0.886 (0.874–0.899), jadval bazasi 0.782 | ✅ ulangan | `docs/experiments/ecg_lowef_echonext.md` |
 | AI-EKG tuzilmaviy kasalliklar | EchoNext | rasmiy test | RV disfunksiya 0.874, TR 0.818, SHD 0.815, MR 0.813 | ✅ 4 yorliq ulangan | `docs/experiments/ecg_shd_echonext.md` |
 | AI-EKG: aorta stenozi | EchoNext | rasmiy test | 0.825, lekin yosh/jins bazasi 0.844 | ❌ rad etilgan | `docs/experiments/ecg_shd_echonext.md` |
