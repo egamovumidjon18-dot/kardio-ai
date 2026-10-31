@@ -1,0 +1,26 @@
+# Ishga tushirish:   docker compose up -d --build      → http://localhost:8010
+# To'xtatish:        docker compose down
+# Administrator:     docker compose run --rm -it cardiopath python -m core.auth_cli create-user --username admin --role admin  (parolni o'zi so'raydi)
+services:
+  cardiopath:
+    build: .
+    image: cardiopath-ai:local
+    container_name: cardiopath-ai
+    restart: unless-stopped
+    # Faqat shu kompyuterdan ochiladi. Boshqa kompyuterlarga ochishdan OLDIN kirishni yoqing (CARDIOPATH_AUTH=on).
+    ports:
+      - "127.0.0.1:8010:8010"
+    environment:
+      CARDIOPATH_AUTH: ${CARDIOPATH_AUTH:-off}
+      CARDIOPATH_MODE: ${CARDIOPATH_MODE:-research}
+      # Telegram (Guardian ogohlantirishlari, ixtiyoriy): .env faylida bering, bu yerga yozmang
+      CARDIOPATH_TG_TOKEN: ${CARDIOPATH_TG_TOKEN:-}
+      CARDIOPATH_TG_CHAT: ${CARDIOPATH_TG_CHAT:-}
+    volumes:
+      - ./weights:/app/weights:ro          # model og'irliklari (faqat o'qish)
+      - cardiopath-data:/data              # baza (cardiopath.db)
+      - cardiopath-models:/app/models      # shifokor tasdiqlagan yangi model versiyalari
+
+volumes:
+  cardiopath-data:
+  cardiopath-models:

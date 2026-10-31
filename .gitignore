@@ -8,3 +8,4 @@ weights/**/split.json
 weights/**/*.pt
 data/
 models/
+.env

@@ -1,0 +1,12 @@
+# obrazga kirmaydi: muhit, ma'lumot, og'irliklar (compose orqali ulanadi), maxfiy fayllar
+.git
+.venv
+.claude
+**/__pycache__
+.pytest_cache
+*.db
+data/
+models/
+weights/
+.env
+*.log

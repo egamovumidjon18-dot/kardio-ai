@@ -160,6 +160,30 @@ C:\Users\user\.venvs\cardiopath-ai\Scripts\python -m uvicorn api.main:default_ap
 
 API hujjatlari: http://localhost:8010/docs (kirish yoqilganda `/docs` o'chiriladi).
 
+### Docker bilan
+
+Python o'rnatish shart emas, faqat Docker Desktop kerak.
+
+```bash
+docker compose up -d --build
+```
+
+Keyin brauzerda http://localhost:8010 ni oching. To'xtatish: `docker compose down`.
+
+**Nima qayerda saqlanadi:**
+- **Obraz** faqat kodni o'z ichiga oladi (CPU, torch yo'q, taxminan 1,2 GB).
+- **Model og'irliklari** `./weights` papkasidan faqat o'qish uchun ulanadi. Ular obrazga kirmaydi: EchoNext kabi tadqiqot litsenziyali og'irliklar obraz bilan birga tarqalib ketmasligi kerak.
+- **Baza va tasdiqlangan model versiyalari** Docker volume'larida saqlanadi (`cardiopath-data`, `cardiopath-models`). Konteyner qayta ishga tushganda ham yo'qolmaydi.
+- `docker compose down -v` buyrug'i bazani **o'chirib yuboradi**.
+
+**Xavfsizlik:**
+- Port faqat shu kompyuterga ochiq (`127.0.0.1:8010`).
+- Boshqa kompyuterlardan ochishdan oldin kirishni yoqing:
+  1. Administrator yarating: `docker compose run --rm -it cardiopath python -m core.auth_cli create-user --username admin --role admin`.
+  2. `.env` faylida `CARDIOPATH_AUTH=on` deb yozing.
+  3. Shundan keyingina `docker-compose.yml` dagi portni o'zgartiring.
+- Telegram tokeni ham `.env` faylida turadi. Bu fayl git'ga kirmaydi.
+
 ### Kirish va rollar (`CARDIOPATH_AUTH`)
 
 Standart: **o'chiq** (`CARDIOPATH_AUTH=off`) — mahalliy ishlash va testlar o'zgarmaydi. Yoqish:

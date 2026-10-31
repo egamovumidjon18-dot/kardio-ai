@@ -27,6 +27,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from research.metrics import auroc  # noqa: F401  (eski importlar: from research.train_pcg import auroc)
 from screening.features import N_MELS, log_mel
 from screening.model import LOCATIONS
 from screening.pcg import TARGET_SR, WIN_S, assess_quality, load_wav, preprocess, windows
@@ -157,21 +158,6 @@ class PCGNet(nn.Module):
 
 
 # ---------------------------------------------------------------- baholash
-def auroc(y: np.ndarray, s: np.ndarray) -> float:
-    pos, neg = s[y == 1], s[y == 0]
-    if len(pos) == 0 or len(neg) == 0:
-        return float("nan")
-    order = np.argsort(np.concatenate([pos, neg]), kind="mergesort")
-    ranks = np.empty(len(order))
-    ranks[order] = np.arange(1, len(order) + 1)
-    # teng qiymatlar uchun o'rtacha rang
-    allv = np.concatenate([pos, neg])
-    for v in np.unique(allv):
-        idx = allv == v
-        ranks[idx] = ranks[idx].mean()
-    return float((ranks[:len(pos)].sum() - len(pos) * (len(pos) + 1) / 2) / (len(pos) * len(neg)))
-
-
 @torch.no_grad()
 def patient_scores(model, items: list[dict], device) -> dict[str, dict]:
     """Inference bilan bir xil agregatsiya: yozuv = oynalar o'rtachasi, bemor = yozuvlar maksimumi."""

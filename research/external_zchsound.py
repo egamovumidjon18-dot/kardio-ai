@@ -20,7 +20,7 @@ from pathlib import Path
 
 import numpy as np
 
-from research.train_pcg import auroc
+from research.metrics import auroc
 from screening.model import PCGModel, Recording
 
 SUBSETS = {
