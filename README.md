@@ -113,6 +113,9 @@ python -m research.adapt_zchsound --data-dir <eksport> --base <pcg.pt papkasi> -
 
 ### O'z-o'zini o'rgatish (nazorat bilan)
 
+**Jadval bilan (ixtiyoriy):** `CARDIOPATH_LEARNING_EVERY_H=168` (har hafta), `CARDIOPATH_CIRCOR_DIR` va `CARDIOPATH_RECORDINGS` berilsa, server sikl vaqtini soatiga bir marta tekshiradi va nomzodni o'zi tayyorlaydi. Nomzod baribir faqat kardiolog «Modellar» sahifasida tasdiqlaganidan keyin ishga tushadi. Docker obrazida torch yo'q, shuning uchun u yerda sikl o'tkazib yuboriladi va sababi yoziladi.
+
+
 Dastur yangi tasdiqlangan holatlardan o'zi o'rganadi, lekin **modelni o'zi almashtirmaydi**: nomzod avtomatik o'qitiladi va darvozalardan o'tkaziladi, joriy qilish esa faqat shifokor tasdig'i bilan.
 
 ```bash

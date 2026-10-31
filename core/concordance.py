@@ -18,6 +18,7 @@ class Agreement(str, Enum):
     DISAGREE = "disagree"
     AI_ABSTAINED = "ai_abstained"
     RULE_ONLY = "rule_only"        # AI moduli umuman yo'q / ulanmagan
+    NOT_COMPARABLE = "not_comparable"  # ikkala natija bor, lekin solishtirib bo'lmaydi (masalan, turli vaqtdagi o'lchovlar)
 
 
 @dataclass

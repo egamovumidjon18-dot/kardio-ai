@@ -84,6 +84,7 @@ const I = {
     rd_admin: "foydalanuvchilar, jurnal; klinik amal yo'q", rd_clinician: "bemor qo'shish, skrining, fayl yuklash", rd_cardiologist: "+ xavf baholash, konsilium, model tasdig'i",
     rd_surgeon: "+ ogohlantirishni qabul qilish", rd_icu: "bosqich, xavf, fayl yuklash", rd_patient: "faqat o'z uy kuzatuvi",
     ev_auth_login: "Tizimga kirdi", ev_auth_login_failed: "Kirish muvaffaqiyatsiz", ev_auth_logout: "Tizimdan chiqdi", ev_auth_change_password: "Parolini o'zgartirdi", ev_auth_change_password_failed: "Parol o'zgartirilmadi", ev_user_create: "Foydalanuvchi qo'shildi", ev_user_disable: "Foydalanuvchi o'chirildi", ev_user_enable: "Foydalanuvchi yoqildi", ev_user_reset_password: "Parol yangilandi", ev_user_set_role: "Rol o'zgartirildi", ev_model_promote: "Model tasdiqlandi", ev_model_rollback: "Model qaytarildi",
+    conc_not_comparable: "Solishtirib bo'lmaydi (o'lchovlar turli vaqtda)",
     skip: "Asosiy qismga o'tish", research: "Tadqiqot rejimi", search: "Bemor kodi bo'yicha qidirish", newEpisode: "Yangi bemor",
     nav_dash: "Bosh panel", nav_eps: "Bemorlar", nav_screen: "Skrining", nav_alerts: "Ogohlantirishlar", nav_models: "Modellar", nav_shadow: "Model sinovi",
     welcome: "Xush kelibsiz", signInTitle: "Tizimga kirish", tagline: "Kardiologiya va kardioxirurgiya uchun AI yordamchi",
@@ -198,6 +199,7 @@ const I = {
     rd_admin: "пользователи, журнал; без клинических действий", rd_clinician: "пациенты, скрининг, загрузка файлов", rd_cardiologist: "+ оценка риска, консилиум, утверждение моделей",
     rd_surgeon: "+ приём оповещений", rd_icu: "этапы, риск, загрузка файлов", rd_patient: "только своё домашнее наблюдение",
     ev_auth_login: "Вход в систему", ev_auth_login_failed: "Неудачный вход", ev_auth_logout: "Выход", ev_auth_change_password: "Смена пароля", ev_auth_change_password_failed: "Пароль не изменён", ev_user_create: "Пользователь добавлен", ev_user_disable: "Пользователь отключён", ev_user_enable: "Пользователь включён", ev_user_reset_password: "Пароль сброшен", ev_user_set_role: "Роль изменена", ev_model_promote: "Модель утверждена", ev_model_rollback: "Откат модели",
+    conc_not_comparable: "Несопоставимо (измерения в разное время)",
     skip: "Перейти к содержимому", research: "Исследовательский режим", search: "Поиск по коду пациента", newEpisode: "Новый пациент",
     nav_dash: "Панель", nav_eps: "Пациенты", nav_screen: "Скрининг", nav_alerts: "Оповещения", nav_models: "Модели", nav_shadow: "Испытание модели",
     welcome: "Добро пожаловать", signInTitle: "Вход в систему", tagline: "ИИ-помощник для кардиологии и кардиохирургии",
@@ -312,6 +314,7 @@ const I = {
     rd_admin: "users, log; no clinical actions", rd_clinician: "patients, screening, uploads", rd_cardiologist: "+ risk, Heart Team, model approval",
     rd_surgeon: "+ acknowledge alerts", rd_icu: "stages, risk, uploads", rd_patient: "own home follow-up only",
     ev_auth_login: "Signed in", ev_auth_login_failed: "Failed sign-in", ev_auth_logout: "Signed out", ev_auth_change_password: "Changed password", ev_auth_change_password_failed: "Password not changed", ev_user_create: "User added", ev_user_disable: "User disabled", ev_user_enable: "User enabled", ev_user_reset_password: "Password reset", ev_user_set_role: "Role changed", ev_model_promote: "Model approved", ev_model_rollback: "Model rolled back",
+    conc_not_comparable: "Not comparable (measured at different times)",
     skip: "Skip to content", research: "Research mode", search: "Search by patient code", newEpisode: "New patient",
     nav_dash: "Dashboard", nav_eps: "Patients", nav_screen: "Screening", nav_alerts: "Alerts", nav_models: "Models", nav_shadow: "Model trial",
     welcome: "Welcome", signInTitle: "Sign in", tagline: "AI assistant for cardiology and cardiac surgery",
@@ -744,9 +747,9 @@ function aiRow(name, st, latest) {
 }
 function concChip(c) {
   const st = c.status, cls = st === "agree" ? "agree" : st === "disagree" ? "disagree" : st === "ai_abstained" ? "abstained" : "";
-  const icon = st === "agree" ? "✓" : st === "disagree" ? "!" : st === "ai_abstained" ? "◇" : "·";
+  const icon = st === "agree" ? "✓" : st === "disagree" ? "!" : st === "ai_abstained" ? "◇" : st === "not_comparable" ? "≠" : "·";
   return `<div class="row"><span class="cp-concordance cp-concordance--${cls}"><span aria-hidden="true">${icon}</span>${esc(t("conc_" + st) || st)}</span>
-    <small class="cp-meta" style="flex-basis:100%">${esc(c.question || "")}</small></div>`;
+    <small class="cp-meta" style="flex-basis:100%">${esc(c.question || "")}${st === "not_comparable" && c.message ? " — " + esc(c.message) : ""}</small></div>`;
 }
 async function episodePage(id) {
   const [ep, d] = await Promise.all([api(`/episodes/${id}`), api(`/episodes/${id}/digest`)]);

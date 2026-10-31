@@ -303,3 +303,20 @@ def test_structural_findings_reach_digest_and_protocol(env):
     text = client.get(f"/episodes/{eid}/heart-team-protocol").text
     assert "AI-EKG: yurak tuzilishi" in text and "mitral regurgitatsiya" in text
     assert "AI-EKG: past EF | past EF (≤45%) ehtimoli (p=0.80)" in text
+
+
+def test_measurements_far_apart_in_time_are_not_compared():
+    from datetime import datetime, timedelta, timezone
+    from core.episode import Episode
+    from core.evidence import Evidence, Provenance, RiskLevel, Source
+    from integration.concordances import ecg_lvef_concordance, ef_concordance, lvef_evidence
+    ep = Episode(patient_ref="T-1", population="adult")
+    old = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat()
+    ecg = Evidence(kind="ecg.low_ef", value={"p_low_ef": .9}, source=Source.MODEL, provenance=Provenance(name="m"),
+                   risk=RiskLevel.MODERATE, created_at=old)
+    echo = Evidence(kind="echo.ef", value=30.0, source=Source.MODEL, provenance=Provenance(name="e"), risk=RiskLevel.HIGH, created_at=old)
+    ep.add(ecg); ep.add(echo); ep.add(lvef_evidence(62))
+    c = ecg_lvef_concordance(ep)
+    assert c["status"] == "not_comparable" and not c["needs_discussion"] and "90 kun" in c["message"]
+    e = ef_concordance(ep)
+    assert e.status.value == "not_comparable" and not e.needs_discussion

@@ -4,6 +4,7 @@ Barcha solishtiruv `core.concordance.compare` orqali: AI xavfni hech qachon pasa
 """
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Optional
 
 from adapters.echo_ef import ef_risk
@@ -21,6 +22,14 @@ def lvef_evidence(percent: float) -> Evidence:
 
 
 LOW_EF_CUTOFF = 45.0
+MAX_GAP_DAYS = 30      # LVEF o'zgarishi mumkin: bundan uzoq vaqt farqidagi o'lchovlar o'zaro solishtirilmaydi
+
+
+def _gap_days(a, b) -> Optional[float]:
+    try:
+        return abs((datetime.fromisoformat(a.created_at) - datetime.fromisoformat(b.created_at)).total_seconds()) / 86400
+    except (TypeError, ValueError):
+        return None
 
 
 def ecg_lvef_concordance(ep: Episode) -> Optional[dict]:
@@ -33,6 +42,11 @@ def ecg_lvef_concordance(ep: Episode) -> Optional[dict]:
         return None
     measured_low = float(lvef.value) <= LOW_EF_CUTOFF
     q = "Past EF: AI-EKG vs o'lchangan LVEF"
+    gap = _gap_days(ai, lvef)
+    if gap is not None and gap > MAX_GAP_DAYS:
+        return {"question": q, "status": "not_comparable", "needs_discussion": False, "evidence_ids": [ai.id, lvef.id],
+                "message": f"EKG va ExoKG o'lchovi orasida {gap:.0f} kun — LVEF o'zgargan bo'lishi mumkin, solishtirilmaydi. "
+                           f"O'lchangan LVEF {lvef.value:.0f}% asosiy."}
     if ai.abstained:
         return {"question": q, "status": "ai_abstained", "needs_discussion": False, "evidence_ids": [ai.id, lvef.id],
                 "message": f"AI-EKG javob bermadi; o'lchangan LVEF {lvef.value:.0f}% asosiy."}
@@ -59,6 +73,10 @@ def ef_concordance(ep: Episode) -> Optional[ConcordanceResult]:
     rule, ai = ep.latest("clinician.lvef"), ep.latest("echo.ef")
     if rule is None or ai is None:
         return None
+    gap = _gap_days(rule, ai)
+    if gap is not None and gap > MAX_GAP_DAYS:
+        return ConcordanceResult(question="LVEF: shifokor vs AI (ExoKG video)", status=Agreement.NOT_COMPARABLE, rule=rule, ai=ai,
+                                 final_risk=rule.risk, message=f"O'lchovlar orasida {gap:.0f} kun — solishtirilmaydi; shifokor o'lchovi asosiy.")
     res = compare("LVEF: shifokor vs AI (ExoKG video)", rule, ai, tolerance=0)
     if ai.abstained or not isinstance(ai.value, (int, float)):
         return res
