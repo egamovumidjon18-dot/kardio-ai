@@ -5,7 +5,7 @@ from typing import Callable, Optional
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import PlainTextResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from core.episode import Episode, Stage
 from core.evidence import Evidence, Provenance, RiskLevel, Source
@@ -14,6 +14,7 @@ from integration.concordances import aki_concordance, ef_concordance, lvef_evide
 from risk.aki import AKIInput, AKIModel, thakar
 from risk.euroscore2 import EuroScoreInput, euroscore2
 from risk.protocol import heart_team_protocol
+from risk.rachs1 import PROCEDURES, Rachs1Input, rachs1
 
 # EuroSCORE II'da shifokor kiritmasa jim «eng past xavf» qiymati olinadigan maydonlar (LVEF alohida: AKI blokidan olinadi).
 SILENT_DEFAULTS = {
@@ -22,6 +23,13 @@ SILENT_DEFAULTS = {
     "weight_of_intervention": "yagona izolyatsiyalangan KShSh",
     "pa_systolic_mmhg": "o'pka arteriyasi bosimi me'yorda",
 }
+
+
+class Rachs1In(BaseModel):
+    actor: str
+    procedures: list[str] = Field(min_length=1, max_length=10, description="GET /rachs1/procedures dagi kodlar")
+    age_days: float = Field(ge=0, le=36500)
+    premature: bool = False
 
 
 class RiskIn(BaseModel):
@@ -70,6 +78,21 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], a
                 "ef_concordance": ef_conc.to_dict() if ef_conc else None,
                 "assumed_defaults": missing,
                 "evidence_ids": [e.id for e in added]}
+
+    @app.get("/rachs1/procedures")
+    def rachs1_procedures() -> dict:
+        return {"items": [{"code": c, "name": n, "category_le30d": a, "category_gt30d": b}
+                          for c, (n, a, b) in PROCEDURES.items()]}
+
+    @app.post("/episodes/{eid}/rachs1")
+    def assess_rachs1(eid: str, body: Rachs1In) -> dict:
+        ep = get(eid)
+        if ep.stage not in (Stage.HEART_TEAM, Stage.ICU):
+            raise HTTPException(409, f"xavf baholash HEART_TEAM yoki ICU bosqichida (hozir: {ep.stage.value})")
+        ev = rachs1(Rachs1Input(procedures=body.procedures, age_days=body.age_days, premature=body.premature))
+        ep.add(ev)
+        store.save(ep, body.actor, "risk.rachs1", {"category": ev.value, "procedures": body.procedures, "abstained": ev.abstained})
+        return {"evidence": ev.to_dict()}
 
     @app.get("/episodes/{eid}/heart-team-protocol", response_class=PlainTextResponse)
     def protocol(eid: str) -> str:

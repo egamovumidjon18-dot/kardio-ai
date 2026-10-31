@@ -63,6 +63,7 @@ def heart_team_protocol(ep: Episode) -> str:
         "| Ko'rsatkich | Qiymat | Xavf (manba) |",
         "|---|---|---|",
         _line(es, "EuroSCORE II (o'lim)"),
+        _line(ep.latest("risk.rachs1"), "RACHS-1 (bolalar, operatsiya toifasi)"),
         _line(aki_rule, "Thakar (dializli O'BYe)"),
         _line(aki_ml, "ML: KDIGO AKI"),
         "",
