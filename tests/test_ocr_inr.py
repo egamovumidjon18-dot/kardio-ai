@@ -71,3 +71,23 @@ def test_parse_common_lab_formats():
     assert parse_inr_text("МНО [INR] - 4,2") == 4.2
     assert parse_inr_text("MNO 2.5 (norma 2.0-3.0)") == 2.5
     assert parse_inr_text("INR: 1.2\nmaqsad INR 2.5") is None   # ikki xil qiymat — taxmin qilinmaydi
+
+
+def test_inr_read_preview_saves_nothing(tmp_path):
+    from fastapi.testclient import TestClient
+    from api.main import create_app
+    from core.store import SqliteEpisodeStore
+    from tests.test_ai_api import to_guardian
+    engine = lambda data: [("LABORATORIYA", 0.97), ("MNO (INR): 3.8", 0.98)]
+    c = TestClient(create_app(SqliteEpisodeStore(str(tmp_path / "o.db")), None, ocr_engine=engine))
+    eid = c.post("/episodes", json={"patient_ref": "O-1", "actor": "dr"}).json()["id"]
+    assert c.post(f"/episodes/{eid}/guardian/inr-read", files={"file": ("i.png", b"x", "image/png")}).status_code == 409   # uy kuzatuvi emas
+    to_guardian(c, eid)
+    n_before = len(c.get(f"/episodes/{eid}").json()["evidence"])
+    r = c.post(f"/episodes/{eid}/guardian/inr-read", files={"file": ("i.png", b"x", "image/png")})
+    assert r.status_code == 200 and r.json()["value"] == 3.8
+    assert len(c.get(f"/episodes/{eid}").json()["evidence"]) == n_before          # hech narsa saqlanmadi
+    low = TestClient(create_app(SqliteEpisodeStore(str(tmp_path / "p.db")), None, ocr_engine=lambda d: [("MNO 3.8", 0.4)]))
+    eid2 = low.post("/episodes", json={"patient_ref": "O-2", "actor": "dr"}).json()["id"]
+    to_guardian(low, eid2)
+    assert low.post(f"/episodes/{eid2}/guardian/inr-read", files={"file": ("i.png", b"x", "image/png")}).json() == {"value": None, "reason": "low_confidence"}

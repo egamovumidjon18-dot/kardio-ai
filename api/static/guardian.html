@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CardioPath — Bugungi ahvolingiz</title>
-<link rel="stylesheet" href="/static/cardiopath.css?v=20261101e">
-<script defer src="/static/cardiopath.js?v=20261101e"></script>
+<link rel="stylesheet" href="/static/cardiopath.css?v=20261101f">
+<script defer src="/static/cardiopath.js?v=20261101f"></script>
 <style>
   /* Bemor (yoki oila a'zosi) uchun: har ekranda bitta savol, katta tugmalar, tibbiy atama va AI so'zi yo'q. */
   body { font-size: 1.12rem; background: linear-gradient(180deg, #eaf2ff 0%, #f7faff 45%) fixed; }
@@ -104,6 +104,11 @@ const T = {
     again: "Boshiga qaytish", noEp: "Bu sahifani shifokoringiz bergan havola orqali oching.", errSend: "Yuborib bo'lmadi. Internetni tekshirib, qayta urining. Ahvolingiz yomon bo'lsa — 103.",
     errStage: "Hozir uy kuzatuvi davri emas. Savollaringiz bo'lsa, shifokoringizga qo'ng'iroq qiling.", retry: "Qayta yuborish",
     loginTitle: "Kirish", username: "Login", password: "Parol", signIn: "Kirish", loginBad: "Login yoki parol noto'g'ri",
+    inrQ: "Bugun MNO (INR) tahlil natijangiz bormi?", inrHelp: "Varfarin ichadiganlar uchun. Natija qog'ozining rasmini yuboring yoki raqamni yozing.",
+    inrPhoto: "Qog'oz rasmini yuborish", inrType: "Raqamni o'zim yozaman", inrNo: "Bugun tahlil yo'q", inrReading: "Rasm o'qilmoqda…",
+    inrConfirm: "Qog'ozdagi MNO raqami {v} mi?", inrConfirmHelp: "Qog'ozga qarab tekshiring. Noto'g'ri bo'lsa, o'zingiz yozing.", inrYes: "Ha, to'g'ri",
+    inrFix: "Yo'q, o'zim yozaman", inrNotRead: "Rasmdan raqamni aniq o'qib bo'lmadi. Iltimos, raqamni o'zingiz yozing.", inrValue: "MNO (INR) qiymati",
+    inrDose: "Dori dozasini o'zingiz o'zgartirmang — shifokoringiz hal qiladi.",
     q: { dyspnea_rest: ["Tinch holatda nafas qisyaptimi?", "Dam olayotganingizda ham nafas olish qiyinmi?"],
       orthopnea: ["Yotganda nafas qisyaptimi?", "Yostiqsiz tekis yota olmaysizmi?"],
       syncope: ["Hushdan ketdingizmi?", "Bugun yoki kecha hushingizni yo'qotdingizmi?"],
@@ -132,6 +137,11 @@ const T = {
     again: "В начало", noEp: "Откройте эту страницу по ссылке от вашего врача.", errSend: "Не удалось отправить. Проверьте интернет и повторите. Если плохо — 103.",
     errStage: "Сейчас не период домашнего наблюдения. Если есть вопросы, позвоните врачу.", retry: "Отправить снова",
     loginTitle: "Вход", username: "Логин", password: "Пароль", signIn: "Войти", loginBad: "Неверный логин или пароль",
+    inrQ: "Есть ли у вас сегодня результат МНО (INR)?", inrHelp: "Для принимающих варфарин. Отправьте фото бланка или введите число.",
+    inrPhoto: "Отправить фото бланка", inrType: "Введу число сам", inrNo: "Сегодня анализа нет", inrReading: "Читаем фото…",
+    inrConfirm: "МНО на бланке — {v}?", inrConfirmHelp: "Сверьте с бланком. Если неверно — введите сами.", inrYes: "Да, верно",
+    inrFix: "Нет, введу сам", inrNotRead: "Не удалось точно прочитать число на фото. Введите его, пожалуйста, сами.", inrValue: "Значение МНО (INR)",
+    inrDose: "Не меняйте дозу лекарства сами — решает ваш врач.",
     q: { dyspnea_rest: ["Есть одышка в покое?", "Трудно дышать, даже когда вы отдыхаете?"],
       orthopnea: ["Одышка, когда лежите?", "Не можете лежать ровно без подушек?"],
       syncope: ["Была потеря сознания?", "Сегодня или вчера вы теряли сознание?"],
@@ -160,6 +170,11 @@ const T = {
     again: "Back to start", noEp: "Please open this page using the link from your doctor.", errSend: "Could not send. Check your internet and try again. If unwell — 103.",
     errStage: "This is not the home follow-up period now. If you have questions, call your doctor.", retry: "Send again",
     loginTitle: "Sign in", username: "Login", password: "Password", signIn: "Sign in", loginBad: "Wrong login or password",
+    inrQ: "Do you have an INR result today?", inrHelp: "For people taking warfarin. Send a photo of the lab slip or type the number.",
+    inrPhoto: "Send a photo of the slip", inrType: "I'll type the number", inrNo: "No test today", inrReading: "Reading the photo…",
+    inrConfirm: "Is the INR on the slip {v}?", inrConfirmHelp: "Check against the slip. If wrong, type it yourself.", inrYes: "Yes, correct",
+    inrFix: "No, I'll type it", inrNotRead: "The number could not be read reliably. Please type it yourself.", inrValue: "INR value",
+    inrDose: "Do not change your medicine dose yourself — your doctor decides.",
     q: { dyspnea_rest: ["Are you short of breath at rest?", "Is it hard to breathe even when resting?"],
       orthopnea: ["Short of breath when lying down?", "You cannot lie flat without pillows?"],
       syncope: ["Did you faint?", "Did you lose consciousness today or yesterday?"],
@@ -183,8 +198,12 @@ const t = (k, v) => { let s = T[lang][k] ?? T.uz[k] ?? k; if (v) for (const [a, 
 let session = null; try { session = JSON.parse(sessionStorage.getItem("auth") || "null"); } catch (e) { /* */ }
 const params = new URLSearchParams(location.search);
 let episodeId = params.get("e"), authOn = false;
+const INDICATIONS = ["mechanical_aortic", "mechanical_aortic_risk", "mechanical_mitral", "bioprosthetic", "af"];
+const inrIndication = INDICATIONS.includes(params.get("inr")) ? params.get("inr") : null;   // shifokor havolada belgilaydi
+const inr = { mode: null, value: "", ocrText: "", confirmed: false };
 const answers = {}; let step = 0;
-const N = QUESTIONS.length + 1;                       // + o'lchovlar ekrani
+const N = QUESTIONS.length + 1 + (inrIndication ? 1 : 0);   // + o'lchovlar (+ MNO) ekrani
+const MEASURE_STEP = QUESTIONS.length, INR_STEP = inrIndication ? QUESTIONS.length + 1 : -1;
 const measures = { weight_kg: "", temperature_c: "", heart_rate: "", spo2: "" };
 
 const emergency = (now) => `<div class="emergency ${now ? "now" : ""}" role="${now ? "alert" : "note"}">${ALERT}<div><b>${esc(now ? t("nowTitle") : t("emTitle"))}</b>
@@ -211,25 +230,65 @@ function render() {
       ${showNow ? "" : emergency(false)}<p class="foot">${esc(t("safety"))}</p>`;
     m.querySelectorAll("input[name=a]").forEach((r) => r.addEventListener("change", () => { answers[q.code] = r.value; render(); const g = m.querySelector(".g-step"); if (g) g.style.animation = "none"; m.querySelector("input:checked").focus(); }));
     $("next").onclick = () => { step++; render(); window.scrollTo({ top: 0 }); };
-  } else if (step === QUESTIONS.length) {
+  } else if (step === INR_STEP) {
+    renderInr(m);
+  } else if (step === MEASURE_STEP) {
     const f = (k, min, max, st) => `<div class="cp-field"><label class="cp-field__label" for="${k}">${esc(t({ weight_kg: "weight", temperature_c: "temp", heart_rate: "pulse", spo2: "spo2" }[k]))}</label>
       <input class="cp-input" id="${k}" type="number" inputmode="decimal" min="${min}" max="${max}" step="${st}" value="${esc(measures[k])}"></div>`;
     m.innerHTML = `${head()}<div class="q-icon">${HEART}</div><h2 class="cp-guardian__question">${esc(t("measures"))}</h2><p class="q-help">${esc(t("measuresHelp"))}</p>
       <div class="num-grid">${f("weight_kg", 1, 399, .1)}${f("temperature_c", 30, 45, .1)}${f("heart_rate", 20, 250, 1)}${f("spo2", 50, 100, 1)}</div>
       <p class="cp-field__error err" id="err" role="alert"></p>
       <div class="nav-row"><button class="cp-btn cp-btn--secondary" type="button" id="back" style="min-height:56px">${esc(t("back"))}</button>
-        <button class="cp-btn cp-guardian__submit" type="button" id="send">${esc(t("send"))}</button></div>${emergency(false)}`;
+        <button class="cp-btn cp-guardian__submit" type="button" id="send">${esc(inrIndication ? "→ " + t("next") : t("send"))}</button></div>${emergency(false)}`;
     Object.keys(measures).forEach((k) => { $(k).oninput = (e) => { measures[k] = e.target.value; }; });
-    $("send").onclick = send;
+    $("send").onclick = inrIndication ? () => { step++; render(); window.scrollTo({ top: 0 }); } : send;
   }
   if ($("back")) $("back").onclick = () => { step--; render(); };
+}
+
+function renderInr(m) {
+  const confirmBox = inr.mode === "photo" && inr.value && !inr.confirmed
+    ? `<div class="emergency" style="border-color:var(--cp-brand);background:var(--cp-info-bg);color:var(--cp-ink)"><div><b>${esc(t("inrConfirm", { v: inr.value }))}</b><p>${esc(t("inrConfirmHelp"))}</p>
+        <div class="nav-row" style="grid-template-columns:1fr 1fr"><button class="cp-btn" type="button" id="inrYes">${esc(t("inrYes"))}</button><button class="cp-btn cp-btn--secondary" type="button" id="inrFix">${esc(t("inrFix"))}</button></div></div></div>` : "";
+  const typeBox = inr.mode === "type" || (inr.mode === "photo" && inr.confirmed)
+    ? `<div class="cp-field" style="margin-top:1rem"><label class="cp-field__label" for="inrVal">${esc(t("inrValue"))}</label>
+        <input class="cp-input" id="inrVal" type="number" inputmode="decimal" min="0.8" max="12" step="0.1" value="${esc(inr.value)}" style="font-size:1.4rem;min-height:58px" ${inr.confirmed ? "readonly" : ""}></div>` : "";
+  m.innerHTML = `${head()}<div class="g-step"><div class="q-icon">${HEART}</div><h2 class="cp-guardian__question">${esc(t("inrQ"))}</h2><p class="q-help">${esc(t("inrHelp"))}</p>
+      ${["photo", "type", "none"].map((v) => `<label class="cp-guardian__choice"><input type="radio" name="inrm" value="${v}" ${inr.mode === v ? "checked" : ""}>${esc(t({ photo: "inrPhoto", type: "inrType", none: "inrNo" }[v]))}</label>`).join("")}
+      <input type="file" id="inrFile" accept="image/*" capture="environment" hidden>
+      <p class="q-help" id="inrMsg" role="status"></p>${confirmBox}${typeBox}
+      <p class="q-help">${esc(t("inrDose"))}</p></div>
+    <p class="cp-field__error err" id="err" role="alert"></p>
+    <div class="nav-row"><button class="cp-btn cp-btn--secondary" type="button" id="back" style="min-height:56px">${esc(t("back"))}</button>
+      <button class="cp-btn cp-guardian__submit" type="button" id="send" ${inr.mode && (inr.mode === "none" || inr.value) && !(inr.mode === "photo" && !inr.confirmed) ? "" : "disabled"}>${esc(t("send"))}</button></div>${emergency(false)}`;
+  m.querySelectorAll("input[name=inrm]").forEach((r) => r.addEventListener("change", () => {
+    inr.mode = r.value; inr.value = ""; inr.confirmed = false; inr.ocrText = "";
+    if (r.value === "photo") $("inrFile").click();
+    render(); const g = m.querySelector(".g-step"); if (g) g.style.animation = "none";
+  }));
+  if ($("inrFile")) $("inrFile").onchange = async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    $("inrMsg").textContent = t("inrReading");
+    try {
+      const fd = new FormData(); fd.append("file", f);
+      const headers = {}; if (session) headers.Authorization = "Bearer " + session.token;
+      const r = await (await fetch(`/episodes/${encodeURIComponent(episodeId)}/guardian/inr-read`, { method: "POST", headers, body: fd })).json();
+      if (r.value) { inr.value = String(r.value); inr.ocrText = r.text || ""; }
+      else { inr.mode = "type"; }
+    } catch (err) { inr.mode = "type"; }
+    render(); if (inr.mode === "type") $("inrMsg").textContent = t("inrNotRead");
+  };
+  if ($("inrYes")) $("inrYes").onclick = () => { inr.confirmed = true; render(); };
+  if ($("inrFix")) $("inrFix").onclick = () => { inr.mode = "type"; inr.value = ""; inr.ocrText = ""; render(); };
+  if ($("inrVal")) $("inrVal").oninput = (e) => { inr.value = e.target.value; $("send").disabled = !e.target.value; };
+  $("send").onclick = send;
 }
 
 async function send() {
   const btn = $("send"); btn.disabled = true; btn.textContent = t("sending"); $("err").textContent = "";
   const pick = (group, v) => QUESTIONS.filter((q) => q.group === group && answers[q.code] === v).map((q) => q.code);
   const num = (k) => measures[k] === "" ? null : Number(measures[k]);
-  const body = { actor: session ? session.user.username : "patient", symptoms: pick("symptoms", "yes"), unsure_symptoms: pick("symptoms", "unsure"),
+  const body = { actor: session ? session.user.username : "patient", questionnaire: true, symptoms: pick("symptoms", "yes"), unsure_symptoms: pick("symptoms", "unsure"),
     wound_signs: pick("wound", "yes"), unsure_wound_signs: pick("wound", "unsure"), fever: answers.fever === "yes",
     weight_kg: num("weight_kg"), temperature_c: num("temperature_c"), heart_rate: num("heart_rate"), spo2: num("spo2") };
   try {
@@ -237,7 +296,16 @@ async function send() {
     const r = await fetch(`/episodes/${encodeURIComponent(episodeId)}/guardian/checkin`, { method: "POST", headers, body: JSON.stringify(body) });
     if (r.status === 409) { $("err").textContent = t("errStage"); btn.disabled = false; btn.textContent = t("retry"); return; }
     if (!r.ok) throw new Error(String(r.status));
-    showResult((await r.json()).escalation, Object.values(answers).includes("unsure"));
+    let esc1 = (await r.json()).escalation;
+    if (inrIndication && inr.mode !== "none" && inr.value) {
+      const r2 = await fetch(`/episodes/${encodeURIComponent(episodeId)}/guardian/inr`, { method: "POST", headers,
+        body: JSON.stringify({ actor: body.actor, indication: inrIndication, value: Number(inr.value), ocr_text: inr.ocrText || null }) });
+      if (!r2.ok) throw new Error(String(r2.status));
+      const esc2 = (await r2.json()).escalation, rank = { green: 0, amber: 1, red: 2 };
+      esc1 = { alert: rank[esc2.alert] > rank[esc1.alert] ? esc2.alert : esc1.alert,
+               notified: (esc1.alert === "green" || esc1.notified) && (esc2.alert === "green" || esc2.notified) };
+    }
+    showResult(esc1, Object.values(answers).includes("unsure"));
   } catch (e) { $("err").textContent = t("errSend"); btn.disabled = false; btn.textContent = t("retry"); }
 }
 
@@ -252,7 +320,8 @@ function showResult(esc_, unsure) {
       ${lvl === "red" ? `<a class="call" href="tel:103">${esc(t("call"))}</a>` : ""}</div>
     ${lvl === "red" ? "" : emergency(false)}
     <button class="cp-btn cp-btn--secondary cp-btn--block" type="button" id="again" style="margin-top:1rem;min-height:56px">${esc(t("again"))}</button>`;
-  $("again").onclick = () => { for (const k in answers) delete answers[k]; Object.keys(measures).forEach((k) => { measures[k] = ""; }); step = 0; render(); };
+  $("again").onclick = () => { for (const k in answers) delete answers[k]; Object.keys(measures).forEach((k) => { measures[k] = ""; });
+    Object.assign(inr, { mode: null, value: "", ocrText: "", confirmed: false }); step = 0; render(); };
 }
 
 function renderLogin() {

@@ -72,6 +72,18 @@ const I = {
     locw_AV: "to'sh suyagining o'ng chetida, 2-qovurg'a oralig'i", locw_PV: "to'sh suyagining chap chetida, 2-qovurg'a oralig'i",
     locw_TV: "to'sh suyagining chap chetida, 4-qovurg'a oralig'i", locw_MV: "chap o'rta o'mrov chizig'i, 5-qovurg'a oralig'i",
     dl_sent: "Jarrohga yuborildi {t}", dl_failed: "Jarrohga yetib bormadi — internet yo'q, avtomatik qayta yuboriladi ({n}-urinish)", dl_none: "Telegram sozlanmagan — faqat shu ro'yxatda", dl_notSeen: "jarroh hali «Qabul qildim» demadi", resend: "Hozir qayta yuborish",
+    gl_inr: "Varfarin (MNO nazorati)", gl_hint: "Tanlansa, bemor sahifasida MNO natijasini yuborish bosqichi paydo bo'ladi.", gl_copy: "Havolani nusxalash", ind_none: "Varfarin ichmaydi", ind_mechanical_aortic: "Mexanik aortal klapan", ind_mechanical_aortic_risk: "Mexanik aortal klapan + xavf omillari", ind_mechanical_mitral: "Mexanik mitral klapan", ind_bioprosthetic: "Bioprotez (dastlabki oylar)", ind_af: "Bo'lmachalar fibrillyatsiyasi",
+    nav_users: "Foydalanuvchilar", us_title: "Foydalanuvchilar va rollar", us_sub: "Kim dasturga kira oladi va nima qila oladi",
+    us_authOff: "Kirish tizimi hozir o'chiq: dasturni shu kompyuterdagi har kim ishlatadi. Bir nechta shifokor ishlashi uchun kirishni yoqing.",
+    us_authSteps: "Yoqish: 1) terminalda administrator yarating: python -m core.auth_cli create-user --username admin --role admin  2) CARDIOPATH_AUTH=on bilan qayta ishga tushiring.",
+    us_add: "Foydalanuvchi qo'shish", us_login: "Login", us_name: "Ismi (ekranda ko'rinadi)", us_role: "Roli", us_pass: "Parol (kamida 10 belgi)", us_pass2: "Parolni takrorlang",
+    us_patientCode: "Bemor kodi (faqat «Bemor» roli uchun)", us_status: "Holati", us_active: "Faol", us_disabled: "O'chirilgan", us_actions: "Amallar",
+    us_disable: "O'chirish", us_enable: "Yoqish", us_reset: "Yangi parol", us_changeRole: "Rolni o'zgartirish", us_passMismatch: "Parollar bir xil emas",
+    us_noPatient: "Bu kod bilan bemor topilmadi", us_log: "Xavfsizlik jurnali", us_logSub: "Kirishlar, xatolar va foydalanuvchi o'zgarishlari", us_me: "siz",
+    role_admin: "Administrator", role_clinician: "Shifokor", role_cardiologist: "Kardiolog", role_surgeon: "Kardioxirurg", role_icu: "Reanimatsiya", role_patient: "Bemor",
+    rd_admin: "foydalanuvchilar, jurnal; klinik amal yo'q", rd_clinician: "bemor qo'shish, skrining, fayl yuklash", rd_cardiologist: "+ xavf baholash, konsilium, model tasdig'i",
+    rd_surgeon: "+ ogohlantirishni qabul qilish", rd_icu: "bosqich, xavf, fayl yuklash", rd_patient: "faqat o'z uy kuzatuvi",
+    ev_auth_login: "Tizimga kirdi", ev_auth_login_failed: "Kirish muvaffaqiyatsiz", ev_auth_logout: "Tizimdan chiqdi", ev_auth_change_password: "Parolini o'zgartirdi", ev_auth_change_password_failed: "Parol o'zgartirilmadi", ev_user_create: "Foydalanuvchi qo'shildi", ev_user_disable: "Foydalanuvchi o'chirildi", ev_user_enable: "Foydalanuvchi yoqildi", ev_user_reset_password: "Parol yangilandi", ev_user_set_role: "Rol o'zgartirildi", ev_model_promote: "Model tasdiqlandi", ev_model_rollback: "Model qaytarildi",
     skip: "Asosiy qismga o'tish", research: "Tadqiqot rejimi", search: "Bemor kodi bo'yicha qidirish", newEpisode: "Yangi bemor",
     nav_dash: "Bosh panel", nav_eps: "Bemorlar", nav_screen: "Skrining", nav_alerts: "Ogohlantirishlar", nav_models: "Modellar", nav_shadow: "Model sinovi",
     welcome: "Xush kelibsiz", signInTitle: "Tizimga kirish", tagline: "Kardiologiya va kardioxirurgiya uchun AI yordamchi",
@@ -174,6 +186,18 @@ const I = {
     locw_AV: "у правого края грудины, 2-е межреберье", locw_PV: "у левого края грудины, 2-е межреберье",
     locw_TV: "у левого края грудины, 4-е межреберье", locw_MV: "левая среднеключичная линия, 5-е межреберье",
     dl_sent: "Отправлено хирургу {t}", dl_failed: "Не дошло до хирурга — нет интернета, повтор автоматически (попытка {n})", dl_none: "Telegram не настроен — только в этом списке", dl_notSeen: "хирург ещё не нажал «Принято»", resend: "Отправить снова",
+    gl_inr: "Варфарин (контроль МНО)", gl_hint: "Если выбрано, на странице пациента появится шаг отправки МНО.", gl_copy: "Скопировать ссылку", ind_none: "Не принимает варфарин", ind_mechanical_aortic: "Механический аортальный клапан", ind_mechanical_aortic_risk: "Механический аортальный + факторы риска", ind_mechanical_mitral: "Механический митральный клапан", ind_bioprosthetic: "Биопротез (первые месяцы)", ind_af: "Фибрилляция предсердий",
+    nav_users: "Пользователи", us_title: "Пользователи и роли", us_sub: "Кто может войти и что может делать",
+    us_authOff: "Вход сейчас выключен: программой пользуется любой на этом компьютере. Чтобы работали несколько врачей, включите вход.",
+    us_authSteps: "Как включить: 1) создайте администратора в терминале: python -m core.auth_cli create-user --username admin --role admin  2) перезапустите с CARDIOPATH_AUTH=on.",
+    us_add: "Добавить пользователя", us_login: "Логин", us_name: "Имя (видно на экране)", us_role: "Роль", us_pass: "Пароль (не менее 10 символов)", us_pass2: "Повторите пароль",
+    us_patientCode: "Код пациента (только для роли «Пациент»)", us_status: "Статус", us_active: "Активен", us_disabled: "Отключён", us_actions: "Действия",
+    us_disable: "Отключить", us_enable: "Включить", us_reset: "Новый пароль", us_changeRole: "Сменить роль", us_passMismatch: "Пароли не совпадают",
+    us_noPatient: "Пациент с таким кодом не найден", us_log: "Журнал безопасности", us_logSub: "Входы, ошибки и изменения пользователей", us_me: "вы",
+    role_admin: "Администратор", role_clinician: "Врач", role_cardiologist: "Кардиолог", role_surgeon: "Кардиохирург", role_icu: "Реанимация", role_patient: "Пациент",
+    rd_admin: "пользователи, журнал; без клинических действий", rd_clinician: "пациенты, скрининг, загрузка файлов", rd_cardiologist: "+ оценка риска, консилиум, утверждение моделей",
+    rd_surgeon: "+ приём оповещений", rd_icu: "этапы, риск, загрузка файлов", rd_patient: "только своё домашнее наблюдение",
+    ev_auth_login: "Вход в систему", ev_auth_login_failed: "Неудачный вход", ev_auth_logout: "Выход", ev_auth_change_password: "Смена пароля", ev_auth_change_password_failed: "Пароль не изменён", ev_user_create: "Пользователь добавлен", ev_user_disable: "Пользователь отключён", ev_user_enable: "Пользователь включён", ev_user_reset_password: "Пароль сброшен", ev_user_set_role: "Роль изменена", ev_model_promote: "Модель утверждена", ev_model_rollback: "Откат модели",
     skip: "Перейти к содержимому", research: "Исследовательский режим", search: "Поиск по коду пациента", newEpisode: "Новый пациент",
     nav_dash: "Панель", nav_eps: "Пациенты", nav_screen: "Скрининг", nav_alerts: "Оповещения", nav_models: "Модели", nav_shadow: "Испытание модели",
     welcome: "Добро пожаловать", signInTitle: "Вход в систему", tagline: "ИИ-помощник для кардиологии и кардиохирургии",
@@ -276,6 +300,18 @@ const I = {
     locw_AV: "right sternal border, 2nd intercostal space", locw_PV: "left sternal border, 2nd intercostal space",
     locw_TV: "left sternal border, 4th intercostal space", locw_MV: "left midclavicular line, 5th intercostal space",
     dl_sent: "Sent to the surgeon {t}", dl_failed: "Not delivered — no internet, retrying automatically (attempt {n})", dl_none: "Telegram not set up — this list only", dl_notSeen: "surgeon has not acknowledged yet", resend: "Resend now",
+    gl_inr: "Warfarin (INR monitoring)", gl_hint: "If chosen, the patient page gets an INR step.", gl_copy: "Copy link", ind_none: "Not on warfarin", ind_mechanical_aortic: "Mechanical aortic valve", ind_mechanical_aortic_risk: "Mechanical aortic + risk factors", ind_mechanical_mitral: "Mechanical mitral valve", ind_bioprosthetic: "Bioprosthesis (early months)", ind_af: "Atrial fibrillation",
+    nav_users: "Users", us_title: "Users and roles", us_sub: "Who can sign in and what they can do",
+    us_authOff: "Sign-in is off: anyone at this computer can use the app. Turn sign-in on so several clinicians can work.",
+    us_authSteps: "To turn on: 1) create an admin in the terminal: python -m core.auth_cli create-user --username admin --role admin  2) restart with CARDIOPATH_AUTH=on.",
+    us_add: "Add user", us_login: "Login", us_name: "Name (shown on screen)", us_role: "Role", us_pass: "Password (at least 10 characters)", us_pass2: "Repeat password",
+    us_patientCode: "Patient code (Patient role only)", us_status: "Status", us_active: "Active", us_disabled: "Disabled", us_actions: "Actions",
+    us_disable: "Disable", us_enable: "Enable", us_reset: "New password", us_changeRole: "Change role", us_passMismatch: "Passwords do not match",
+    us_noPatient: "No patient with this code", us_log: "Security log", us_logSub: "Sign-ins, failures and user changes", us_me: "you",
+    role_admin: "Administrator", role_clinician: "Clinician", role_cardiologist: "Cardiologist", role_surgeon: "Cardiac surgeon", role_icu: "Intensive care", role_patient: "Patient",
+    rd_admin: "users, log; no clinical actions", rd_clinician: "patients, screening, uploads", rd_cardiologist: "+ risk, Heart Team, model approval",
+    rd_surgeon: "+ acknowledge alerts", rd_icu: "stages, risk, uploads", rd_patient: "own home follow-up only",
+    ev_auth_login: "Signed in", ev_auth_login_failed: "Failed sign-in", ev_auth_logout: "Signed out", ev_auth_change_password: "Changed password", ev_auth_change_password_failed: "Password not changed", ev_user_create: "User added", ev_user_disable: "User disabled", ev_user_enable: "User enabled", ev_user_reset_password: "Password reset", ev_user_set_role: "Role changed", ev_model_promote: "Model approved", ev_model_rollback: "Model rolled back",
     skip: "Skip to content", research: "Research mode", search: "Search by patient code", newEpisode: "New patient",
     nav_dash: "Dashboard", nav_eps: "Patients", nav_screen: "Screening", nav_alerts: "Alerts", nav_models: "Models", nav_shadow: "Model trial",
     welcome: "Welcome", signInTitle: "Sign in", tagline: "AI assistant for cardiology and cardiac surgery",
@@ -456,7 +492,8 @@ function navItems() {
     { href: "#/alerts", key: "nav_alerts", icon: "bell", on: (h) => h.startsWith("#/alerts"), perm: "alerts.read", count: true },
     { href: "#/models", key: "nav_models", icon: "layers", on: (h) => h.startsWith("#/models"), perm: "learning.read" },
     { href: "#/shadow", key: "nav_shadow", icon: "pulse", on: (h) => h.startsWith("#/shadow"), perm: "shadow.label", alt: "shadow.report" },
-  ].filter((n) => !n.perm || can(n.perm) || (n.alt && can(n.alt)));
+    { href: "#/users", key: "nav_users", icon: "user", on: (h) => h.startsWith("#/users"), perm: "users.manage" },
+  ].filter((n) => (!n.perm || can(n.perm) || (n.alt && can(n.alt))));
 }
 function paintNav() {
   const h = location.hash || "#/";
@@ -543,6 +580,7 @@ async function route() {
     else if (parts[0] === "alerts") await alertsPage(params);
     else if (parts[0] === "models") await modelsPage(params);
     else if (parts[0] === "screening") await screeningStart();
+    else if (parts[0] === "users") await usersPage();
     else if (parts[0] === "shadow") await shadowPage(params);
     else if (parts[0] === "e" && parts[1]) {
       const sub = parts[2];
@@ -781,10 +819,15 @@ async function episodePage(id) {
       </div>
     </div>`;
   if ($("trBtn")) $("trBtn").onclick = () => transitionDialog(d);
-  if ($("gLink")) $("gLink").onclick = async () => {
-    const url = `${location.origin}/guardian?e=${d.episode.id}`;
-    try { await navigator.clipboard.writeText(url); toast(t("glinkCopied")); } catch (e) { window.prompt(t("act_glink"), url); }
-  };
+  if ($("gLink")) $("gLink").onclick = () => dialog(`<h2 class="cp-dialog__title">${esc(t("act_glink"))}</h2>
+      <div class="cp-field"><label class="cp-field__label" for="gInr">${esc(t("gl_inr"))}</label><select class="cp-select" id="gInr" name="inr">
+        ${["", "mechanical_aortic", "mechanical_aortic_risk", "mechanical_mitral", "bioprosthetic", "af"].map((v) => `<option value="${v}">${esc(t("ind_" + (v || "none")))}</option>`).join("")}</select>
+        <span class="cp-field__hint">${esc(t("gl_hint"))}</span></div><p class="cp-field__error" role="alert"></p>
+      <div class="cp-dialog__actions"><button class="cp-btn cp-btn--secondary" value="cancel" formnovalidate>${esc(t("cancel"))}</button><button class="cp-btn" type="submit">${esc(t("gl_copy"))}</button></div>`,
+    async (fd) => {
+      const url = `${location.origin}/guardian?e=${d.episode.id}${fd.get("inr") ? "&inr=" + fd.get("inr") : ""}`;
+      try { await navigator.clipboard.writeText(url); toast(t("glinkCopied")); } catch (e) { window.prompt(t("act_glink"), url); }
+    });
 }
 function transitionDialog(d) {
   if (!requireActor()) return;
@@ -1270,6 +1313,87 @@ async function screeningPage(id) {
     } catch (err) { $("scOut").innerHTML = ""; $("scErr").textContent = `${t("failed")}: ${err.message}`; }
     btn.disabled = false; btn.classList.remove("cp-btn--loading");
   });
+}
+
+
+/* ------------------------------------------------------------------ 11. Foydalanuvchilar (administrator) */
+const ROLE_LIST = ["clinician", "cardiologist", "surgeon", "icu", "admin", "patient"];
+async function usersPage() {
+  if (!authOn) {
+    view.innerHTML = `<div class="pm-in"><div class="pagehead"><div><p class="eyebrow">CardioPath</p><h1>${esc(t("us_title"))}</h1><p class="sub">${esc(t("us_sub"))}</p></div></div>
+      <section class="cp-card"><div class="urgentbox urgentbox--warn">${ic("shield")}<div><b>${esc(t("us_authOff"))}</b><p>${esc(t("us_authSteps"))}</p></div></div>
+      <h2 class="cp-card__title" style="margin:1rem 0 .5rem">${esc(t("us_role"))}</h2>
+      ${ROLE_LIST.map((r) => `<div class="row"><b>${esc(t("role_" + r))}</b><span class="cp-meta">${esc(t("rd_" + r))}</span></div>`).join("")}</section></div>`;
+    return;
+  }
+  const [users, log] = await Promise.all([api("/users"), api("/audit/security?limit=40")]);
+  const me = session && session.user.username;
+  view.innerHTML = `<div class="pm-in"><div class="pagehead"><div><p class="eyebrow">CardioPath</p><h1>${esc(t("us_title"))}</h1><p class="sub">${esc(t("us_sub"))}</p></div>
+      <button class="cp-btn" type="button" id="usAdd">${ic("plus")}${esc(t("us_add"))}</button></div>
+    <section class="cp-card"><div class="cp-table-scroll"><table class="cp-table"><thead><tr><th>${esc(t("us_login"))}</th><th>${esc(t("us_role"))}</th><th>${esc(t("us_status"))}</th><th>${esc(t("us_actions"))}</th></tr></thead><tbody>
+      ${users.map((u) => `<tr><td><span class="pt-ava" aria-hidden="true">${esc((u.display_name || u.username).slice(0, 2).toUpperCase())}</span><b>${esc(u.display_name)}</b>
+          <div class="cp-meta">${esc(u.username)}${u.username === me ? " · " + esc(t("us_me")) : ""}</div></td>
+        <td><span class="pill">${esc(t("role_" + u.role))}</span><div class="cp-meta">${esc(t("rd_" + u.role))}</div></td>
+        <td>${u.active ? `<span class="pill pill--ok">✓ ${esc(t("us_active"))}</span>` : `<span class="pill pill--bad">✕ ${esc(t("us_disabled"))}</span>`}</td>
+        <td><div class="actions">
+          <button class="cp-btn cp-btn--secondary" type="button" data-role="${esc(u.username)}" data-cur="${esc(u.role)}">${esc(t("us_changeRole"))}</button>
+          <button class="cp-btn cp-btn--secondary" type="button" data-reset="${esc(u.username)}">${esc(t("us_reset"))}</button>
+          ${u.username === me ? "" : u.active ? `<button class="cp-btn cp-btn--secondary" type="button" data-off="${esc(u.username)}">${esc(t("us_disable"))}</button>`
+            : `<button class="cp-btn" type="button" data-on="${esc(u.username)}">${esc(t("us_enable"))}</button>`}</div></td></tr>`).join("")}
+    </tbody></table></div></section>
+    <section class="cp-card" style="margin-top:1rem"><h2 class="cp-card__title">${esc(t("us_log"))}</h2><p class="sub">${esc(t("us_logSub"))}</p>
+      <ol class="timeline" style="margin-top:1rem">${log.map((e) => { const key = "ev_" + e.action.replace(/\./g, "_"), d = e.detail || {};
+        const extra = [d.username, d.role ? t("role_" + d.role) : null, d.version].filter(Boolean).join(" · ");
+        return `<li><div><b>${esc(I[lang][key] ? t(key) : e.action)}</b><small>${esc(e.actor)} · ${esc(ago(e.at))}${extra ? " · " + esc(extra) : ""}</small></div>
+          ${/failed/.test(e.action) ? `<span class="src" style="background:var(--cp-danger-bg);color:var(--cp-danger)">!</span>` : ""}</li>`; }).join("")}</ol></section></div>`;
+  const roleOpts = (cur) => ROLE_LIST.map((r) => `<option value="${r}" ${r === cur ? "selected" : ""}>${esc(t("role_" + r))} — ${esc(t("rd_" + r))}</option>`).join("");
+  const patientId = async (code) => {
+    if (!code) return null;
+    const r = await api(`/episodes?q=${encodeURIComponent(code)}&limit=20`);
+    const hit = r.items.find((e) => e.patient_ref.toLowerCase() === code.toLowerCase());
+    if (!hit) throw new Error(t("us_noPatient"));
+    return hit.id;
+  };
+  $("usAdd").onclick = () => dialog(`<h2 class="cp-dialog__title">${esc(t("us_add"))}</h2>
+      <div class="cp-stack"><div class="cp-field"><label class="cp-field__label" for="uL">${esc(t("us_login"))}</label><input class="cp-input" id="uL" name="u" required maxlength="64" autocomplete="off"></div>
+      <div class="cp-field"><label class="cp-field__label" for="uN">${esc(t("us_name"))}</label><input class="cp-input" id="uN" name="n" maxlength="80"></div>
+      <div class="cp-field"><label class="cp-field__label" for="uR">${esc(t("us_role"))}</label><select class="cp-select" id="uR" name="r">${roleOpts("clinician")}</select></div>
+      <div class="cp-field"><label class="cp-field__label" for="uC">${esc(t("us_patientCode"))}</label><input class="cp-input" id="uC" name="c" maxlength="64"></div>
+      <div class="cp-field"><label class="cp-field__label" for="uP">${esc(t("us_pass"))}</label><input class="cp-input" id="uP" name="p" type="password" minlength="10" required autocomplete="new-password"></div>
+      <div class="cp-field"><label class="cp-field__label" for="uP2">${esc(t("us_pass2"))}</label><input class="cp-input" id="uP2" name="p2" type="password" required autocomplete="new-password"></div></div>
+      <p class="cp-field__error" role="alert"></p>
+      <div class="cp-dialog__actions"><button class="cp-btn cp-btn--secondary" value="cancel" formnovalidate>${esc(t("cancel"))}</button><button class="cp-btn" type="submit">${esc(t("us_add"))}</button></div>`,
+    async (fd) => {
+      if (fd.get("p") !== fd.get("p2")) throw new Error(t("us_passMismatch"));
+      const role = fd.get("r");
+      await api("/users", { method: "POST", json: { username: fd.get("u").trim(), display_name: fd.get("n").trim(), role, password: fd.get("p"),
+        episode_id: role === "patient" ? await patientId(fd.get("c").trim()) : null } });
+      toast(t("saved")); route();
+    });
+  view.querySelectorAll("[data-off],[data-on]").forEach((b) => b.addEventListener("click", async () => {
+    const u = b.dataset.off || b.dataset.on;
+    try { await api(`/users/${encodeURIComponent(u)}/${b.dataset.off ? "disable" : "enable"}`, { method: "POST" }); toast(t("saved")); route(); }
+    catch (e) { toast(`${t("failed")}: ${e.message}`, "error"); }
+  }));
+  view.querySelectorAll("[data-reset]").forEach((b) => b.addEventListener("click", () => dialog(`<h2 class="cp-dialog__title">${esc(t("us_reset"))} · ${esc(b.dataset.reset)}</h2>
+      <div class="cp-field"><label class="cp-field__label" for="rP">${esc(t("us_pass"))}</label><input class="cp-input" id="rP" name="p" type="password" minlength="10" required autocomplete="new-password"></div>
+      <div class="cp-field" style="margin-top:.8rem"><label class="cp-field__label" for="rP2">${esc(t("us_pass2"))}</label><input class="cp-input" id="rP2" name="p2" type="password" required autocomplete="new-password"></div>
+      <p class="cp-field__error" role="alert"></p>
+      <div class="cp-dialog__actions"><button class="cp-btn cp-btn--secondary" value="cancel" formnovalidate>${esc(t("cancel"))}</button><button class="cp-btn" type="submit">${esc(t("us_reset"))}</button></div>`,
+    async (fd) => {
+      if (fd.get("p") !== fd.get("p2")) throw new Error(t("us_passMismatch"));
+      await api(`/users/${encodeURIComponent(b.dataset.reset)}/password`, { method: "POST", json: { new_password: fd.get("p") } }); toast(t("saved"));
+    })));
+  view.querySelectorAll("[data-role]").forEach((b) => b.addEventListener("click", () => dialog(`<h2 class="cp-dialog__title">${esc(t("us_changeRole"))} · ${esc(b.dataset.role)}</h2>
+      <div class="cp-field"><label class="cp-field__label" for="cR">${esc(t("us_role"))}</label><select class="cp-select" id="cR" name="r">${roleOpts(b.dataset.cur)}</select></div>
+      <div class="cp-field" style="margin-top:.8rem"><label class="cp-field__label" for="cC">${esc(t("us_patientCode"))}</label><input class="cp-input" id="cC" name="c" maxlength="64"></div>
+      <p class="cp-field__error" role="alert"></p>
+      <div class="cp-dialog__actions"><button class="cp-btn cp-btn--secondary" value="cancel" formnovalidate>${esc(t("cancel"))}</button><button class="cp-btn" type="submit">${esc(t("us_changeRole"))}</button></div>`,
+    async (fd) => {
+      const role = fd.get("r");
+      await api(`/users/${encodeURIComponent(b.dataset.role)}/role`, { method: "POST", json: { role, episode_id: role === "patient" ? await patientId(fd.get("c").trim()) : null } });
+      toast(t("saved")); route();
+    })));
 }
 
 /* ------------------------------------------------------------------ ishga tushirish */

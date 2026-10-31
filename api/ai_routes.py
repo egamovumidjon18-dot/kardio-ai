@@ -23,8 +23,8 @@ from ecg.model import ECGModel
 from ecg.shd import StructuralFromECG
 from ecg.signal import read_csv
 from guardian.escalation import Notifier, escalate
-from guardian.inr import Indication
-from guardian.ocr import Engine, assess_inr_image
+from guardian.inr import Indication, parse_inr_text
+from guardian.ocr import MIN_CONFIDENCE, Engine, assess_inr_image, rapid_engine, read_text
 
 MAX_UPLOAD = 25 * 1024 * 1024
 MAX_VIDEO = 100 * 1024 * 1024
@@ -133,6 +133,26 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from None
         return {"evidence": _save(ep, actor, "angio.analyze", ev), "plain": plain_ai(ev, lang)}
+
+    @app.post("/episodes/{eid}/guardian/inr-read")
+    async def inr_read(eid: str, file: UploadFile = File(...)) -> dict:
+        """Faqat o'qish (hech narsa saqlanmaydi): bemor OCR o'qigan raqamni qog'oz bilan solishtirib TASDIQLAYDI,
+        keyin /guardian/inr ga yuboradi. Bir nechta raqam yoki past ishonch → value=None (qo'lda kiritadi)."""
+        ep = get(eid)
+        if ep.stage != Stage.GUARDIAN_30D:
+            raise HTTPException(409, f"Guardian faqat GUARDIAN_30D bosqichida (hozir: {ep.stage.value})")
+        engine = ocr_engine or rapid_engine()
+        if engine is None:
+            return {"value": None, "reason": "ocr_unavailable"}
+        try:
+            res = read_text(await _read(file, MAX_UPLOAD), engine)
+        except Exception:                                  # noqa: BLE001 — o'qilmasa, bemor qo'lda kiritadi
+            return {"value": None, "reason": "unreadable"}
+        if res.n_lines == 0 or res.confidence < MIN_CONFIDENCE:
+            return {"value": None, "reason": "low_confidence"}
+        v = parse_inr_text(res.text)
+        return {"value": v if v is not None and 0.8 <= v <= 12 else None, "reason": None if v is not None else "not_found",
+                "text": res.text[:500]}
 
     @app.post("/episodes/{eid}/guardian/inr-image")
     async def inr_image(eid: str, actor: str = Form(...), lang: str = Form("uz", pattern="^(uz|ru|en)$"), indication: Indication = Form(...),

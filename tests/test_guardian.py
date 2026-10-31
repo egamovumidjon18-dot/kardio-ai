@@ -84,3 +84,18 @@ def test_guardian_page_is_served_and_safe(tmp_path):
     assert "tel:103" in html and "unsure_symptoms" in html and "guardian/checkin" in html
     texts = html[html.index("const T = {"):html.index("let lang")]      # bemorga ko'rinadigan matnlar
     assert "AI" not in texts and "ИИ" not in texts and "tashxis" not in texts       # AI so'zi va tashxis yo'q
+
+
+def test_all_no_questionnaire_is_a_valid_checkin(tmp_path):
+    from fastapi.testclient import TestClient
+    from api.main import create_app
+    from core.store import SqliteEpisodeStore
+    from tests.test_ai_api import to_guardian
+    c = TestClient(create_app(SqliteEpisodeStore(str(tmp_path / "q.db")), None))
+    eid = c.post("/episodes", json={"patient_ref": "Q-1", "actor": "dr"}).json()["id"]
+    to_guardian(c, eid)
+    assert c.post(f"/episodes/{eid}/guardian/checkin", json={"actor": "p"}).status_code == 422          # haqiqatan bo'sh
+    r = c.post(f"/episodes/{eid}/guardian/checkin", json={"actor": "p", "questionnaire": True})          # hammasi «yo'q»
+    assert r.status_code == 200 and r.json()["escalation"]["alert"] == "green"
+    kinds = {e["kind"] for e in r.json()["evidence"]}
+    assert kinds == {"guardian.hf", "guardian.wound"}
