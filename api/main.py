@@ -16,6 +16,7 @@ from typing import Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from fastapi import Depends
@@ -97,6 +98,9 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
         if ep is None:
             raise HTTPException(404, "epizod topilmadi")
         return ep
+
+    # dizayn tizimi (cardiopath.css / .js): bemor ma'lumoti yo'q, kirishsiz ham ochiq
+    app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 
     @app.get("/models-ui", response_class=HTMLResponse, include_in_schema=False)
     def models_page() -> str:
