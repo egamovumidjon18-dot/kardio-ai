@@ -32,6 +32,8 @@ class CheckinIn(BaseModel):
     temperature_c: Optional[float] = Field(None, ge=30, le=45)
     symptoms: list[str] = []
     wound_signs: list[str] = []
+    unsure_symptoms: list[str] = Field([], description="bemor «bilmayman» degan belgilar — «yo'q» deb hisoblanmaydi")
+    unsure_wound_signs: list[str] = []
     fever: bool = False
     photo_ref: Optional[str] = None
 
@@ -80,10 +82,10 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
             ev = weight_trend(history + [(at.isoformat(), body.weight_kg)])
             ev.created_at = at.isoformat()            # o'lchov vaqti — keyingi trendlar uchun
             items.append(ev)
-        if any(v is not None for v in (body.heart_rate, body.spo2, body.temperature_c)) or body.symptoms:
-            items.append(vitals_and_symptoms(body.heart_rate, body.spo2, body.temperature_c, body.symptoms))
-        if body.wound_signs or body.photo_ref or body.fever:
-            items.append(wound(body.wound_signs, body.fever, body.photo_ref))
+        if any(v is not None for v in (body.heart_rate, body.spo2, body.temperature_c)) or body.symptoms or body.unsure_symptoms:
+            items.append(vitals_and_symptoms(body.heart_rate, body.spo2, body.temperature_c, body.symptoms, body.unsure_symptoms))
+        if body.wound_signs or body.photo_ref or body.fever or body.unsure_wound_signs:
+            items.append(wound(body.wound_signs, body.fever, body.photo_ref, body.unsure_wound_signs))
         if not items:
             raise HTTPException(422, "check-in bo'sh — kamida bitta ko'rsatkich kiriting")
         return _finish(ep, body.actor, "guardian.checkin", items, at)

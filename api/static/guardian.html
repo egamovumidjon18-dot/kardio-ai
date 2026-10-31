@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CardioPath — Bugungi ahvolingiz</title>
+<link rel="stylesheet" href="/static/cardiopath.css?v=20261101a">
+<script defer src="/static/cardiopath.js?v=20261101a"></script>
+<style>
+  /* Bemor (yoki oila a'zosi) uchun: har ekranda bitta savol, katta tugmalar, tibbiy atama va AI so'zi yo'q. */
+  body { font-size: 1.12rem; background: linear-gradient(180deg, #eaf2ff 0%, #f7faff 45%) fixed; }
+  :root[data-theme="dark"] body { background: linear-gradient(180deg, #0b1d36, #071427) fixed; }
+  .bar > span { background: linear-gradient(90deg, #0758AA, #22c1e6) !important; }
+  .q-icon { background: linear-gradient(135deg, #0758AA, #22c1e6) !important; color: #fff !important; box-shadow: 0 10px 24px rgb(31 142 241 / .3); }
+  .cp-guardian__submit:not(:disabled) { background: linear-gradient(135deg, #0758AA, #1f8ef1); box-shadow: 0 10px 24px rgb(31 142 241 / .3); }
+  .cp-guardian__choice { transition: border-color .15s, background-color .15s; }
+  .g-step { animation: g-in .35s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes g-in { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .g-step { animation: none; } }
+  .icon { width: 1.2em; height: 1.2em; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  header.g-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .9rem 1.1rem; background: var(--cp-surface); border-bottom: 1px solid var(--cp-border); }
+  .g-brand { display: flex; align-items: center; gap: .5rem; font-weight: 800; font-size: 1.25rem; color: var(--cp-brand); }
+  .g-brand .icon { width: 28px; height: 28px; }
+  main { padding: 1.25rem 1.1rem 2rem; }
+  .eyebrow { font-size: .75rem; letter-spacing: .14em; font-weight: 800; color: var(--cp-brand); text-transform: uppercase; margin: 0; }
+  h1 { margin: .3rem 0 .2rem; font-size: clamp(1.8rem, 1.5rem + 1.5vw, 2.2rem); }
+  .lead { color: var(--cp-ink-muted); margin: 0 0 1.2rem; }
+  .progress { display: flex; justify-content: space-between; font-weight: 750; margin-bottom: .45rem; }
+  .progress small { color: var(--cp-ink-muted); font-weight: 500; }
+  .bar { height: 10px; border-radius: 999px; background: var(--cp-surface-2); overflow: hidden; margin-bottom: 1.5rem; }
+  .bar > span { display: block; height: 100%; background: var(--cp-brand); border-radius: 999px; }
+  .q-icon { width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center; background: var(--cp-info-bg); color: var(--cp-brand); margin-bottom: 1rem; }
+  .q-icon .icon { width: 32px; height: 32px; }
+  .cp-guardian__question { font-size: clamp(1.45rem, 1.3rem + .8vw, 1.75rem); line-height: 1.25; margin: 0 0 .35rem; }
+  .q-help { color: var(--cp-ink-muted); margin: 0 0 1rem; }
+  .cp-guardian__choice { font-size: 1.25rem; font-weight: 750; min-height: 64px; }
+  .cp-guardian__choice:has(input:checked) { background: var(--cp-info-bg); }
+  .nav-row { display: grid; grid-template-columns: auto 1fr; gap: .6rem; margin-top: 1rem; }
+  .cp-guardian__submit { font-size: 1.2rem; }
+  .emergency { display: flex; gap: .8rem; align-items: flex-start; margin-top: 1.25rem; padding: 1rem; border: 2px solid var(--cp-danger); border-radius: var(--cp-radius-lg);
+               background: var(--cp-danger-bg); color: var(--cp-danger); }
+  .emergency b { display: block; font-size: 1.1rem; } .emergency p { margin: .2rem 0 0; color: var(--cp-ink); }
+  .emergency a { color: var(--cp-danger); font-weight: 800; }
+  .now { border-width: 3px; }
+  .num-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .num-grid .cp-input { font-size: 1.3rem; min-height: 58px; }
+  .result { text-align: center; padding: 1.5rem 1rem; border-radius: var(--cp-radius-xl); border: 2px solid var(--cp-success); background: var(--cp-success-bg); }
+  .result .big-icon { width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center; margin: 0 auto 1rem; font-size: 2.2rem; font-weight: 900;
+                      background: var(--cp-success); color: var(--cp-surface); }
+  .result--amber { border-color: var(--cp-warning); background: var(--cp-warning-bg); } .result--amber .big-icon { background: var(--cp-warning); }
+  .result--red { border-color: var(--cp-danger); background: var(--cp-danger-bg); } .result--red .big-icon { background: var(--cp-danger); }
+  .result h2 { margin: 0 0 .5rem; } .result p { margin: .35rem 0; }
+  .call { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 60px; width: 100%; margin-top: 1rem; border-radius: var(--cp-radius-md);
+          background: var(--cp-danger); color: var(--cp-surface); font-weight: 800; font-size: 1.25rem; text-decoration: none; }
+  .foot { text-align: center; color: var(--cp-ink-muted); font-size: .85rem; margin-top: 1.5rem; }
+  .err { margin-top: 1rem; }
+</style>
+</head>
+<body>
+<header class="g-top">
+  <span class="g-brand"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-9-9.2C1.6 7.3 3.7 4 7.2 4c2 0 3.4 1.1 4.8 2.8C13.4 5.1 14.8 4 16.8 4c3.5 0 5.6 3.3 4.2 6.8C19 15.6 12 20 12 20z"/></svg>CardioPath</span>
+  <label class="cp-sr-only" for="lang">Til / Язык / Language</label>
+  <select class="cp-select cp-select--language" id="lang"><option value="uz">O'zbekcha</option><option value="ru">Русский</option><option value="en">English</option></select>
+</header>
+<main class="cp-guardian" id="main"></main>
+<script>
+(() => {
+"use strict";
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* */ } } };
+const HEART = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-9-9.2C1.6 7.3 3.7 4 7.2 4c2 0 3.4 1.1 4.8 2.8C13.4 5.1 14.8 4 16.8 4c3.5 0 5.6 3.3 4.2 6.8C19 15.6 12 20 12 20z"/></svg>';
+const ALERT = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/></svg>';
+
+/* Savollar: kod serverdagi guardian/checkin.py jadvali bilan bir xil. urgent=true — «Ha» bo'lsa, shoshilinch ko'rsatma DARHOL chiqadi. */
+const QUESTIONS = [
+  { code: "dyspnea_rest", group: "symptoms", urgent: true },
+  { code: "orthopnea", group: "symptoms" },
+  { code: "syncope", group: "symptoms", urgent: true },
+  { code: "chest_pain_non_incisional", group: "symptoms", urgent: true },
+  { code: "palpitations", group: "symptoms" },
+  { code: "new_edema", group: "symptoms" },
+  { code: "reduced_urine", group: "symptoms" },
+  { code: "purulent_discharge", group: "wound" },
+  { code: "sternal_instability", group: "wound" },
+  { code: "dehiscence", group: "wound" },
+  { code: "spreading_redness", group: "wound" },
+  { code: "serous_discharge", group: "wound" },
+  { code: "increasing_pain", group: "wound" },
+  { code: "fever", group: "fever" },
+];
+const T = {
+  uz: { eyebrow: "Operatsiyadan keyingi kuzatuv", title: "Bugungi ahvolingiz", lead: "Bir nechta oddiy savolga javob bering.", of: "{i} / {n} savol",
+    yes: "Ha", no: "Yo'q", unsure: "Bilmayman", next: "Davom etish", back: "Orqaga", measures: "O'lchovlar (bo'lsa)", measuresHelp: "Tarozi yoki apparat bo'lmasa, bo'sh qoldiring.",
+    weight: "Vazn, kg", temp: "Harorat, °C", pulse: "Puls, daqiqasiga", spo2: "SpO₂, %", send: "Yuborish", sending: "Yuborilmoqda…",
+    emTitle: "Shoshilinch holat", emText: "Hushdan ketish yoki kuchli ko'krak og'rig'i bo'lsa — darhol 103 ga qo'ng'iroq qiling.",
+    nowTitle: "Hozir yordam kerak bo'lishi mumkin", nowText: "Ahvolingiz og'ir bo'lsa, savollarni tugatishni kutmang — 103 ga qo'ng'iroq qiling. Keyin javoblarni yuborishda davom eting.",
+    call: "103 ga qo'ng'iroq qilish", safety: "Sizning xavfsizligingiz birinchi o'rinda.",
+    r_green_t: "Rahmat!", r_green: "Javoblaringiz qabul qilindi. Ertaga yana so'raymiz.",
+    r_amber_t: "Shifokoringiz ko'rib chiqadi", r_amber: "Javoblaringiz shifokoringizga yuborildi. Bugun siz bilan bog'lanishadi.",
+    r_red_t: "Shifokoringiz xabardor qilindi", r_red: "Ahvolingiz og'ir bo'lsa, kutmasdan 103 ga qo'ng'iroq qiling.",
+    r_unsure: "Ba'zi savollarga «Bilmayman» dedingiz — shifokoringiz aniqlashtirish uchun bog'lanadi.",
+    r_notSent: "Xabar shifokorga avtomatik yetib bormadi. Iltimos, shifokoringizga o'zingiz qo'ng'iroq qiling.",
+    again: "Boshiga qaytish", noEp: "Bu sahifani shifokoringiz bergan havola orqali oching.", errSend: "Yuborib bo'lmadi. Internetni tekshirib, qayta urining. Ahvolingiz yomon bo'lsa — 103.",
+    errStage: "Hozir uy kuzatuvi davri emas. Savollaringiz bo'lsa, shifokoringizga qo'ng'iroq qiling.", retry: "Qayta yuborish",
+    loginTitle: "Kirish", username: "Login", password: "Parol", signIn: "Kirish", loginBad: "Login yoki parol noto'g'ri",
+    q: { dyspnea_rest: ["Tinch holatda nafas qisyaptimi?", "Dam olayotganingizda ham nafas olish qiyinmi?"],
+      orthopnea: ["Yotganda nafas qisyaptimi?", "Yostiqsiz tekis yota olmaysizmi?"],
+      syncope: ["Hushdan ketdingizmi?", "Bugun yoki kecha hushingizni yo'qotdingizmi?"],
+      chest_pain_non_incisional: ["Ko'krakda og'riq bormi?", "Chok og'rig'idan boshqa, siquvchi yoki kuchli og'riq."],
+      palpitations: ["Yurak tez yoki notekis urayaptimi?", "Yuragingiz «sakrayotgandek» his qilyapsizmi?"],
+      new_edema: ["Oyoqlarda yangi shish paydo bo'ldimi?", "Paypoq izi qolyaptimi yoki oyoq kiyim tor bo'lib qoldimi?"],
+      reduced_urine: ["Siydik kamaydimi?", "Odatdagidan ancha kam siyyapsizmi?"],
+      purulent_discharge: ["Chokdan yiring chiqyaptimi?", "Sariq yoki yashil, hidli suyuqlik."],
+      sternal_instability: ["Ko'krak suyagi qimirlayaptimi?", "Yo'talganda yoki burilganda chiqillash yoki qimirlash seziladimi?"],
+      dehiscence: ["Chok ochildimi?", "Chok chetlari bir-biridan ajraldimi?"],
+      spreading_redness: ["Chok atrofidagi qizarish kengaymoqdami?", "Qizarish kechagidan kattaroqmi?"],
+      serous_discharge: ["Chokdan suyuqlik chiqyaptimi?", "Tiniq yoki qonli suyuqlik."],
+      increasing_pain: ["Chok og'rig'i kuchaymoqdami?", "Og'riq kechagidan kuchliroqmi?"],
+      fever: ["Isitmangiz bormi?", "Harorat 38°C yoki undan yuqori."] } },
+  ru: { eyebrow: "Наблюдение после операции", title: "Ваше самочувствие сегодня", lead: "Ответьте на несколько простых вопросов.", of: "{i} / {n} вопрос",
+    yes: "Да", no: "Нет", unsure: "Не знаю", next: "Далее", back: "Назад", measures: "Измерения (если есть)", measuresHelp: "Если нет весов или прибора, оставьте пустым.",
+    weight: "Вес, кг", temp: "Температура, °C", pulse: "Пульс, уд/мин", spo2: "SpO₂, %", send: "Отправить", sending: "Отправка…",
+    emTitle: "Срочная ситуация", emText: "При потере сознания или сильной боли в груди — сразу звоните 103.",
+    nowTitle: "Возможно, нужна помощь сейчас", nowText: "Если вам плохо, не ждите окончания вопросов — звоните 103. Затем продолжите отправку ответов.",
+    call: "Позвонить 103", safety: "Ваша безопасность — на первом месте.",
+    r_green_t: "Спасибо!", r_green: "Ваши ответы приняты. Завтра спросим снова.",
+    r_amber_t: "Врач посмотрит ваши ответы", r_amber: "Ответы отправлены вашему врачу. Сегодня с вами свяжутся.",
+    r_red_t: "Врач уведомлён", r_red: "Если вам плохо, не ждите — звоните 103.",
+    r_unsure: "На некоторые вопросы вы ответили «Не знаю» — врач свяжется, чтобы уточнить.",
+    r_notSent: "Сообщение не дошло до врача автоматически. Пожалуйста, позвоните врачу сами.",
+    again: "В начало", noEp: "Откройте эту страницу по ссылке от вашего врача.", errSend: "Не удалось отправить. Проверьте интернет и повторите. Если плохо — 103.",
+    errStage: "Сейчас не период домашнего наблюдения. Если есть вопросы, позвоните врачу.", retry: "Отправить снова",
+    loginTitle: "Вход", username: "Логин", password: "Пароль", signIn: "Войти", loginBad: "Неверный логин или пароль",
+    q: { dyspnea_rest: ["Есть одышка в покое?", "Трудно дышать, даже когда вы отдыхаете?"],
+      orthopnea: ["Одышка, когда лежите?", "Не можете лежать ровно без подушек?"],
+      syncope: ["Была потеря сознания?", "Сегодня или вчера вы теряли сознание?"],
+      chest_pain_non_incisional: ["Есть боль в груди?", "Не боль от шва, а сжимающая или сильная боль."],
+      palpitations: ["Сердце бьётся часто или неровно?", "Ощущение, что сердце «прыгает»?"],
+      new_edema: ["Появились новые отёки ног?", "Остаются следы от носков или обувь стала тесной?"],
+      reduced_urine: ["Мочи стало меньше?", "Мочитесь заметно реже обычного?"],
+      purulent_discharge: ["Из шва выделяется гной?", "Жёлтая или зелёная жидкость с запахом."],
+      sternal_instability: ["Грудина подвижна?", "Щелчки или подвижность при кашле или повороте?"],
+      dehiscence: ["Шов разошёлся?", "Края шва отошли друг от друга?"],
+      spreading_redness: ["Покраснение вокруг шва увеличивается?", "Покраснение больше, чем вчера?"],
+      serous_discharge: ["Из шва выделяется жидкость?", "Прозрачная или с кровью."],
+      increasing_pain: ["Боль в шве усиливается?", "Боль сильнее, чем вчера?"],
+      fever: ["Есть температура?", "38°C или выше."] } },
+  en: { eyebrow: "Follow-up after surgery", title: "How are you today", lead: "Please answer a few simple questions.", of: "Question {i} / {n}",
+    yes: "Yes", no: "No", unsure: "Not sure", next: "Continue", back: "Back", measures: "Measurements (if you have them)", measuresHelp: "Leave empty if you have no scale or device.",
+    weight: "Weight, kg", temp: "Temperature, °C", pulse: "Pulse, per minute", spo2: "SpO₂, %", send: "Send", sending: "Sending…",
+    emTitle: "Emergency", emText: "If you faint or have severe chest pain — call 103 now.",
+    nowTitle: "You may need help now", nowText: "If you feel unwell, do not wait to finish the questions — call 103. Then continue sending your answers.",
+    call: "Call 103", safety: "Your safety comes first.",
+    r_green_t: "Thank you!", r_green: "Your answers were received. We will ask again tomorrow.",
+    r_amber_t: "Your doctor will review this", r_amber: "Your answers were sent to your doctor. They will contact you today.",
+    r_red_t: "Your doctor has been alerted", r_red: "If you feel unwell, do not wait — call 103.",
+    r_unsure: "You answered “Not sure” to some questions — your doctor will contact you to check.",
+    r_notSent: "The message did not reach your doctor automatically. Please call your doctor yourself.",
+    again: "Back to start", noEp: "Please open this page using the link from your doctor.", errSend: "Could not send. Check your internet and try again. If unwell — 103.",
+    errStage: "This is not the home follow-up period now. If you have questions, call your doctor.", retry: "Send again",
+    loginTitle: "Sign in", username: "Login", password: "Password", signIn: "Sign in", loginBad: "Wrong login or password",
+    q: { dyspnea_rest: ["Are you short of breath at rest?", "Is it hard to breathe even when resting?"],
+      orthopnea: ["Short of breath when lying down?", "You cannot lie flat without pillows?"],
+      syncope: ["Did you faint?", "Did you lose consciousness today or yesterday?"],
+      chest_pain_non_incisional: ["Do you have chest pain?", "Not the wound pain — a tight or strong pain."],
+      palpitations: ["Is your heart racing or irregular?", "Does your heart feel like it is “jumping”?"],
+      new_edema: ["New swelling in your legs?", "Sock marks, or shoes feel tight?"],
+      reduced_urine: ["Passing less urine?", "Much less than usual?"],
+      purulent_discharge: ["Is there pus from the wound?", "Yellow or green fluid with a smell."],
+      sternal_instability: ["Does your breastbone move?", "Clicking or movement when you cough or turn?"],
+      dehiscence: ["Has the wound opened?", "Have the wound edges come apart?"],
+      spreading_redness: ["Is the redness around the wound spreading?", "Bigger than yesterday?"],
+      serous_discharge: ["Is fluid coming from the wound?", "Clear or bloody fluid."],
+      increasing_pain: ["Is the wound pain getting worse?", "Stronger than yesterday?"],
+      fever: ["Do you have a fever?", "38°C or higher."] } },
+};
+const UZ_MONTHS = ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentabr", "oktabr", "noyabr", "dekabr"];
+const today = () => { const d = new Date(); return lang === "uz" ? `Bugun, ${d.getDate()}-${UZ_MONTHS[d.getMonth()]}` : d.toLocaleDateString(lang === "ru" ? "ru-RU" : "en-GB", { day: "numeric", month: "long" }); };
+let lang = ["uz", "ru", "en"].includes(store.get("lang")) ? store.get("lang") : "uz";
+const t = (k, v) => { let s = T[lang][k] ?? T.uz[k] ?? k; if (v) for (const [a, b] of Object.entries(v)) s = s.replace(`{${a}}`, b); return s; };
+
+let session = null; try { session = JSON.parse(sessionStorage.getItem("auth") || "null"); } catch (e) { /* */ }
+const params = new URLSearchParams(location.search);
+let episodeId = params.get("e"), authOn = false;
+const answers = {}; let step = 0;
+const N = QUESTIONS.length + 1;                       // + o'lchovlar ekrani
+const measures = { weight_kg: "", temperature_c: "", heart_rate: "", spo2: "" };
+
+const emergency = (now) => `<div class="emergency ${now ? "now" : ""}" role="${now ? "alert" : "note"}">${ALERT}<div><b>${esc(now ? t("nowTitle") : t("emTitle"))}</b>
+  <p>${esc(now ? t("nowText") : t("emText"))}</p>${now ? `<a class="call" href="tel:103">${esc(t("call"))}</a>` : ""}</div></div>`;
+const head = () => `<p class="eyebrow">${esc(t("eyebrow"))}</p><h1>${esc(t("title"))}</h1><p class="lead">${esc(t("lead"))}</p>
+  <div class="progress"><span>${esc(t("of", { i: Math.min(step + 1, N), n: N }))}</span><small>${esc(today())}</small></div>
+  <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${N}" aria-valuenow="${step}"><span style="width:${(step / N) * 100}%"></span></div>`;
+
+function render() {
+  document.documentElement.lang = lang; $("lang").value = lang;
+  document.title = `CardioPath — ${t("title")}`;
+  const m = $("main");
+  if (authOn && !session) return renderLogin();
+  if (!episodeId) { m.innerHTML = `<h1>${esc(t("title"))}</h1><p class="lead">${esc(t("noEp"))}</p>${emergency(false)}`; return; }
+  if (step < QUESTIONS.length) {
+    const q = QUESTIONS[step], [title, help] = T[lang].q[q.code], a = answers[q.code];
+    const showNow = q.urgent && a === "yes";      // jiddiy belgi: ko'rsatma darhol, yuborishni kutmasdan
+    m.innerHTML = `${head()}<div class="g-step"><div class="q-icon">${HEART}</div>
+      <fieldset style="border:0;padding:0;margin:0"><legend class="cp-guardian__question">${esc(title)}</legend><p class="q-help">${esc(help)}</p>
+        ${["yes", "no", "unsure"].map((v) => `<label class="cp-guardian__choice"><input type="radio" name="a" value="${v}" ${a === v ? "checked" : ""}>${esc(t(v))}</label>`).join("")}</fieldset></div>
+      ${showNow ? emergency(true) : ""}
+      <div class="nav-row">${step > 0 ? `<button class="cp-btn cp-btn--secondary" type="button" id="back" style="min-height:56px">${esc(t("back"))}</button>` : "<span></span>"}
+        <button class="cp-btn cp-guardian__submit" type="button" id="next" ${a ? "" : "disabled"}>→ ${esc(t("next"))}</button></div>
+      ${showNow ? "" : emergency(false)}<p class="foot">${esc(t("safety"))}</p>`;
+    m.querySelectorAll("input[name=a]").forEach((r) => r.addEventListener("change", () => { answers[q.code] = r.value; render(); const g = m.querySelector(".g-step"); if (g) g.style.animation = "none"; m.querySelector("input:checked").focus(); }));
+    $("next").onclick = () => { step++; render(); window.scrollTo({ top: 0 }); };
+  } else if (step === QUESTIONS.length) {
+    const f = (k, min, max, st) => `<div class="cp-field"><label class="cp-field__label" for="${k}">${esc(t({ weight_kg: "weight", temperature_c: "temp", heart_rate: "pulse", spo2: "spo2" }[k]))}</label>
+      <input class="cp-input" id="${k}" type="number" inputmode="decimal" min="${min}" max="${max}" step="${st}" value="${esc(measures[k])}"></div>`;
+    m.innerHTML = `${head()}<div class="q-icon">${HEART}</div><h2 class="cp-guardian__question">${esc(t("measures"))}</h2><p class="q-help">${esc(t("measuresHelp"))}</p>
+      <div class="num-grid">${f("weight_kg", 1, 399, .1)}${f("temperature_c", 30, 45, .1)}${f("heart_rate", 20, 250, 1)}${f("spo2", 50, 100, 1)}</div>
+      <p class="cp-field__error err" id="err" role="alert"></p>
+      <div class="nav-row"><button class="cp-btn cp-btn--secondary" type="button" id="back" style="min-height:56px">${esc(t("back"))}</button>
+        <button class="cp-btn cp-guardian__submit" type="button" id="send">${esc(t("send"))}</button></div>${emergency(false)}`;
+    Object.keys(measures).forEach((k) => { $(k).oninput = (e) => { measures[k] = e.target.value; }; });
+    $("send").onclick = send;
+  }
+  if ($("back")) $("back").onclick = () => { step--; render(); };
+}
+
+async function send() {
+  const btn = $("send"); btn.disabled = true; btn.textContent = t("sending"); $("err").textContent = "";
+  const pick = (group, v) => QUESTIONS.filter((q) => q.group === group && answers[q.code] === v).map((q) => q.code);
+  const num = (k) => measures[k] === "" ? null : Number(measures[k]);
+  const body = { actor: session ? session.user.username : "patient", symptoms: pick("symptoms", "yes"), unsure_symptoms: pick("symptoms", "unsure"),
+    wound_signs: pick("wound", "yes"), unsure_wound_signs: pick("wound", "unsure"), fever: answers.fever === "yes",
+    weight_kg: num("weight_kg"), temperature_c: num("temperature_c"), heart_rate: num("heart_rate"), spo2: num("spo2") };
+  try {
+    const headers = { "Content-Type": "application/json" }; if (session) headers.Authorization = "Bearer " + session.token;
+    const r = await fetch(`/episodes/${encodeURIComponent(episodeId)}/guardian/checkin`, { method: "POST", headers, body: JSON.stringify(body) });
+    if (r.status === 409) { $("err").textContent = t("errStage"); btn.disabled = false; btn.textContent = t("retry"); return; }
+    if (!r.ok) throw new Error(String(r.status));
+    showResult((await r.json()).escalation, Object.values(answers).includes("unsure"));
+  } catch (e) { $("err").textContent = t("errSend"); btn.disabled = false; btn.textContent = t("retry"); }
+}
+
+function showResult(esc_, unsure) {
+  const lvl = esc_.alert, cls = lvl === "red" ? "result--red" : lvl === "amber" ? "result--amber" : "";
+  const icon = lvl === "red" ? "!" : lvl === "amber" ? "!" : "✓";
+  // natija darhol, animatsiyasiz; tashxis, raqam yoki AI so'zi ko'rsatilmaydi
+  $("main").innerHTML = `<div class="result ${cls}" role="status" ${lvl === "red" ? "data-clinical-urgent" : ""}><div class="big-icon" aria-hidden="true">${icon}</div>
+      <h2>${esc(t("r_" + lvl + "_t"))}</h2><p>${esc(t("r_" + lvl))}</p>
+      ${unsure ? `<p>${esc(t("r_unsure"))}</p>` : ""}
+      ${lvl !== "green" && !esc_.notified ? `<p><b>${esc(t("r_notSent"))}</b></p>` : ""}
+      ${lvl === "red" ? `<a class="call" href="tel:103">${esc(t("call"))}</a>` : ""}</div>
+    ${lvl === "red" ? "" : emergency(false)}
+    <button class="cp-btn cp-btn--secondary cp-btn--block" type="button" id="again" style="margin-top:1rem;min-height:56px">${esc(t("again"))}</button>`;
+  $("again").onclick = () => { for (const k in answers) delete answers[k]; Object.keys(measures).forEach((k) => { measures[k] = ""; }); step = 0; render(); };
+}
+
+function renderLogin() {
+  $("main").innerHTML = `<h1>${esc(t("loginTitle"))}</h1><form id="lf" class="cp-stack" style="margin-top:1rem">
+    <div class="cp-field"><label class="cp-field__label" for="lu">${esc(t("username"))}</label><input class="cp-input" id="lu" autocomplete="username" required></div>
+    <div class="cp-field"><label class="cp-field__label" for="lp">${esc(t("password"))}</label><input class="cp-input" id="lp" type="password" autocomplete="current-password" required></div>
+    <p class="cp-field__error" id="le" role="alert"></p><button class="cp-btn cp-guardian__submit" type="submit">${esc(t("signIn"))}</button></form>${emergency(false)}`;
+  $("lf").onsubmit = async (e) => {
+    e.preventDefault();
+    const r = await fetch("/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: $("lu").value.trim(), password: $("lp").value }) });
+    if (!r.ok) { $("le").textContent = t("loginBad"); return; }
+    const b = await r.json(); session = { token: b.token, user: b.user, permissions: b.permissions };
+    try { sessionStorage.setItem("auth", JSON.stringify(session)); } catch (err) { /* */ }
+    episodeId = b.user.episode_id || episodeId; render();
+  };
+}
+
+$("lang").onchange = (e) => { lang = e.target.value; store.set("lang", lang); render(); };
+(async () => {
+  try { authOn = (await (await fetch("/auth/status")).json()).enabled; } catch (e) { /* */ }
+  if (authOn && session && session.user.episode_id) episodeId = session.user.episode_id;   // bemor faqat o'z epizodi
+  render();
+})();
+})();
+</script>
+</body>
+</html>

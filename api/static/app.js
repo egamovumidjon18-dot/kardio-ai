@@ -41,6 +41,8 @@ const ic = (n) => `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${IC
 const I = {
   uz: {
     vit_spo2: "SpO₂", vit_pcg: "Yurak tovushi", vit_ef: "EF (LVEF)", vit_risk: "Xavf", notEnteredShort: "Kiritilmagan", aiAdvice: "AI tavsiyasi", nextStep: "Keyingi qadam", noAdvice: "Hozircha muhokama talab qiladigan AI topilmasi yo'q.", heartMap: "Auskultatsiya nuqtalari", heartNote: "Yozuv olingan nuqtalar; eng yuqori shovqin ehtimoli belgilangan.", notRecorded: "Yurak tovushi yozilmagan", v_aorta: "Aorta", v_pulm: "Pulmonal", v_tric: "Trikuspid", v_mitral: "Mitral", topPoint: "eng yuqori",
+    hello_m: "Xayrli tong", hello_d: "Xayrli kun", hello_e: "Xayrli kech", hello_sub: "Bugungi klinik holat bir qarashda", chart_stages: "Bemorlar bosqichlar bo'yicha", chart_risk: "Xavf taqsimoti", total: "jami", quick_alerts: "Ogohlantirishlar",
+    act_glink: "Bemor havolasi (uy kuzatuvi)", glinkCopied: "Havola nusxalandi — bemorga yuboring",
     skip: "Asosiy qismga o'tish", research: "Tadqiqot rejimi", search: "Bemor kodi bo'yicha qidirish", newEpisode: "Yangi epizod",
     nav_dash: "Bosh panel", nav_eps: "Epizodlar", nav_screen: "Skrining", nav_alerts: "Ogohlantirishlar", nav_models: "Modellar", nav_shadow: "Shadow",
     welcome: "Xush kelibsiz", signInTitle: "Tizimga kirish", tagline: "Kardiologiya va kardioxirurgiya uchun AI yordamchi",
@@ -112,6 +114,8 @@ const I = {
   },
   ru: {
     vit_spo2: "SpO₂", vit_pcg: "Тоны сердца", vit_ef: "ФВ (ФВЛЖ)", vit_risk: "Риск", notEnteredShort: "Не внесено", aiAdvice: "Рекомендация ИИ", nextStep: "Следующий шаг", noAdvice: "Пока нет находок ИИ, требующих обсуждения.", heartMap: "Точки аускультации", heartNote: "Точки с записью; отмечена точка с наибольшей вероятностью шума.", notRecorded: "Тоны сердца не записаны", v_aorta: "Аорта", v_pulm: "Лёгочная", v_tric: "Трикуспидальная", v_mitral: "Митральная", topPoint: "максимум",
+    hello_m: "Доброе утро", hello_d: "Добрый день", hello_e: "Добрый вечер", hello_sub: "Клиническая картина дня одним взглядом", chart_stages: "Пациенты по этапам", chart_risk: "Распределение риска", total: "всего", quick_alerts: "Оповещения",
+    act_glink: "Ссылка для пациента (наблюдение)", glinkCopied: "Ссылка скопирована — отправьте пациенту",
     skip: "Перейти к содержимому", research: "Исследовательский режим", search: "Поиск по коду пациента", newEpisode: "Новый эпизод",
     nav_dash: "Панель", nav_eps: "Эпизоды", nav_screen: "Скрининг", nav_alerts: "Оповещения", nav_models: "Модели", nav_shadow: "Тень",
     welcome: "Добро пожаловать", signInTitle: "Вход в систему", tagline: "ИИ-помощник для кардиологии и кардиохирургии",
@@ -183,6 +187,8 @@ const I = {
   },
   en: {
     vit_spo2: "SpO₂", vit_pcg: "Heart sounds", vit_ef: "EF (LVEF)", vit_risk: "Risk", notEnteredShort: "Not entered", aiAdvice: "AI suggestion", nextStep: "Next step", noAdvice: "No AI finding needs discussion yet.", heartMap: "Auscultation points", heartNote: "Recorded points; the point with the highest murmur probability is marked.", notRecorded: "No heart sounds recorded", v_aorta: "Aortic", v_pulm: "Pulmonary", v_tric: "Tricuspid", v_mitral: "Mitral", topPoint: "highest",
+    hello_m: "Good morning", hello_d: "Good afternoon", hello_e: "Good evening", hello_sub: "Today's clinical picture at a glance", chart_stages: "Patients by stage", chart_risk: "Risk distribution", total: "total", quick_alerts: "Alerts",
+    act_glink: "Patient link (home follow-up)", glinkCopied: "Link copied — send it to the patient",
     skip: "Skip to content", research: "Research mode", search: "Search by patient code", newEpisode: "New episode",
     nav_dash: "Dashboard", nav_eps: "Episodes", nav_screen: "Screening", nav_alerts: "Alerts", nav_models: "Models", nav_shadow: "Shadow",
     welcome: "Welcome", signInTitle: "Sign in", tagline: "AI assistant for cardiology and cardiac surgery",
@@ -271,8 +277,13 @@ function ago(iso) {
     if (s < 3600) return rtf.format(-Math.round(s / 60), "minute");
     if (s < 86400) return rtf.format(-Math.round(s / 3600), "hour");
   }
+  if (lang === "uz") return `${d.getDate()}-${UZ_MONTHS[d.getMonth()]}, ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
   return d.toLocaleString(LOCALE(), { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
+const UZ_MONTHS = ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentabr", "oktabr", "noyabr", "dekabr"];
+const UZ_DAYS = ["yakshanba", "dushanba", "seshanba", "chorshanba", "payshanba", "juma", "shanba"];
+const longDate = (d) => lang === "uz" ? `${UZ_DAYS[d.getDay()]}, ${d.getDate()}-${UZ_MONTHS[d.getMonth()]}`
+  : d.toLocaleDateString(LOCALE(), { weekday: "long", day: "numeric", month: "long" });
 const hm = (iso) => iso ? new Date(iso).toLocaleTimeString(LOCALE(), { hour: "2-digit", minute: "2-digit" }) : "";
 
 /* ------------------------------------------------------------------ xavf belgilari: har doim belgi + matn */
@@ -484,31 +495,78 @@ function episodeRows(items) {
   if (!items.length) return `<div class="empty-note">${esc(t("noEpisodes"))}</div>`;
   return `<div class="cp-table-scroll"><table class="cp-table"><thead><tr><th scope="col">${esc(t("col_ref"))}</th><th scope="col">${esc(t("col_pop"))}</th><th scope="col">${esc(t("col_stage"))}</th>
     <th scope="col">${esc(t("col_risk"))}</th><th scope="col">${esc(t("col_upd"))}</th><th scope="col">${esc(t("col_disc"))}</th></tr></thead><tbody>
-    ${items.map((e) => `<tr><td><a href="#/e/${esc(e.id)}">${esc(e.patient_ref)}</a>${e.open_alert_level ? ` <span class="badge-n" title="alerts">${e.open_alerts}</span>` : ""}</td>
+    ${items.map((e) => `<tr><td><span class="pt-ava" aria-hidden="true">${esc(e.patient_ref.replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase())}</span><a href="#/e/${esc(e.id)}">${esc(e.patient_ref)}</a>${e.open_alert_level ? ` <span class="badge-n" title="alerts">${e.open_alerts}</span>` : ""}</td>
       <td>${esc(t("pop_" + e.population))}</td><td><span class="pill">${esc(t("stage_" + e.stage))}</span></td>
       <td>${riskBadge(e.overall_risk)}</td><td>${esc(ago(e.updated_at))}</td>
       <td><span class="pill ${e.n_discussion ? "" : "pill--muted"}">${esc(t("disc_n", { n: e.n_discussion }))}</span></td></tr>`).join("")}
     </tbody></table></div>`;
 }
+const STAGE_COLORS = { screening: "#22c1e6", workup: "#2f7cf6", heart_team: "#8b6cff", procedure: "#ff8a3d", icu: "#ff5d73",
+  discharge: "#3fd19a", guardian_30d: "#1fb5a8", closed: "#8a99ad" };
+const RISK_COLORS = { very_high: "var(--cp-danger)", high: "var(--cp-danger)", moderate: "var(--cp-warning)", low: "var(--cp-success)", normal: "var(--cp-success)", none: "var(--cp-abstain)" };
+function ring(n, total) {
+  const c = 2 * Math.PI * 22, frac = total ? Math.min(1, n / total) : 0;
+  return `<svg class="ring" viewBox="0 0 54 54" aria-hidden="true"><circle class="bg" cx="27" cy="27" r="22"/>
+    <circle class="fg" cx="27" cy="27" r="22" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - frac)).toFixed(1)}"/>
+    <text x="27" y="31" text-anchor="middle">${Math.round(frac * 100)}%</text></svg>`;
+}
+function donut(counts) {
+  const total = Object.values(counts).reduce((a, b) => a + b, 0), r = 60, c = 2 * Math.PI * r;
+  let off = 0;
+  const segs = STAGES.filter((s) => counts[s]).map((s) => {
+    const len = (counts[s] / total) * c, seg = `<circle cx="80" cy="80" r="${r}" fill="none" stroke="${STAGE_COLORS[s]}" stroke-width="18"
+      stroke-dasharray="${len.toFixed(2)} ${(c - len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 80 80)"/>`;
+    off += len; return seg;
+  }).join("");
+  return `<svg class="donut" viewBox="0 0 160 160" role="img" aria-label="${esc(t("chart_stages"))}"><circle cx="80" cy="80" r="${r}" fill="none" stroke="var(--cp-surface-2)" stroke-width="18"/>
+    ${segs}<text class="n" x="80" y="84" text-anchor="middle">${total}</text><text class="l" x="80" y="102" text-anchor="middle">${esc(t("total"))}</text></svg>`;
+}
+function liveEcg() {
+  const beat = (x) => `L${x} 40 L${x + 10} 40 L${x + 16} 34 L${x + 22} 40 L${x + 30} 40 L${x + 35} 48 L${x + 41} 8 L${x + 47} 60 L${x + 53} 40 L${x + 68} 40 L${x + 78} 30 L${x + 90} 40`;
+  let d = "M0 40"; for (let x = 0; x < 1180; x += 118) d += " " + beat(x);
+  return `<svg class="live-ecg" viewBox="0 0 1180 70" preserveAspectRatio="none" aria-hidden="true"><path class="ghost" d="${d}"/><path class="trace" d="${d}"/></svg>`;
+}
+let clockTimer = null;
 async function dashboard() {
   const canEp = can("episode.read"), canAl = can("alerts.read");
-  const [al, all, closed, ht, icu, gd, eps] = await Promise.all([
+  const [al, eps] = await Promise.all([
     canAl ? api("/alerts?status=open&limit=6") : { items: [], total: 0 },
-    canEp ? api("/episodes?limit=1") : { total: 0 }, canEp ? api("/episodes?stage=closed&limit=1") : { total: 0 },
-    canEp ? api("/episodes?stage=heart_team&limit=1") : { total: 0 }, canEp ? api("/episodes?stage=icu&limit=1") : { total: 0 },
-    canEp ? api("/episodes?stage=guardian_30d&limit=1") : { total: 0 }, canEp ? api("/episodes?limit=12") : { items: [] },
+    canEp ? api("/episodes?limit=200") : { items: [], total: 0 },
   ]);
   openAlerts = al.total;
-  const stat = (icon, label, n, s) => `<div class="stat"><span class="stat__icon">${ic(icon)}</span><div><small>${esc(label)}</small><b>${n}</b><small style="font-weight:500">${esc(s)}</small></div></div>`;
-  view.innerHTML = `
-    <div class="pagehead"><div><p class="eyebrow">${esc(t("dashEyebrow"))}</p><h1>${esc(t("nav_dash"))}</h1><p class="sub">${esc(t("dashSub"))}</p></div>
-      ${health ? `<span class="pill pill--ok">${ic("check")}${esc(health.mode === "research" ? t("research") : health.mode)}</span>` : ""}</div>
+  const items = eps.items, byStage = {}, byRisk = {};
+  items.forEach((e) => { byStage[e.stage] = (byStage[e.stage] || 0) + 1; const k = e.overall_risk || "none"; byRisk[k] = (byRisk[k] || 0) + 1; });
+  const active = items.filter((e) => e.stage !== "closed").length;
+  const hour = new Date().getHours(), hello = hour < 11 ? t("hello_m") : hour < 17 ? t("hello_d") : t("hello_e");
+  const who = session ? (session.user.display_name || session.user.username) : (store.get("actor") || "");
+  const stat = (icon, label, n, s, kpi) => `<div class="stat" style="--kpi:${kpi}"><span class="stat__icon">${ic(icon)}</span><div><small>${esc(label)}</small><b>${n}</b>
+    <small style="font-weight:500">${esc(s)}</small></div>${ring(n, Math.max(active, 1))}</div>`;
+  const riskRows = ["very_high", "high", "moderate", "low", "none"].filter((k) => byRisk[k] || k === "none").map((k) => {
+    const n = byRisk[k] || 0, w = items.length ? (n / items.length) * 100 : 0;
+    return `<div class="bars__row"><span>${k === "none" ? esc(t("risk_none")) : riskBadge(k)}</span><div class="bars__track"><div class="bars__fill" style="width:${w}%;background:${RISK_COLORS[k]}"></div></div><b>${n}</b></div>`;
+  }).join("");
+  view.innerHTML = `<div class="pm-in">
+    <section class="hello"><div class="hello__row"><div><p class="eyebrow">${esc(t("dashEyebrow"))}</p><h1>${esc(hello)}${who ? ", " + esc(who) : ""}</h1><p>${esc(t("hello_sub"))}</p></div>
+        <div class="hello__clock" id="clock"></div></div>
+      ${liveEcg()}
+      <div class="hello__actions">${can("episode.create") ? `<button class="cp-btn" type="button" id="heroNew">${ic("plus")}${esc(t("newEpisode"))}</button>` : ""}
+        ${canAl ? `<a class="cp-btn" href="#/alerts">${ic("bell")}${esc(t("quick_alerts"))}${al.total ? ` · ${al.total}` : ""}</a>` : ""}
+        ${can("screening.run") ? `<a class="cp-btn" href="/screening">${ic("steth")}${esc(t("nav_screen"))}</a>` : ""}</div></section>
     ${canAl ? `<h2 class="section-title">${ic("alert")}${esc(t("urgent"))} <span class="badge-n">${al.total}</span></h2>
-      ${al.items.length ? `<div class="urgent-grid">${al.items.slice(0, 3).map(alertCard).join("")}</div>` : `<div class="cp-card cp-card--flat" style="margin-bottom:1rem"><span class="cp-risk cp-risk--low"><span aria-hidden="true">✓</span>${esc(t("noUrgent"))}</span></div>`}` : ""}
-    ${canEp ? `<div class="stats">${stat("folder", t("st_active"), all.total - closed.total, t("st_active_s"))}${stat("user", t("st_ht"), ht.total, t("st_ht_s"))}
-      ${stat("pulse", t("st_icu"), icu.total, t("st_icu_s"))}${stat("heart", t("st_guard"), gd.total, t("st_guard_s"))}</div>
+      ${al.items.length ? `<div class="urgent-grid">${al.items.slice(0, 3).map(alertCard).join("")}</div>` : `<div class="cp-card" style="margin-bottom:1rem;padding:1rem"><span class="cp-risk cp-risk--low"><span aria-hidden="true">✓</span>${esc(t("noUrgent"))}</span></div>`}` : ""}
+    ${canEp ? `<div class="stats">${stat("folder", t("st_active"), active, t("st_active_s"), "linear-gradient(135deg,#2f7cf6,#22c1e6)")}
+      ${stat("user", t("st_ht"), byStage.heart_team || 0, t("st_ht_s"), "linear-gradient(135deg,#8b6cff,#5a8bff)")}
+      ${stat("pulse", t("st_icu"), byStage.icu || 0, t("st_icu_s"), "linear-gradient(135deg,#ff5d73,#ff8a3d)")}
+      ${stat("heart", t("st_guard"), byStage.guardian_30d || 0, t("st_guard_s"), "linear-gradient(135deg,#1fb5a8,#3fd19a)")}</div>
+    <div class="charts"><section class="cp-card lift"><h2 class="cp-card__title" style="margin-bottom:1rem">${esc(t("chart_stages"))}</h2>
+        <div class="donut-wrap">${donut(byStage)}<ul class="legend">${STAGES.filter((s) => byStage[s]).map((s) => `<li><i style="background:${STAGE_COLORS[s]}"></i>${esc(t("stage_" + s))}<b>${byStage[s]}</b></li>`).join("") || `<li>—</li>`}</ul></div></section>
+      <section class="cp-card lift"><h2 class="cp-card__title" style="margin-bottom:1rem">${esc(t("chart_risk"))}</h2><div class="bars">${riskRows}</div></section></div>
     <section class="cp-card"><div class="tablebar"><div><h2 class="cp-card__title">${esc(t("episodes"))}</h2><p class="sub">${esc(t("episodesSub"))}</p></div>
-      <a class="cp-btn cp-btn--secondary" href="#/episodes">${ic("list")}${esc(t("nav_eps"))}</a></div>${episodeRows(eps.items)}</section>` : ""}`;
+      <a class="cp-btn cp-btn--secondary" href="#/episodes">${ic("list")}${esc(t("nav_eps"))}</a></div>${episodeRows(items.slice(0, 10))}</section>` : ""}</div>`;
+  if ($("heroNew")) $("heroNew").onclick = () => newEpisodeDialog();
+  const tick = () => { const c = $("clock"); if (!c) { clearInterval(clockTimer); return; } const d = new Date();
+    c.innerHTML = `${d.toLocaleTimeString(LOCALE(), { hour: "2-digit", minute: "2-digit" })}<small>${esc(longDate(d))}</small>`; };
+  clearInterval(clockTimer); tick(); clockTimer = setInterval(tick, 15000);
   bindAck(dashboard);
   paintNav();
 }
@@ -578,7 +636,7 @@ async function episodePage(id) {
   const nxt = d.next_stages.filter((s) => STAGES.indexOf(s) > STAGES.indexOf(d.episode.stage)).sort((a, b) => STAGES.indexOf(a) - STAGES.indexOf(b))[0];
   view.innerHTML = `
     <p class="eyebrow"><a href="#/episodes">${esc(t("episodes"))}</a> / ${esc(d.episode.patient_ref)}</p>
-    <section class="cp-card hero" style="margin-top:.5rem">
+    <section class="cp-card hero" style="margin-top:.5rem;animation:pm-rise .5s var(--cp-ease-out) both">
       <div class="hero__id"><span class="hero__avatar">${ic("user")}</span><div style="min-width:0"><h1>${esc(d.episode.patient_ref)}</h1>
         <p class="sub">${esc(t("pop_" + d.episode.population))} · ${esc(t("stage_" + d.episode.stage))}</p>
         <div class="cp-cluster">${riskBadge(d.overall_risk)}${canTr && d.next_stages.length ? `<button class="cp-btn" type="button" id="trBtn">${ic("arrow")}${esc(t("nextStage"))}</button>` : ""}</div></div></div>
@@ -612,7 +670,8 @@ async function episodePage(id) {
           <div class="actions" style="margin-top:1rem">${canUp ? `<a class="cp-btn cp-btn--secondary" href="#/e/${id}/ecg">${ic("upload")}${esc(t("act_ecg"))}</a>` : ""}
             ${canRisk ? `<a class="cp-btn cp-btn--secondary" href="#/e/${id}/risk">${ic("chart")}${esc(t("act_risk"))}</a>` : ""}
             ${canProto ? `<a class="cp-btn cp-btn--secondary" href="#/e/${id}/protocol">${ic("doc")}${esc(t("act_proto"))}</a>` : ""}
-            ${d.episode.stage === "screening" && can("screening.run") ? `<a class="cp-btn cp-btn--secondary" href="/screening">${ic("steth")}${esc(t("act_screen"))}</a>` : ""}</div></section>
+            ${d.episode.stage === "screening" && can("screening.run") ? `<a class="cp-btn cp-btn--secondary" href="/screening">${ic("steth")}${esc(t("act_screen"))}</a>` : ""}
+            ${d.episode.stage === "guardian_30d" ? `<button class="cp-btn cp-btn--secondary" type="button" id="gLink">${ic("heart")}${esc(t("act_glink"))}</button>` : ""}</div></section>
       </div>
       <div class="cp-stack">
         <section class="cp-card" id="sec-ev"><div class="cp-card__header"><h2 class="cp-card__title">${esc(t("sec_evidence"))}</h2><span class="pill">${ep.evidence.length}</span></div>
@@ -623,6 +682,10 @@ async function episodePage(id) {
       </div>
     </div>`;
   if ($("trBtn")) $("trBtn").onclick = () => transitionDialog(d);
+  if ($("gLink")) $("gLink").onclick = async () => {
+    const url = `${location.origin}/guardian?e=${d.episode.id}`;
+    try { await navigator.clipboard.writeText(url); toast(t("glinkCopied")); } catch (e) { window.prompt(t("act_glink"), url); }
+  };
 }
 function transitionDialog(d) {
   if (!requireActor()) return;
@@ -886,6 +949,7 @@ async function alertsPage(params) {
 
 /* ------------------------------------------------------------------ ishga tushirish */
 (async () => {
+  if (!["light", "dark"].includes(store.get("theme"))) document.documentElement.dataset.theme = "dark";
   paintChrome();
   try { authOn = (await (await fetch("/auth/status")).json()).enabled; } catch (e) { /* */ }
   if (!authOn) { session = null; saveSession(); }

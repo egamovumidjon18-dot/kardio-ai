@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CardioPath AI</title>
-<link rel="stylesheet" href="/static/cardiopath.css">
-<script defer src="/static/cardiopath.js"></script>
+<link rel="stylesheet" href="/static/cardiopath.css?v=20261101a">
+<script defer src="/static/cardiopath.js?v=20261101a"></script>
 <style>
   /* Ilova qobig'i (Clinical Precision maketlari bo'yicha). Tokenlar cardiopath.css da. */
   body { overflow-x: hidden; }
@@ -213,9 +213,15 @@
     .app { display: block; } .content { width: 100%; padding: 0; } .doc { box-shadow: none; border: 0; padding: 0; max-width: none; }
   }
 </style>
+<link rel="stylesheet" href="/static/app-premium.css?v=20261101a">
 </head>
 <body>
 <a class="cp-skip" href="#view" data-i="skip"></a>
+<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="kpiGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2f7cf6"/><stop offset="1" stop-color="#3fe0d0"/></linearGradient>
+  <radialGradient id="heartGrad" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#ff6b81"/><stop offset=".6" stop-color="#d1344b"/><stop offset="1" stop-color="#7a1426"/></radialGradient>
+</defs></svg>
 <div class="app">
   <aside class="side" aria-label="CardioPath">
     <a class="brand" href="#/"><span class="brand__mark" data-icon="heart"></span><span><span class="brand__name">CardioPath <b>AI</b></span><span class="brand__sub">Clinical precision</span></span></a>
@@ -258,6 +264,6 @@
     <div class="seg" id="loginLang" style="margin-top:1rem" role="group" aria-label="Language"></div>
   </form>
 </div>
-<script src="/static/app.js"></script>
+<script src="/static/app.js?v=20261101a"></script>
 </body>
 </html>

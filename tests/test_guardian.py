@@ -63,3 +63,24 @@ def test_escalation_levels_and_privacy():
     assert "PSV-1" in n.sent[-1] and "4-kun" in n.sent[-1]
     assert escalate("PSV-1", 5, [assess_inr(None, "af")], n).alert == Alert.AMBER   # o'qilmagan → inson ko'rigi
     assert "doza" not in " ".join(e.patient_message for e in [esc])                   # bemorga doza aytilmaydi
+
+
+def test_unsure_answer_is_not_treated_as_no():
+    from guardian.checkin import vitals_and_symptoms, wound
+    from core.evidence import RiskLevel
+    ev = vitals_and_symptoms(None, None, None, [], unsure=["syncope"])
+    assert ev.risk == RiskLevel.MODERATE and any("aniq emas" in x for x in ev.explanation)
+    assert vitals_and_symptoms(None, None, None, [], unsure=["palpitations"]).risk != RiskLevel.HIGH
+    assert wound([], unsure=["dehiscence"]).risk == RiskLevel.MODERATE
+    assert wound([], unsure=[]).risk == RiskLevel.LOW
+    assert vitals_and_symptoms(None, None, None, ["syncope"], unsure=["syncope"]).risk == RiskLevel.HIGH   # «ha» ustun
+
+
+def test_guardian_page_is_served_and_safe(tmp_path):
+    from fastapi.testclient import TestClient
+    from api.main import create_app
+    from core.store import SqliteEpisodeStore
+    html = TestClient(create_app(SqliteEpisodeStore(str(tmp_path / "g.db")), None)).get("/guardian").text
+    assert "tel:103" in html and "unsure_symptoms" in html and "guardian/checkin" in html
+    texts = html[html.index("const T = {"):html.index("let lang")]      # bemorga ko'rinadigan matnlar
+    assert "AI" not in texts and "ИИ" not in texts and "tashxis" not in texts       # AI so'zi va tashxis yo'q

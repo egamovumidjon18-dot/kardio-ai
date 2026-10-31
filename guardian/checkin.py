@@ -60,10 +60,20 @@ def weight_trend(history: list[tuple[str, float]]) -> Evidence:
                     risk=risk, explanation=trace or ["vazn barqaror"])
 
 
+def _unsure(codes: list[str], table: dict, levels: list, trace: list) -> None:
+    """«Bilmayman» javobi «yo'q» degani EMAS: jiddiy (HIGH) belgi bo'yicha noaniqlik shifokor tekshiruvini talab qiladi (MODERATE)."""
+    for c in codes:
+        name, lvl = table[c]
+        if lvl == RiskLevel.HIGH:
+            levels.append(RiskLevel.MODERATE)
+        trace.append(f"aniq emas (bemor bilmaydi): {name}")
+
+
 def vitals_and_symptoms(heart_rate: Optional[float], spo2: Optional[float], temperature_c: Optional[float],
-                        symptoms: list[str]) -> Evidence:
+                        symptoms: list[str], unsure: Optional[list[str]] = None) -> Evidence:
     prov = Provenance(name="hf_symptoms", reference=HF_REF)
-    unknown = [s for s in symptoms if s not in HF_SYMPTOMS]
+    unsure = [u for u in (unsure or []) if u not in symptoms]
+    unknown = [s for s in [*symptoms, *unsure] if s not in HF_SYMPTOMS]
     if unknown:
         return Evidence.abstain("guardian.hf", Source.PATIENT, prov, f"noma'lum belgi kodlari: {unknown}")
     levels, trace = [], []
@@ -82,24 +92,27 @@ def vitals_and_symptoms(heart_rate: Optional[float], spo2: Optional[float], temp
     for s in symptoms:
         name, lvl = HF_SYMPTOMS[s]
         levels.append(lvl); trace.append(name)
-    return Evidence(kind="guardian.hf", value={"hr": heart_rate, "spo2": spo2, "t": temperature_c, "symptoms": symptoms},
+    _unsure(unsure, HF_SYMPTOMS, levels, trace)
+    return Evidence(kind="guardian.hf", value={"hr": heart_rate, "spo2": spo2, "t": temperature_c, "symptoms": symptoms, "unsure": unsure},
                     source=Source.PATIENT, provenance=prov, risk=_worst(levels),
                     explanation=trace or ["belgilar yo'q"])
 
 
-def wound(signs: list[str], fever: bool = False, photo_ref: Optional[str] = None) -> Evidence:
+def wound(signs: list[str], fever: bool = False, photo_ref: Optional[str] = None, unsure: Optional[list[str]] = None) -> Evidence:
     prov = Provenance(name="sternal_wound_questionnaire", reference=WOUND_REF)
-    unknown = [s for s in signs if s not in WOUND_SIGNS]
+    unsure = [u for u in (unsure or []) if u not in signs]
+    unknown = [s for s in [*signs, *unsure] if s not in WOUND_SIGNS]
     if unknown:
         return Evidence.abstain("guardian.wound", Source.PATIENT, prov, f"noma'lum belgi kodlari: {unknown}")
     levels = [WOUND_SIGNS[s][1] for s in signs]
     trace = [WOUND_SIGNS[s][0] for s in signs]
+    _unsure(unsure, WOUND_SIGNS, levels, trace)
     risk = _worst(levels)
     if fever and signs and risk == RiskLevel.MODERATE:
         risk = RiskLevel.HIGH
         trace.append("isitma + yara belgisi → chuqur SSI gumoni")
     if photo_ref:
         trace.append("rasm jarrohga ko'rib chiqish uchun yuborildi (AI tahlili hali yo'q)")
-    return Evidence(kind="guardian.wound", value={"signs": signs, "fever": fever, "photo_ref": photo_ref},
-                    source=Source.PATIENT, provenance=prov, risk=risk if signs else RiskLevel.LOW,
+    return Evidence(kind="guardian.wound", value={"signs": signs, "fever": fever, "photo_ref": photo_ref, "unsure": unsure},
+                    source=Source.PATIENT, provenance=prov, risk=risk if (signs or unsure) else RiskLevel.LOW,
                     explanation=trace or ["yara belgilari yo'q"])

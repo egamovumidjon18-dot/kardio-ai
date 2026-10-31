@@ -1,0 +1,147 @@
+/* CardioPath AI · Premium «Command Center» qatlami (app.html ustidan).
+   Bezak animatsiyalari faqat transform/opacity va faqat klinik bo'lmagan elementlarda.
+   [data-clinical-urgent] va qizil natijalar hech qachon harakatlanmaydi (cardiopath.css 05-bo'lim ham kafolatlaydi). */
+
+:root {
+  --pm-bg-1: #eaf2ff; --pm-bg-2: #f7faff;
+  --pm-glass: rgb(255 255 255 / .78); --pm-glass-strong: rgb(255 255 255 / .92);
+  --pm-stroke: rgb(7 88 170 / .14); --pm-stroke-hi: rgb(7 88 170 / .32);
+  --pm-glow: 0 10px 30px rgb(7 88 170 / .12);
+  --pm-grad: linear-gradient(135deg, #0758AA 0%, #1f8ef1 55%, #22c1e6 100%);
+  --pm-grad-soft: linear-gradient(135deg, rgb(7 88 170 / .10), rgb(34 193 230 / .10));
+  --pm-aurora-a: rgb(31 142 241 / .22); --pm-aurora-b: rgb(34 193 230 / .18); --pm-aurora-c: rgb(90 67 164 / .14);
+  --pm-ecg: #0758AA;
+}
+:root[data-theme="dark"] {
+  --pm-bg-1: #071427; --pm-bg-2: #0b1d36;
+  --pm-glass: rgb(16 34 60 / .62); --pm-glass-strong: rgb(18 38 66 / .86);
+  --pm-stroke: rgb(131 187 255 / .16); --pm-stroke-hi: rgb(131 187 255 / .38);
+  --pm-glow: 0 0 0 1px rgb(131 187 255 / .06), 0 18px 40px rgb(0 0 0 / .45);
+  --pm-grad: linear-gradient(135deg, #2f7cf6 0%, #22a6f2 55%, #3fe0d0 100%);
+  --pm-grad-soft: linear-gradient(135deg, rgb(47 124 246 / .20), rgb(63 224 208 / .10));
+  --pm-aurora-a: rgb(47 124 246 / .30); --pm-aurora-b: rgb(63 224 208 / .16); --pm-aurora-c: rgb(140 100 255 / .18);
+  --pm-ecg: #5fd4ff;
+  --cp-surface: #10223c; --cp-surface-2: #0d1c33; --cp-border: #23406a; --cp-canvas: #071427;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --pm-bg-1: #071427; --pm-bg-2: #0b1d36;
+    --pm-glass: rgb(16 34 60 / .62); --pm-glass-strong: rgb(18 38 66 / .86);
+    --pm-stroke: rgb(131 187 255 / .16); --pm-stroke-hi: rgb(131 187 255 / .38);
+    --pm-glow: 0 0 0 1px rgb(131 187 255 / .06), 0 18px 40px rgb(0 0 0 / .45);
+    --pm-grad: linear-gradient(135deg, #2f7cf6 0%, #22a6f2 55%, #3fe0d0 100%);
+    --pm-grad-soft: linear-gradient(135deg, rgb(47 124 246 / .20), rgb(63 224 208 / .10));
+    --pm-aurora-a: rgb(47 124 246 / .30); --pm-aurora-b: rgb(63 224 208 / .16); --pm-aurora-c: rgb(140 100 255 / .18);
+    --pm-ecg: #5fd4ff;
+    --cp-surface: #10223c; --cp-surface-2: #0d1c33; --cp-border: #23406a; --cp-canvas: #071427;
+  }
+}
+
+/* ---- fon: sekin suzuvchi «aurora» (faqat bezak) */
+html, body { background: linear-gradient(180deg, var(--pm-bg-1), var(--pm-bg-2)) fixed !important; }
+.aurora { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.aurora i { position: absolute; width: 46vmax; height: 46vmax; border-radius: 50%; filter: blur(70px); opacity: .9; will-change: transform; }
+.aurora i:nth-child(1) { background: var(--pm-aurora-a); top: -18vmax; right: -10vmax; animation: pm-drift-a 28s ease-in-out infinite alternate; }
+.aurora i:nth-child(2) { background: var(--pm-aurora-b); bottom: -22vmax; left: -12vmax; animation: pm-drift-b 34s ease-in-out infinite alternate; }
+.aurora i:nth-child(3) { background: var(--pm-aurora-c); top: 30%; left: 35%; width: 30vmax; height: 30vmax; animation: pm-drift-c 40s ease-in-out infinite alternate; }
+@keyframes pm-drift-a { to { transform: translate(-8vmax, 10vmax) scale(1.1); } }
+@keyframes pm-drift-b { to { transform: translate(10vmax, -6vmax) scale(1.15); } }
+@keyframes pm-drift-c { to { transform: translate(-12vmax, -8vmax) scale(.9); } }
+.app { position: relative; z-index: 1; }
+
+/* ---- shisha qobiq */
+.side, .topbar { background: var(--pm-glass) !important; backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border-color: var(--pm-stroke) !important; }
+.brand__mark { background: var(--pm-grad); color: #fff; box-shadow: 0 6px 18px rgb(31 142 241 / .35); }
+.brand__name b { background: var(--pm-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.nav a { position: relative; transition: background-color .2s, transform .2s; }
+.nav a:hover { transform: translateX(3px); }
+.nav a[aria-current="page"] { background: var(--pm-grad) !important; color: #fff !important; box-shadow: 0 8px 22px rgb(31 142 241 / .35); }
+.nav a[aria-current="page"] .icon { stroke: #fff; }
+#newEp { background: var(--pm-grad); border: 0; box-shadow: 0 8px 22px rgb(31 142 241 / .35); }
+.search input { background: var(--pm-glass-strong); border-color: var(--pm-stroke-hi); }
+.cp-card, .stat, .urgent:not(.urgent--red) { background: var(--pm-glass) !important; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--pm-stroke) !important; border-radius: 20px; box-shadow: var(--pm-glow); }
+.cp-card { transition: transform .25s var(--cp-ease-out), box-shadow .25s, border-color .25s; }
+.cp-card:not([data-clinical-urgent]):hover, .stat:hover { border-color: var(--pm-stroke-hi) !important; }
+.cp-btn:not(.cp-btn--secondary):not(.cp-btn--ghost):not(.btn-danger-solid):not(.btn-warn-solid) { background: var(--pm-grad); border: 0; }
+.cp-btn--secondary { background: var(--pm-glass-strong); border-color: var(--pm-stroke-hi); }
+.cp-table th { background: transparent; color: var(--cp-ink-muted); text-transform: uppercase; letter-spacing: .08em; font-size: .7rem; }
+.cp-table tbody tr { transition: background-color .2s; }
+.cp-table tbody tr:hover { background: var(--pm-grad-soft); }
+.pill { background: var(--pm-grad-soft); }
+
+/* ---- bosh panel: salomlashish banneri + jonli EKG */
+.hello { position: relative; overflow: hidden; display: grid; gap: 1rem; padding: 1.6rem 1.6rem 1.3rem; margin-bottom: 1.25rem; border-radius: 24px;
+  background: var(--pm-grad); color: #fff; box-shadow: 0 20px 50px rgb(31 142 241 / .30); }
+.hello::after { content: ""; position: absolute; inset: 0; background: radial-gradient(600px 220px at 85% 0%, rgb(255 255 255 / .22), transparent 70%); pointer-events: none; }
+.hello h1 { margin: 0; font-size: clamp(1.7rem, 1.3rem + 1.6vw, 2.5rem); letter-spacing: -.03em; color: #fff; }
+.hello p { margin: .25rem 0 0; color: rgb(255 255 255 / .85); }
+.hello .eyebrow { color: rgb(255 255 255 / .8); }
+.hello__row { position: relative; z-index: 1; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; align-items: flex-end; }
+.hello__clock { font-variant-numeric: tabular-nums; font-size: 2rem; font-weight: 800; line-height: 1; text-align: right; }
+.hello__clock small { display: block; font-size: .8rem; font-weight: 600; opacity: .85; }
+.hello__actions { display: flex; flex-wrap: wrap; gap: .5rem; position: relative; z-index: 1; }
+.hello__actions .cp-btn { background: rgb(255 255 255 / .16) !important; color: #fff; border: 1px solid rgb(255 255 255 / .35); backdrop-filter: blur(6px); }
+.hello__actions .cp-btn:hover { background: rgb(255 255 255 / .26) !important; }
+.live-ecg { position: relative; z-index: 1; width: 100%; height: 70px; display: block; }
+.live-ecg path { fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 6px rgb(255 255 255 / .8)); }
+.live-ecg .trace { stroke-dasharray: 220 1400; animation: pm-sweep 3.2s linear infinite; }
+.live-ecg .ghost { opacity: .22; filter: none; }
+@keyframes pm-sweep { from { stroke-dashoffset: 1620; } to { stroke-dashoffset: 0; } }
+
+/* ---- KPI: halqa diagrammali kartalar */
+.stats { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)) !important; }
+.stat { position: relative; overflow: hidden; padding: 1.15rem; gap: 1rem; }
+.stat > div { min-width: 0; }
+.stat::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--kpi, var(--pm-grad)); }
+.stat__icon { width: 46px; height: 46px; border-radius: 14px; background: var(--kpi, var(--pm-grad)); color: #fff; box-shadow: 0 8px 18px rgb(0 0 0 / .18); }
+.stat b { font-size: 2rem; letter-spacing: -.03em; }
+.ring { margin-left: auto; width: 54px; height: 54px; flex: none; }
+.ring circle { fill: none; stroke-width: 6; } .ring .bg { stroke: var(--cp-border); }
+.ring .fg { stroke: url(#kpiGrad); stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dashoffset 1s var(--cp-ease-out); }
+.ring text { fill: var(--cp-ink-muted); font-size: 11px; font-weight: 800; }
+
+/* ---- diagrammalar */
+.charts { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); margin-bottom: 1rem; }
+@media (min-width: 900px) { .charts { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.donut-wrap { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 1rem; align-items: center; }
+.donut { width: 160px; height: 160px; }
+.donut text.n { fill: var(--cp-ink); font-size: 30px; font-weight: 850; } .donut text.l { fill: var(--cp-ink-muted); font-size: 10px; font-weight: 700; }
+.legend { list-style: none; margin: 0; padding: 0; display: grid; gap: .45rem; font-size: var(--cp-text-sm); }
+.legend li { display: flex; align-items: center; gap: .5rem; } .legend i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.legend b { margin-left: auto; font-variant-numeric: tabular-nums; }
+.bars { display: grid; gap: .8rem; }
+.bars__row { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr) 2.5rem; gap: .6rem; align-items: center; font-size: var(--cp-text-sm); }
+.bars__track { height: 12px; border-radius: 999px; background: var(--cp-surface-2); overflow: hidden; }
+.bars__fill { height: 100%; border-radius: 999px; transform-origin: left; animation: pm-grow .9s var(--cp-ease-out) both; }
+@keyframes pm-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* ---- jadvaldagi bemor «avatari» (initsiallar, foto emas) */
+.pt-ava { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; margin-right: .6rem; vertical-align: middle;
+  background: var(--pm-grad); color: #fff; font-size: .72rem; font-weight: 800; }
+
+/* ---- kirish animatsiyasi: kartalar navbatma-navbat (shoshilinch bloklar bundan mustasno) */
+.pm-in > *:not([data-clinical-urgent]):not(.urgent-grid) { animation: pm-rise .55s var(--cp-ease-out) both; }
+.pm-in > *:nth-child(2) { animation-delay: .05s; } .pm-in > *:nth-child(3) { animation-delay: .1s; } .pm-in > *:nth-child(4) { animation-delay: .15s; }
+.pm-in > *:nth-child(5) { animation-delay: .2s; } .pm-in > *:nth-child(6) { animation-delay: .25s; } .pm-in > *:nth-child(n+7) { animation-delay: .3s; }
+.stats > .stat { animation: pm-rise .55s var(--cp-ease-out) both; }
+.stats > .stat:nth-child(2) { animation-delay: .07s; } .stats > .stat:nth-child(3) { animation-delay: .14s; } .stats > .stat:nth-child(4) { animation-delay: .21s; }
+@keyframes pm-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@media (hover: hover) { .stat:hover, .cp-card.lift:hover { transform: translateY(-3px); } }
+
+/* ---- epizod: bemor sarlavhasi gradient chegarali */
+.hero { position: relative; border: 1px solid transparent !important; background: linear-gradient(var(--pm-glass-strong), var(--pm-glass-strong)) padding-box, var(--pm-grad) border-box !important; }
+.hero__avatar { background: var(--pm-grad); color: #fff; box-shadow: 0 10px 24px rgb(31 142 241 / .35); }
+.vital { background: var(--pm-glass) !important; border-color: var(--pm-stroke) !important; border-radius: 16px; }
+.step--cur .step__n { background: var(--pm-grad); border-color: transparent; box-shadow: 0 0 0 5px rgb(31 142 241 / .18), 0 6px 16px rgb(31 142 241 / .4); }
+.heartmap .body { fill: url(#heartGrad); stroke: none; opacity: 1; }
+
+/* ---- shoshilinch: qat'iy, harakatsiz, eng kuchli kontrast */
+[data-clinical-urgent], [data-clinical-urgent] * { animation: none !important; transition: none !important; transform: none !important; }
+.urgent:not(.urgent--amber) { background: var(--cp-danger-bg) !important; border: 1px solid var(--cp-danger) !important; backdrop-filter: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora i, .live-ecg .trace, .bars__fill, .pm-in > *, .stats > .stat { animation: none !important; }
+}
+@media print { .aurora, .hello { display: none !important; } html, body { background: #fff !important; } }

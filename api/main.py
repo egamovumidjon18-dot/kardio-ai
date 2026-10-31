@@ -110,6 +110,11 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
     def app_page() -> str:
         return (Path(__file__).parent / "static" / "app.html").read_text(encoding="utf-8")
 
+    @app.get("/guardian", response_class=HTMLResponse, include_in_schema=False)
+    def guardian_page() -> str:
+        """Bemor (yoki oila a'zosi) uchun uy kuzatuvi sahifasi: ?e=<epizod> yoki bemor login'i."""
+        return (Path(__file__).parent / "static" / "guardian.html").read_text(encoding="utf-8")
+
     @app.get("/screening", response_class=HTMLResponse, include_in_schema=False)
     def screening_page() -> str:
         return (Path(__file__).parent / "static" / "screening.html").read_text(encoding="utf-8")
