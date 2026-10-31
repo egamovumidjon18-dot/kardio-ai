@@ -1,0 +1,118 @@
+{
+  "name": "ecg_afib_multi",
+  "version": "2026.10.31",
+  "task": "12 tarmoqli EKG (10 s, 100 Hz) → ritm: SR / SBRAD / STACH / AFIB / AFL / SVT (softmax)",
+  "dataset": "PTB-XL + Chapman-Shaoxing + Ningbo (PhysioNet Challenge 2021)",
+  "dataset_license": "CC-BY-4.0 / CC0",
+  "weights": "ecg_afib_multi.onnx",
+  "passed": false,
+  "gates": {
+    "cpsc_auroc": 0.95,
+    "cpsc_auroc_ci_low": 0.93,
+    "cpsc_sensitivity": 0.9,
+    "cpsc_specificity": 0.92,
+    "georgia_auroc": 0.95,
+    "georgia_sensitivity": 0.85,
+    "georgia_specificity": 0.92,
+    "georgia_max_fast_called_afib": 0.15
+  },
+  "checks": {
+    "cpsc_auroc": true,
+    "cpsc_auroc_ci_low": true,
+    "cpsc_sensitivity": true,
+    "cpsc_specificity": true,
+    "cpsc_not_worse_than_current": false,
+    "georgia_auroc": false,
+    "georgia_sensitivity": false,
+    "georgia_specificity": true,
+    "georgia_fast_called_afib": true
+  },
+  "thresholds": {
+    "classes": [
+      "SR",
+      "SBRAD",
+      "STACH",
+      "AFIB",
+      "AFL",
+      "SVT"
+    ],
+    "afib_threshold": 0.20014946162700653,
+    "fs": 100,
+    "n_samples": 1000,
+    "leads": [
+      "I",
+      "II",
+      "III",
+      "AVR",
+      "AVL",
+      "AVF",
+      "V1",
+      "V2",
+      "V3",
+      "V4",
+      "V5",
+      "V6"
+    ]
+  },
+  "metrics": {
+    "val": {
+      "mean_auroc": 0.9858,
+      "afib_auroc": 0.9513,
+      "afib_auroc_by_source": {
+        "ptbxl": 0.9732,
+        "chapman": 0.9903,
+        "ningbo": NaN
+      }
+    },
+    "external_cpsc2018": {
+      "n": 6877,
+      "n_afib": 1221,
+      "auroc": 0.9809,
+      "auroc_ci95": [
+        0.9769,
+        0.985
+      ],
+      "sensitivity": 0.9001,
+      "specificity": 0.9859,
+      "current_model_auroc": 0.9819,
+      "current_model_sensitivity": 0.9558,
+      "current_model_specificity": 0.9427
+    },
+    "external_georgia": {
+      "n": 5772,
+      "n_afib": 570,
+      "auroc": 0.9326,
+      "auroc_ci95": [
+        0.9171,
+        0.946
+      ],
+      "sensitivity": 0.7982,
+      "specificity": 0.9729,
+      "fast_called_afib": 0.0779,
+      "called_afib_by_true_class": {
+        "SR": "13/2083",
+        "SBRAD": "14/1656",
+        "STACH": "31/1239",
+        "AFIB": "455/570",
+        "AFL": "72/171",
+        "SVT": "11/53"
+      },
+      "per_class_auroc": {
+        "SR": 0.981,
+        "SBRAD": 0.9927,
+        "STACH": 0.9934,
+        "AFIB": 0.9326,
+        "AFL": 0.9095,
+        "SVT": 0.9165
+      },
+      "current_model_auroc": 0.9275
+    }
+  },
+  "training": {
+    "seed": 42,
+    "epochs": 30,
+    "n_train": 55701,
+    "n_val": 8621,
+    "split": "PTB-XL fold 10 val; Chapman/Ningbo 85/15 stratifikatsiyalangan; CPSC 2018 va Georgia — faqat tashqi"
+  }
+}
