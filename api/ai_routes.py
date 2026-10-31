@@ -18,6 +18,7 @@ from core.evidence import Evidence
 from core.store import EpisodeStore
 from ecg.low_ef import LowEFFromECG
 from ecg.model import ECGModel
+from ecg.shd import StructuralFromECG
 from ecg.signal import read_csv
 from guardian.escalation import Notifier, escalate
 from guardian.inr import Indication
@@ -44,7 +45,8 @@ def _ocr_available() -> bool:
 
 def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], notifier: Notifier,
              ecg: Optional[ECGModel], angio: Optional[AngioModel], ef: Optional[EchoEFAdapter],
-             ocr_engine: Optional[Engine] = None, low_ef: Optional[LowEFFromECG] = None) -> None:
+             ocr_engine: Optional[Engine] = None, low_ef: Optional[LowEFFromECG] = None,
+             shd: Optional[StructuralFromECG] = None) -> None:
     def _need(model, name: str) -> None:
         if model is None:
             raise HTTPException(503, f"{name} moduli ulanmagan (og'irliklar yo'q) — qoidalar ishlashda davom etadi")
@@ -65,7 +67,8 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
         if low_ef is None:
             blocked["ecg_low_ef"] = "og'irliklar yo'q yoki qabul mezonlaridan o'tmagan (yoki product rejimi) — ecg/low_ef.py"
         return {
-            "ecg": card(ecg), "angio": card(angio), "echo_ef": card(ef), "ecg_low_ef": card(low_ef),
+            "ecg": card(ecg), "angio": card(angio), "echo_ef": card(ef), "ecg_low_ef": card(low_ef), "ecg_shd": card(shd),
+            "ecg_shd_enabled": shd.enabled if shd else [],
             "inr_ocr": {"available": ocr_engine is not None or _ocr_available()},
             "blocked": blocked,
         }
@@ -85,6 +88,9 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
         if low_ef is not None:                       # xuddi shu EKG'dan past EF skriningi (alohida dalil)
             lev = low_ef.analyze(sig, fs, leads, age_years)
             out["low_ef"] = {"evidence": _save(ep, actor, "ecg.low_ef", lev), "plain": plain_ai(lev, lang)}
+        if shd is not None:                          # tuzilmaviy kasalliklar (faqat mezondan o'tgan yorliqlar)
+            sev = shd.analyze(sig, fs, leads, age_years)
+            out["structural"] = {"evidence": _save(ep, actor, "ecg.shd", sev), "plain": plain_ai(sev, lang)}
         if ep.stage == Stage.GUARDIAN_30D:           # POAF / operatsiyadan keyingi nazorat
             esc = escalate(ep.patient_ref, _postop_day(ep, datetime.now(timezone.utc)), [ev], notifier)
             alert = record_alert(store, ep, esc, "guardian.ecg")

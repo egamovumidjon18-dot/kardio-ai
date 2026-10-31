@@ -35,6 +35,7 @@ from adapters.echo_ef import EchoEFAdapter
 from angio.model import AngioModel
 from ecg.low_ef import LowEFFromECG
 from ecg.model import ECGModel
+from ecg.shd import StructuralFromECG
 from guardian.ocr import Engine
 from risk.aki import AKIModel
 from screening.collection import ECHO_DIAGNOSES, echo_diagnosis, save_recordings
@@ -79,7 +80,8 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
                ecg_model: Optional[ECGModel] = None, angio_model: Optional[AngioModel] = None,
                ef_model: Optional[EchoEFAdapter] = None, ocr_engine: Optional[Engine] = None,
                models_dir: Optional[Path] = None, running_version: str = "baseline",
-               auth: Optional[AuthService] = None, low_ef_model: Optional[LowEFFromECG] = None) -> FastAPI:
+               auth: Optional[AuthService] = None, low_ef_model: Optional[LowEFFromECG] = None,
+               shd_model: Optional[StructuralFromECG] = None) -> FastAPI:
     # Kirish yoqilgan bo'lsa: har bir so'rov huquq jadvali bo'yicha tekshiriladi; API hujjatlari (/docs) ochiq qolmaydi.
     app = FastAPI(title="CardioPath AI", version="0.1.0",
                   description="Kardiologiya va kardioxirurgiya yagona AI-CDSS platformasi. " + DISCLAIMER,
@@ -104,7 +106,7 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
     risk_routes.register(app, store, _get, aki_model)
     notifier = notifier or LogNotifier()
     guardian_routes.register(app, store, _get, notifier)
-    ai_routes.register(app, store, _get, notifier, ecg_model, angio_model, ef_model, ocr_engine, low_ef=low_ef_model)
+    ai_routes.register(app, store, _get, notifier, ecg_model, angio_model, ef_model, ocr_engine, low_ef=low_ef_model, shd=shd_model)
     alerts_api.register(app, store, _get)
     auth_routes.register_status(app, auth is not None)
     if auth is not None:
@@ -265,6 +267,15 @@ def _load_low_ef() -> Optional[LowEFFromECG]:
         return None
 
 
+def _load_shd() -> Optional[StructuralFromECG]:
+    from core.registry import LicenseError
+
+    try:
+        return StructuralFromECG.from_dir(os.environ.get("CARDIOPATH_SHD_WEIGHTS", "weights/ecg_shd"))
+    except LicenseError:
+        return None
+
+
 def _load_auth(db_path: str, store: EpisodeStore) -> Optional[AuthService]:
     """CARDIOPATH_AUTH=on bo'lsa kirish yoqiladi. Administrator bo'lmasa, ishga tushmaydi (tizim qulflanib qolmasin)."""
     if os.environ.get("CARDIOPATH_AUTH", "off").strip().lower() not in ("on", "1", "true", "yes"):
@@ -291,4 +302,4 @@ def default_app() -> FastAPI:
                       Path(rec_dir) if rec_dir else None, models_dir=models_dir, running_version=running,
                       ecg_model=ECGModel.from_dir(os.environ.get("CARDIOPATH_ECG_WEIGHTS", "weights/ecg")),
                       angio_model=AngioModel.from_dir(os.environ.get("CARDIOPATH_ANGIO_WEIGHTS", "weights/angio")),
-                      ef_model=_load_ef(), auth=auth, low_ef_model=_load_low_ef())
+                      ef_model=_load_ef(), auth=auth, low_ef_model=_load_low_ef(), shd_model=_load_shd())

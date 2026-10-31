@@ -1,0 +1,395 @@
+{
+  "name": "ecg_shd_echonext",
+  "version": "2026.10.31",
+  "task": "12 tarmoqli EKG (10 s, 100 Hz) → tuzilmaviy yurak kasalliklari (o'rta yoki og'ir), kattalar",
+  "dataset": "EchoNext",
+  "weights": "ecg_shd.onnx",
+  "passed": true,
+  "gates": {
+    "min_test_pos": 30,
+    "auroc": 0.8,
+    "auroc_ci_low": 0.75,
+    "beats_tabular_by": 0.03,
+    "min_auroc_per_location": 0.7,
+    "min_pos_per_location": 10
+  },
+  "thresholds": {
+    "labels": [
+      "shd",
+      "aortic_stenosis",
+      "aortic_regurgitation",
+      "mitral_regurgitation",
+      "tricuspid_regurgitation",
+      "pulmonary_regurgitation",
+      "rv_dysfunction",
+      "pericardial_effusion",
+      "pulmonary_hypertension",
+      "tr_velocity",
+      "lv_wall_thickness",
+      "lvef_le_45"
+    ],
+    "enabled": [
+      "shd",
+      "mitral_regurgitation",
+      "tricuspid_regurgitation",
+      "rv_dysfunction"
+    ],
+    "per_label": {
+      "shd": {
+        "low": 0.252093,
+        "high": 0.718402
+      },
+      "aortic_stenosis": {
+        "low": 0.106397,
+        "high": 0.709397
+      },
+      "aortic_regurgitation": {
+        "low": 0.014089,
+        "high": 0.288064
+      },
+      "mitral_regurgitation": {
+        "low": 0.296727,
+        "high": 0.7439
+      },
+      "tricuspid_regurgitation": {
+        "low": 0.334795,
+        "high": 0.784831
+      },
+      "pulmonary_regurgitation": {
+        "low": 0.012305,
+        "high": 0.173554
+      },
+      "rv_dysfunction": {
+        "low": 0.286699,
+        "high": 0.686919
+      },
+      "pericardial_effusion": {
+        "low": 0.06268,
+        "high": 0.393317
+      },
+      "pulmonary_hypertension": {
+        "low": 0.289301,
+        "high": 0.762357
+      },
+      "tr_velocity": {
+        "low": 0.299285,
+        "high": 0.787768
+      },
+      "lv_wall_thickness": {
+        "low": 0.277271,
+        "high": 0.739995
+      },
+      "lvef_le_45": {
+        "low": 0.265582,
+        "high": 0.573613
+      }
+    },
+    "fs": 100,
+    "n_samples": 1000,
+    "leads": [
+      "I",
+      "II",
+      "III",
+      "AVR",
+      "AVL",
+      "AVF",
+      "V1",
+      "V2",
+      "V3",
+      "V4",
+      "V5",
+      "V6"
+    ],
+    "min_age_years": 18
+  },
+  "metrics": {
+    "test": {
+      "shd": {
+        "test_pos": 2318,
+        "auroc": 0.8154,
+        "auroc_ci95": [
+          0.8043,
+          0.8263
+        ],
+        "tabular_auroc": 0.745,
+        "val_auroc": 0.823,
+        "by_location": {
+          "emergency": 0.8218,
+          "inpatient": 0.7916,
+          "outpatient": 0.7884,
+          "procedural": 0.7823
+        },
+        "checks": {
+          "enough_positives": true,
+          "auroc": true,
+          "auroc_ci_low": true,
+          "beats_tabular": true,
+          "per_location": true
+        },
+        "passed": true
+      },
+      "aortic_stenosis": {
+        "test_pos": 286,
+        "auroc": 0.8253,
+        "auroc_ci95": [
+          0.7991,
+          0.8479
+        ],
+        "tabular_auroc": 0.8441,
+        "val_auroc": 0.7991,
+        "by_location": {
+          "emergency": 0.7366,
+          "inpatient": 0.845,
+          "outpatient": 0.8941,
+          "procedural": 0.7802
+        },
+        "checks": {
+          "enough_positives": true,
+          "auroc": true,
+          "auroc_ci_low": true,
+          "beats_tabular": false,
+          "per_location": true
+        },
+        "passed": false
+      },
+      "aortic_regurgitation": {
+        "test_pos": 66,
+        "auroc": 0.7169,
+        "auroc_ci95": [
+          0.6592,
+          0.7749
+        ],
+        "tabular_auroc": 0.6881,
+        "val_auroc": 0.7658,
+        "by_location": {
+          "emergency": 0.702,
+          "inpatient": 0.6939
+        },
+        "checks": {
+          "enough_positives": true,
+          "auroc": false,
+          "auroc_ci_low": false,
+          "beats_tabular": false,
+          "per_location": false
+        },
+        "passed": false
+      },
+      "mitral_regurgitation": {
+        "test_pos": 337,
+        "auroc": 0.8133,
+        "auroc_ci95": [
+          0.7892,
+          0.8363
+        ],
+        "tabular_auroc": 0.7379,
+        "val_auroc": 0.8244,
+        "by_location": {
+          "emergency": 0.8262,
+          "inpatient": 0.7946,
+          "outpatient": 0.7391,
+          "procedural": 0.8725
+        },
+        "checks": {
+          "enough_positives": true,
+          "auroc": true,
+          "auroc_ci_low": true,
+          "beats_tabular": true,
+          "per_location": true
+        },
+        "passed": true
+      },
+      "tricuspid_regurgitation": {
+        "test_pos": 353,
+        "auroc": 0.8176,
+        "auroc_ci95": [
+          0.7945,
+          0.8379
+        ],
+        "tabular_auroc": 0.7121,
+        "val_auroc": 0.8238,
+        "by_location": {
+          "emergency": 0.8358,
+          "inpatient": 0.7772,
+          "outpatient": 0.8065,
+          "procedural": 0.8171
+        },
+        "checks": {
+          "enough_positives": true,
+          "auroc": true,
+          "auroc_ci_low": true,
+          "beats_tabular": true,
+          "per_location": true
+        },
+        "passed": true
+      },
+      "pulmonary_regurgitation": {
+        "test_pos": 20,
+        "auroc": 0.7762,
+        "auroc_ci95": [
+          0.6659,
+          0.8853
+        ],
+        "tabular_auroc": 0.6879,
+        "val_auroc": 0.7558,
+        "by_location": {
+          "inpatient": 0.7221
+        },
+        "checks": {
+          "enough_positives": false,
+          "auroc": false,
+          "auroc_ci_low": false,
+          "beats_tabular": true,
+          "per_location": true
+        },
+        "passed": false
+      },
+      "rv_dysfunction": {
+        "test_pos": 419,
+        "auroc": 0.874,
+        "auroc_ci95": [
+          0.8567,
+          0.8914
+        ],
+        "tabular_auroc": 0.7592,
+        "val_auroc": 0.8801,
+        "by_location": {
+          "emergency": 0.9082,
+          "inpatient": 0.8265,
+          "outpatient": 0.8351
+        },
+        "checks": {
+          "enough_positives": true,
+          "auroc": true,
+          "auroc_ci_low": true,
+          "beats_tabular": true,
+          "per_location": true
+        },
+        "passed": true
+      },
+      "pericardial_effusion": {
+        "test_pos": 69,
+        "auroc": 0.7188,
+        "auroc_ci95": [
+          0.6597,
+          0.7762
+        ],
+        "tabular_auroc": 0.6419,
+        "val_auroc": 0.684,
+        "by_location": {
+          "emergency": 0.6864,
+          "inpatient": 0.6911
+        },
+        "checks": {
+          "enough_positives": true,
+          "auroc": false,
+          "auroc_ci_low": false,
+          "beats_tabular": true,
+          "per_location": false
+        },
+        "passed": false
+      },
+      "pulmonary_hypertension": {
+        "test_pos": 699,
+        "auroc": 0.7663,
+        "auroc_ci95": [
+          0.746,
+          0.7842
+        ],
+        "tabular_auroc": 0.6902,
+        "val_auroc": 0.7741,
+        "by_location": {
+          "emergency": 0.7986,
+          "inpatient": 0.7124,
+          "outpatient": 0.7354,
+          "procedural": 0.7409
+        },
+        "checks": {
+          "enough_positives": true,
+          "auroc": false,
+          "auroc_ci_low": false,
+          "beats_tabular": true,
+          "per_location": true
+        },
+        "passed": false
+      },
+      "tr_velocity": {
+        "test_pos": 375,
+        "auroc": 0.7605,
+        "auroc_ci95": [
+          0.7365,
+          0.784
+        ],
+        "tabular_auroc": 0.6654,
+        "val_auroc": 0.7915,
+        "by_location": {
+          "emergency": 0.776,
+          "inpatient": 0.7097,
+          "outpatient": 0.8188,
+          "procedural": 0.7077
+        },
+        "checks": {
+          "enough_positives": true,
+          "auroc": false,
+          "auroc_ci_low": false,
+          "beats_tabular": true,
+          "per_location": true
+        },
+        "passed": false
+      },
+      "lv_wall_thickness": {
+        "test_pos": 1061,
+        "auroc": 0.7417,
+        "auroc_ci95": [
+          0.7252,
+          0.7576
+        ],
+        "tabular_auroc": 0.6716,
+        "val_auroc": 0.7406,
+        "by_location": {
+          "emergency": 0.7613,
+          "inpatient": 0.7152,
+          "outpatient": 0.7596,
+          "procedural": 0.6476
+        },
+        "checks": {
+          "enough_positives": true,
+          "auroc": false,
+          "auroc_ci_low": false,
+          "beats_tabular": true,
+          "per_location": false
+        },
+        "passed": false
+      },
+      "lvef_le_45": {
+        "test_pos": 962,
+        "auroc": 0.8863,
+        "auroc_ci95": [
+          0.8744,
+          0.8981
+        ],
+        "tabular_auroc": 0.7819,
+        "val_auroc": 0.8878,
+        "by_location": {
+          "emergency": 0.8878,
+          "inpatient": 0.8589,
+          "outpatient": 0.9117,
+          "procedural": 0.8967
+        },
+        "checks": {
+          "enough_positives": true,
+          "auroc": true,
+          "auroc_ci_low": true,
+          "beats_tabular": true,
+          "per_location": true
+        },
+        "passed": true
+      }
+    },
+    "val_mean_auroc": 0.7958
+  },
+  "training": {
+    "seed": 42,
+    "epochs": 15,
+    "split": "EchoNext rasmiy split"
+  }
+}

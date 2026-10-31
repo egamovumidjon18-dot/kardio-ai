@@ -1,6 +1,6 @@
 # CardioPath AI — loyiha tavsifi (dizayner AI uchun texnik va funksional hujjat)
 
-Holat: 2026-yil 30-oktabr. Manba: loyiha kodi (`main` branch, 252 ta test; `feat/ai-models` branch'i 2026-10-30 da `main` bilan birlashtirildi), muallifning o'z maqsad hujjati va o'qitish/baholash hisobotlari.
+Holat: 2026-yil 30-oktabr. Manba: loyiha kodi (`main` branch, 259 ta test; `feat/ai-models` branch'i 2026-10-30 da `main` bilan birlashtirildi), muallifning o'z maqsad hujjati va o'qitish/baholash hisobotlari.
 
 ## 0. Bu hujjatni qanday o'qish kerak
 
@@ -395,6 +395,7 @@ Qoidalar AI'dan mustaqil, va Concordance'da «qoida tomoni» bo'ladi. Batafsil �
 **MNO qog'ozi OCR** [MAVJUD, ekransiz]: rasm → matn → `parse_inr_text` → baholash. Dvigatel ixtiyoriy kutubxona (`rapidocr-onnxruntime`). Dvigatel yo'q, ishonch past (<0.80) yoki qiymat noaniq bo'lsa, abstain.
 
 **AI-EKG orqali past EF [MAVJUD, faqat tadqiqot]:** EchoNext (PhysioNet, shartnoma bilan) da o'qitilgan, test AUROC 0.886 (CI 0.874–0.899), oldindan yozilgan 5 qabul mezonidan o'tgan; `/ecg` javobida `low_ef` bo'limi; 18 yoshdan kichik → abstain; product rejimida yuklanmaydi (docs/experiments/ecg_lowef_echonext.md).
+**AI-EKG tuzilmaviy yurak kasalliklari [MAVJUD, faqat tadqiqot]:** EchoNext'da bitta ko'p yorliqli model; oldindan yozilgan mezonlardan o'tgan 4 yorliq yoqilgan: o'ng qorincha disfunksiyasi (AUROC 0.874), trikuspidal regurgitatsiya (0.818), umumiy SHD (0.815), mitral regurgitatsiya (0.813); 7 tasi rad etilgan, jumladan aorta stenozi (EKG yoshdan ortiq ma'lumot bermadi). `/ecg` javobida `structural` bo'limi (docs/experiments/ecg_shd_echonext.md).
 **Bloklangan, o'qitilmagan:** yara rasmidan infeksiya aniqlash (ochiq sternotomiya dataseti yo'q; SurgWound sinovi rad etildi).
 
 ### 4.7. Ma'lumot manbalari va litsenziyalar
@@ -636,12 +637,12 @@ Asosiy foydalanuvchi: **tuman va viloyatdagi shifokor** (ExoKG imkoniyati chekla
 | Bildirishnoma | Telegram Bot API (`httpx`), muhit o'zgaruvchilari orqali | Kod bor, haqiqiy bot bilan **sinalmagan** |
 | Tashqi OCR | `rapidocr-onnxruntime` (ixtiyoriy) | MAVJUD |
 | Tilda xulosa | Deterministik shablonlar, LLM yo'q | MAVJUD |
-| Testlar | pytest: 252 | MAVJUD |
+| Testlar | pytest: 259 | MAVJUD |
 | Ishga tushirish | `Start.bat` (Windows) | MAVJUD |
 | Frontend freymvork (Next.js), PostgreSQL | Dastlabki rejada bor edi | **REJADA**, qurilmagan |
 
 ### 8.2. Sozlash (muhit o'zgaruvchilari)
-`CARDIOPATH_DB` (baza fayli), `CARDIOPATH_WEIGHTS` (PCG og'irliklari papkasi), `CARDIOPATH_AKI_WEIGHTS`, `CARDIOPATH_MODE` (`research`/`product`), `CARDIOPATH_RECORDINGS` (rozilik bilan saqlanadigan yozuvlar), `CARDIOPATH_TG_TOKEN` va `CARDIOPATH_TG_CHAT` (Telegram), `CARDIOPATH_PORT` (`Start.bat`, standart 8010). Yana `CARDIOPATH_EF_WEIGHTS` (ExoKG EF og'irligi) va `CARDIOPATH_MODELS` (model versiyalari papkasi, standart `models/pcg`). Yana `CARDIOPATH_AUTH` (`on`/`off`, standart `off`: kirish va rollar). `CARDIOPATH_LOWEF_WEIGHTS` (AI-EKG past EF, standart `weights/ecg_lowef`).
+`CARDIOPATH_DB` (baza fayli), `CARDIOPATH_WEIGHTS` (PCG og'irliklari papkasi), `CARDIOPATH_AKI_WEIGHTS`, `CARDIOPATH_MODE` (`research`/`product`), `CARDIOPATH_RECORDINGS` (rozilik bilan saqlanadigan yozuvlar), `CARDIOPATH_TG_TOKEN` va `CARDIOPATH_TG_CHAT` (Telegram), `CARDIOPATH_PORT` (`Start.bat`, standart 8010). Yana `CARDIOPATH_EF_WEIGHTS` (ExoKG EF og'irligi) va `CARDIOPATH_MODELS` (model versiyalari papkasi, standart `models/pcg`). Yana `CARDIOPATH_AUTH` (`on`/`off`, standart `off`: kirish va rollar). `CARDIOPATH_LOWEF_WEIGHTS` (AI-EKG past EF, standart `weights/ecg_lowef`), `CARDIOPATH_SHD_WEIGHTS` (AI-EKG tuzilmaviy kasalliklar, standart `weights/ecg_shd`).
 
 ### 8.3. Ma'lumot saqlash
 - Jadvallar: `episodes` (id, JSON hujjat, yangilangan vaqt), `audit_log` (faqat qo'shiladi).

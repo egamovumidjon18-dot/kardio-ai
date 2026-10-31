@@ -38,6 +38,24 @@ T: dict[str, dict[str, str]] = {
     "lowef.ok.t": {"uz": "Bu EF normal ekanini kafolatlamaydi. Shikoyat yoki klinik shubha bo'lsa, ExoKG qiling.",
                    "ru": "Это не гарантирует нормальную ФВ. При жалобах или клиническом подозрении сделайте ЭхоКГ.",
                    "en": "This does not guarantee a normal EF. If there are symptoms or clinical doubt, order an echo."},
+    "shd.title": {"uz": "EKG bo'yicha yurak tuzilishi (klapanlar, o'ng qorincha)", "ru": "Структура сердца по ЭКГ (клапаны, правый желудочек)",
+                  "en": "Heart structure from the ECG (valves, right ventricle)"},
+    "shd.h": {"uz": "Yurak tuzilishida o'zgarish bo'lishi mumkin", "ru": "Возможны структурные изменения сердца",
+              "en": "There may be a structural heart problem"},
+    "shd.t": {"uz": "ExoKG qiling — bu tashxis emas, skrining belgisi. Ehtimoli: {found}.",
+              "ru": "Сделайте ЭхоКГ — это не диагноз, а сигнал скрининга. Вероятно: {found}.",
+              "en": "Order an echocardiogram — this is a screening signal, not a diagnosis. Likely: {found}."},
+    "shd.ok.h": {"uz": "EKGda tekshirilgan tuzilmaviy belgilar topilmadi", "ru": "Проверенных структурных признаков на ЭКГ не найдено",
+                 "en": "No checked structural signs on the ECG"},
+    "shd.ok.t": {"uz": "Bu kasallik yo'qligini kafolatlamaydi. Shovqin, hansirash yoki shish bo'lsa, ExoKG qiling.",
+                 "ru": "Это не исключает болезнь. При шуме, одышке или отёках сделайте ЭхоКГ.",
+                 "en": "This does not rule out disease. If there is a murmur, breathlessness or swelling, order an echo."},
+    "shd.shd": {"uz": "tuzilmaviy yurak kasalligi", "ru": "структурная болезнь сердца", "en": "structural heart disease"},
+    "shd.mitral_regurgitation": {"uz": "mitral klapan yetishmovchiligi", "ru": "митральная регургитация", "en": "mitral regurgitation"},
+    "shd.tricuspid_regurgitation": {"uz": "trikuspidal klapan yetishmovchiligi", "ru": "трикуспидальная регургитация",
+                                    "en": "tricuspid regurgitation"},
+    "shd.rv_dysfunction": {"uz": "o'ng qorincha qisqarishi pasayishi", "ru": "снижение функции правого желудочка",
+                           "en": "reduced right ventricular function"},
     "lowef.age": {"uz": "Bu baho faqat kattalar uchun. Bolada EF'ni ExoKG o'lchaydi.",
                   "ru": "Эта оценка только для взрослых. У ребёнка ФВ измеряет ЭхоКГ.",
                   "en": "This estimate is for adults only. In a child, EF is measured by echo."},
@@ -151,6 +169,19 @@ def _lowef(e: Evidence, L: str) -> dict:
     return _out(L, "green", tr("lowef.ok.h", L), tr("lowef.ok.t", L), title, tr("lowef.ok.h", L))
 
 
+def _shd(e: Evidence, L: str) -> dict:
+    title = tr("shd.title", L)
+    if e.abstained:
+        r = e.explanation[0]
+        key = "lowef.age" if "yosh" in r else "ecg.q" if ("sifatsiz" in r or "qisqa" in r or "tarmoq" in r) else "ecg.unsure"
+        return _abstain(L, title, title, tr(key, L))
+    if e.risk == RiskLevel.MODERATE:
+        found = ", ".join(tr("shd." + n, L) for n in (e.value or {}).get("positive", []))
+        t = tr("shd.t", L, found=found or "—")
+        return _out(L, "yellow", tr("shd.h", L), t, title, t)
+    return _out(L, "green", tr("shd.ok.h", L), tr("shd.ok.t", L), title, tr("shd.ok.h", L))
+
+
 def _angio(e: Evidence, L: str) -> dict:
     title = tr("angio.title", L)
     if e.abstained:
@@ -192,7 +223,7 @@ def _ef(e: Evidence, L: str) -> dict:
     return _out(L, level, h, tr("ef.t", L), title, h)
 
 
-_BY_KIND = {"ecg.afib": _ecg, "ecg.low_ef": _lowef, "angio.stenosis_assist": _angio, "guardian.inr": _inr, "echo.ef": _ef}
+_BY_KIND = {"ecg.afib": _ecg, "ecg.low_ef": _lowef, "ecg.shd": _shd, "angio.stenosis_assist": _angio, "guardian.inr": _inr, "echo.ef": _ef}
 
 
 def plain_ai(ev: Evidence, lang: str = "uz") -> dict:

@@ -272,6 +272,10 @@ EKG'dan LVEF ≤ 45% skriningi. EchoNext (PhysioNet, shartnoma bilan) da o'qitil
 python -m research.train_lowef --data-dir C:\Users\user\data\echonext --out weights/ecg_lowef
 ```
 
+## 9-modul: AI-EKG tuzilmaviy kasalliklar (`ecg/shd.py`) — EchoNext
+
+Bitta ko'p yorliqli model, har bir yorliq uchun oldindan yozilgan mezonlar. **Yoqilgan (4):** o'ng qorincha disfunksiyasi (AUROC 0.874), trikuspidal regurgitatsiya (0.818), umumiy SHD (0.815), mitral regurgitatsiya (0.813). **Rad etilgan (7):** aorta stenozi (EKG yosh/jinsdan ortiq hech narsa qo'shmadi: 0.825 va 0.844), o'pka gipertenziyasi, TR tezligi, devor qalinligi, perikard suyuqligi, aorta va o'pka arteriyasi regurgitatsiyasi. `/ecg` javobida `structural` bo'limi: musbat → «ExoKG qiling». Batafsil: [docs/experiments/ecg_shd_echonext.md](docs/experiments/ecg_shd_echonext.md).
+
 ## Bloklangan modellar (qurilmagan)
 
 | Model | Sabab | Qaerda |
