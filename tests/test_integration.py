@@ -245,3 +245,61 @@ def test_red_before_amber_even_if_older_and_pagination(env):
     assert items[0]["patient_ref"] == "RED-LATE"
     page = client.get("/alerts", params={"limit": 2, "offset": 2}).json()
     assert page["total"] == 4 and len(page["items"]) == 2
+
+
+# ---- AI-EKG (past EF, tuzilma) digest va protokolda
+def low_ef(p, abstained=False):
+    prov = Provenance(name="ecg_lowef_echonext", version="t")
+    if abstained:
+        return Evidence.abstain("ecg.low_ef", Source.MODEL, prov, "sifatsiz EKG: x")
+    return Evidence(kind="ecg.low_ef", value={"p_low_ef": p}, source=Source.MODEL, provenance=prov,
+                    risk=RiskLevel.MODERATE if p >= 0.5 else RiskLevel.LOW, explanation=["x"])
+
+
+def test_ai_ecg_low_ef_without_measured_lvef_asks_for_echo(env):
+    client, store = env
+    eid = client.post("/episodes", json={"patient_ref": "L-1", "population": "adult"}).json()["id"]
+    inject(store, eid, low_ef(0.8))
+    d = client.get(f"/episodes/{eid}/digest").json()
+    assert d["ai"]["ecg_low_ef"]["state"] == "ok" and d["ai"]["ecg_shd"]["state"] == "not_run"
+    assert "lowef_echo_needed" in {x["code"] for x in d["discussion"]}
+
+
+def test_ai_ecg_vs_measured_lvef_disagreement_is_discussed(env):
+    client, store = env
+    eid = heart_team_episode(client, "L-2")
+    risk(client, eid, lvef=35)                                    # o'lchangan LVEF past
+    inject(store, eid, low_ef(0.1))                               # AI-EKG belgi topmadi
+    d = client.get(f"/episodes/{eid}/digest").json()
+    c = next(x for x in d["concordance"] if x["question"].startswith("Past EF"))
+    assert c["status"] == "disagree" and "sezmadi" in c["message"]
+    codes = {x["code"] for x in d["discussion"]}
+    assert "ecg_lvef_disagree" in codes and "lowef_echo_needed" not in codes
+
+
+def test_ai_ecg_agrees_with_measured_lvef_and_abstain_is_not_hidden(env):
+    client, store = env
+    eid = heart_team_episode(client, "L-3")
+    risk(client, eid, lvef=60)
+    inject(store, eid, low_ef(0.1))
+    c = next(x for x in client.get(f"/episodes/{eid}/digest").json()["concordance"] if x["question"].startswith("Past EF"))
+    assert c["status"] == "agree"
+    inject(store, eid, low_ef(0, abstained=True))
+    c = next(x for x in client.get(f"/episodes/{eid}/digest").json()["concordance"] if x["question"].startswith("Past EF"))
+    assert c["status"] == "ai_abstained"
+
+
+def test_structural_findings_reach_digest_and_protocol(env):
+    client, store = env
+    eid = heart_team_episode(client, "S-1")
+    risk(client, eid)
+    inject(store, eid, Evidence(kind="ecg.shd", value={"positive": ["mitral_regurgitation"],
+                                                       "positive_names": ["mitral regurgitatsiya (o'rta/og'ir)"]},
+                                source=Source.MODEL, provenance=Provenance(name="ecg_shd_echonext", version="t"),
+                                risk=RiskLevel.MODERATE, explanation=["x"]))
+    inject(store, eid, low_ef(0.8))
+    d = client.get(f"/episodes/{eid}/digest").json()
+    assert "shd_echo" in {x["code"] for x in d["discussion"]}
+    text = client.get(f"/episodes/{eid}/heart-team-protocol").text
+    assert "AI-EKG: yurak tuzilishi" in text and "mitral regurgitatsiya" in text
+    assert "AI-EKG: past EF | past EF (≤45%) ehtimoli (p=0.80)" in text

@@ -33,6 +33,16 @@ def _ecg_text(ev: Evidence) -> str:
     return f"AFIB ehtimoli {v.get('p_afib', 0):.2f}" + (f"; boshqa: {', '.join(other)}" if other else "")
 
 
+def _lowef_text(ev: Evidence) -> str:
+    p = (ev.value or {}).get("p_low_ef", 0)
+    return ("past EF (≤45%) ehtimoli" if ev.risk.value != "low" else "past EF belgisi yo'q") + f" (p={p:.2f})"
+
+
+def _shd_text(ev: Evidence) -> str:
+    names = (ev.value or {}).get("positive_names") or []
+    return ("ehtimoli: " + ", ".join(names)) if names else "tekshirilgan belgilar topilmadi"
+
+
 def _angio_text(ev: Evidence) -> str:
     n = (ev.value or {}).get("n_candidates", 0)
     return f"{n} ta stenoz nomzodi (SYNTAX kalkulyatori emas)" if n else "nomzod topilmadi («stenoz yo'q» degani emas)"
@@ -62,6 +72,8 @@ def heart_team_protocol(ep: Episode) -> str:
         "| Modul | Natija | Xavf (model) |",
         "|---|---|---|",
         _ai_row("EKG (bo'lmachalar fibrillyatsiyasi)", ep.latest("ecg.afib"), _ecg_text),
+        _ai_row("AI-EKG: past EF", ep.latest("ecg.low_ef"), _lowef_text),
+        _ai_row("AI-EKG: yurak tuzilishi (klapanlar, o'ng qorincha)", ep.latest("ecg.shd"), _shd_text),
         _ai_row("Angiografiya (SYNTAX-ga yordamchi)", ep.latest("angio.stenosis_assist"), _angio_text),
         _ai_row("ExoKG videosidan EF", ep.latest("echo.ef"), lambda e: f"EF ≈ {e.value:.0f}% (±{e.uncertainty or 0:.0f}%)"),
         "",

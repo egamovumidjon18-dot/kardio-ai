@@ -1,6 +1,6 @@
 # CardioPath AI — loyiha tavsifi (dizayner AI uchun texnik va funksional hujjat)
 
-Holat: 2026-yil 30-oktabr. Manba: loyiha kodi (`main` branch, 259 ta test; `feat/ai-models` branch'i 2026-10-30 da `main` bilan birlashtirildi), muallifning o'z maqsad hujjati va o'qitish/baholash hisobotlari.
+Holat: 2026-yil 30-oktabr. Manba: loyiha kodi (`main` branch, 263 ta test; `feat/ai-models` branch'i 2026-10-30 da `main` bilan birlashtirildi), muallifning o'z maqsad hujjati va o'qitish/baholash hisobotlari.
 
 ## 0. Bu hujjatni qanday o'qish kerak
 
@@ -395,7 +395,7 @@ Qoidalar AI'dan mustaqil, va Concordance'da «qoida tomoni» bo'ladi. Batafsil �
 **MNO qog'ozi OCR** [MAVJUD, ekransiz]: rasm → matn → `parse_inr_text` → baholash. Dvigatel ixtiyoriy kutubxona (`rapidocr-onnxruntime`). Dvigatel yo'q, ishonch past (<0.80) yoki qiymat noaniq bo'lsa, abstain.
 
 **AI-EKG orqali past EF [MAVJUD, faqat tadqiqot]:** EchoNext (PhysioNet, shartnoma bilan) da o'qitilgan, test AUROC 0.886 (CI 0.874–0.899), oldindan yozilgan 5 qabul mezonidan o'tgan; `/ecg` javobida `low_ef` bo'limi; 18 yoshdan kichik → abstain; product rejimida yuklanmaydi (docs/experiments/ecg_lowef_echonext.md).
-**AI-EKG tuzilmaviy yurak kasalliklari [MAVJUD, faqat tadqiqot]:** EchoNext'da bitta ko'p yorliqli model; oldindan yozilgan mezonlardan o'tgan 4 yorliq yoqilgan: o'ng qorincha disfunksiyasi (AUROC 0.874), trikuspidal regurgitatsiya (0.818), umumiy SHD (0.815), mitral regurgitatsiya (0.813); 7 tasi rad etilgan, jumladan aorta stenozi (EKG yoshdan ortiq ma'lumot bermadi). `/ecg` javobida `structural` bo'limi (docs/experiments/ecg_shd_echonext.md).
+**AI-EKG tuzilmaviy yurak kasalliklari [MAVJUD, faqat tadqiqot]:** EchoNext'da bitta ko'p yorliqli model; oldindan yozilgan mezonlardan o'tgan 4 yorliq yoqilgan: o'ng qorincha disfunksiyasi (AUROC 0.874), trikuspidal regurgitatsiya (0.818), umumiy SHD (0.815), mitral regurgitatsiya (0.813); 7 tasi rad etilgan, jumladan aorta stenozi (EKG yoshdan ortiq ma'lumot bermadi). `/ecg` javobida `structural` bo'limi (docs/experiments/ecg_shd_echonext.md). AI-EKG natijalari epizod xulosasi (digest) va Heart Team protokoliga ham chiqadi: past EF ehtimoli bo'lib LVEF o'lchanmagan bo'lsa «ExoKG kerak», o'lchangan LVEF bilan zid bo'lsa majburiy muhokama punkti (qaror doim o'lchovniki); tuzilma topilmalari «ExoKG'da klapanlar va o'ng qorincha baholansin» punkti sifatida.
 **Bloklangan, o'qitilmagan:** yara rasmidan infeksiya aniqlash (ochiq sternotomiya dataseti yo'q; SurgWound sinovi rad etildi).
 
 ### 4.7. Ma'lumot manbalari va litsenziyalar
@@ -637,7 +637,7 @@ Asosiy foydalanuvchi: **tuman va viloyatdagi shifokor** (ExoKG imkoniyati chekla
 | Bildirishnoma | Telegram Bot API (`httpx`), muhit o'zgaruvchilari orqali | Kod bor, haqiqiy bot bilan **sinalmagan** |
 | Tashqi OCR | `rapidocr-onnxruntime` (ixtiyoriy) | MAVJUD |
 | Tilda xulosa | Deterministik shablonlar, LLM yo'q | MAVJUD |
-| Testlar | pytest: 259 | MAVJUD |
+| Testlar | pytest: 263 | MAVJUD |
 | Ishga tushirish | `Start.bat` (Windows) | MAVJUD |
 | Frontend freymvork (Next.js), PostgreSQL | Dastlabki rejada bor edi | **REJADA**, qurilmagan |
 

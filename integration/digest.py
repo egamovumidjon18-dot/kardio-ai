@@ -10,10 +10,11 @@ from typing import Optional
 
 from core.episode import ALLOWED, Episode, Stage
 from core.evidence import Evidence
-from integration.concordances import aki_concordance, ef_concordance
+from integration.concordances import aki_concordance, ecg_lvef_concordance, ef_concordance
 
 # AI modullari: ichki nom → Evidence turi
-AI_KINDS = {"pcg": "screening.pcg", "ecg": "ecg.afib", "angio": "angio.stenosis_assist", "echo_ef": "echo.ef"}
+AI_KINDS = {"pcg": "screening.pcg", "ecg": "ecg.afib", "ecg_low_ef": "ecg.low_ef", "ecg_shd": "ecg.shd",
+            "angio": "angio.stenosis_assist", "echo_ef": "echo.ef"}
 
 
 def brief(ev: Evidence) -> dict:
@@ -61,6 +62,11 @@ def episode_digest(ep: Episode, alerts: Optional[list[dict]] = None) -> dict:
         concordance.append(ef.to_dict())
         if ef.needs_discussion:
             add_discussion("ef_" + ef.status.value, "LVEF", ef.message, [ef.rule.id, ef.ai.id if ef.ai else None])
+    ecg_ef = ecg_lvef_concordance(ep)
+    if ecg_ef:
+        concordance.append(ecg_ef)
+        if ecg_ef["needs_discussion"]:
+            add_discussion("ecg_lvef_disagree", "LVEF", ecg_ef["message"], ecg_ef["evidence_ids"])
     scr = _screening_concordance(ep)
     if scr:
         concordance.append(scr)
@@ -78,6 +84,16 @@ def episode_digest(ep: Episode, alerts: Optional[list[dict]] = None) -> dict:
     if afib is not None and not afib.abstained and afib.risk.value in ("high", "very_high"):
         add_discussion("afib_high", "EKG", "EKGda bo'lmachalar fibrillyatsiyasi ehtimoli yuqori (AI) — shifokor EKGni "
                        "ko'rib tasdiqlaydi.", [afib.id])
+    low_ef = latest.get("ecg.low_ef")
+    if (low_ef is not None and not low_ef.abstained and low_ef.risk.value != "low"
+            and "clinician.lvef" not in latest and "echo.ef" not in latest):
+        add_discussion("lowef_echo_needed", "LVEF", "AI-EKG: past EF (≤45%) ehtimoli, LVEF hali o'lchanmagan — ExoKG kerak.",
+                       [low_ef.id])
+    shd = latest.get("ecg.shd")
+    if shd is not None and not shd.abstained and isinstance(shd.value, dict) and shd.value.get("positive"):
+        add_discussion("shd_echo", "Yurak tuzilishi",
+                       "AI-EKG ehtimoli: " + ", ".join(shd.value.get("positive_names") or shd.value["positive"])
+                       + " — ExoKG'da klapanlar va o'ng qorincha baholansin (EKG darajani aniqlamaydi).", [shd.id])
     angio = latest.get("angio.stenosis_assist")
     if angio is not None and not angio.abstained and isinstance(angio.value, dict) and angio.value.get("n_candidates"):
         add_discussion("angio_candidates", "Angiografiya",

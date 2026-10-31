@@ -20,6 +20,32 @@ def lvef_evidence(percent: float) -> Evidence:
                     explanation=[f"shifokor kiritgan LVEF {percent:.0f}%"])
 
 
+LOW_EF_CUTOFF = 45.0
+
+
+def ecg_lvef_concordance(ep: Episode) -> Optional[dict]:
+    """AI-EKG «past EF» (LVEF ≤ 45%) skriningi vs o'lchangan LVEF (shifokor kiritgan ExoKG o'lchovi).
+
+    O'lchov bor bo'lsa, qaror doim o'lchovniki; AI faqat taqqoslanadi (AI xavfni pasaytirmaydi). Ikkalasi bo'lmasa — None.
+    """
+    ai, lvef = ep.latest("ecg.low_ef"), ep.latest("clinician.lvef")
+    if ai is None or lvef is None or not isinstance(lvef.value, (int, float)):
+        return None
+    measured_low = float(lvef.value) <= LOW_EF_CUTOFF
+    q = "Past EF: AI-EKG vs o'lchangan LVEF"
+    if ai.abstained:
+        return {"question": q, "status": "ai_abstained", "needs_discussion": False, "evidence_ids": [ai.id, lvef.id],
+                "message": f"AI-EKG javob bermadi; o'lchangan LVEF {lvef.value:.0f}% asosiy."}
+    ai_low = ai.risk.value != "low"
+    if ai_low == measured_low:
+        return {"question": q, "status": "agree", "needs_discussion": False, "evidence_ids": [ai.id, lvef.id],
+                "message": f"Mos: LVEF {lvef.value:.0f}%, AI-EKG {'past EF ehtimoli' if ai_low else 'belgi yo`q'}."}
+    msg = (f"LVEF {lvef.value:.0f}% (past), AI-EKG esa belgi topmadi — o'lchov asosiy; AI bu bemorda past EF'ni sezmadi."
+           if measured_low else
+           f"LVEF {lvef.value:.0f}%, AI-EKG esa past EF ehtimolini ko'rsatdi — EF chegarada bo'lishi yoki o'lchovni qayta tekshirish kerak.")
+    return {"question": q, "status": "disagree", "needs_discussion": True, "evidence_ids": [ai.id, lvef.id], "message": msg}
+
+
 def aki_concordance(ep: Episode) -> Optional[ConcordanceResult]:
     rule = ep.latest("risk.aki.rule")
     if rule is None:
