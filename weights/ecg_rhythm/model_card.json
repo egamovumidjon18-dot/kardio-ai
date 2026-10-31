@@ -1,0 +1,156 @@
+{
+  "name": "ecg_rhythm_chapman",
+  "version": "2026.10.31",
+  "task": "12 tarmoqli EKG (10 s, 100 Hz) → ritm: SR / SBRAD / STACH / AFIB / AFL / SVT",
+  "dataset": "Chapman-Shaoxing",
+  "weights": "ecg_rhythm.onnx",
+  "passed": false,
+  "gates": {
+    "afib_auroc": 0.95,
+    "afib_sensitivity": 0.85,
+    "afib_specificity": 0.92,
+    "max_fast_called_afib": 0.25,
+    "min_class_auroc": 0.85,
+    "min_class_n": 30
+  },
+  "checks": {
+    "afib_auroc": true,
+    "afib_sensitivity": false,
+    "afib_specificity": true,
+    "fast_called_afib": true,
+    "per_class": true
+  },
+  "thresholds": {
+    "classes": [
+      "SR",
+      "SBRAD",
+      "STACH",
+      "AFIB",
+      "AFL",
+      "SVT"
+    ],
+    "afib_threshold": 0.279951274394989,
+    "fs": 100,
+    "n_samples": 1000,
+    "leads": [
+      "I",
+      "II",
+      "III",
+      "AVR",
+      "AVL",
+      "AVF",
+      "V1",
+      "V2",
+      "V3",
+      "V4",
+      "V5",
+      "V6"
+    ]
+  },
+  "metrics": {
+    "chapman_val_mean_auroc": 0.9872,
+    "external_ptbxl": {
+      "n": 20484,
+      "n_afib": 1503,
+      "afib_auroc": 0.9883,
+      "afib_auroc_ci95": [
+        0.9854,
+        0.9909
+      ],
+      "afib_threshold": 0.279951274394989,
+      "afib_sensitivity": 0.843,
+      "afib_specificity": 0.9931,
+      "fast_rhythms_called_afib": 0.0067,
+      "n_fast": 895,
+      "called_afib_by_true_class": {
+        "SR": "123/17454",
+        "SBRAD": "2/632",
+        "STACH": "6/805",
+        "AFIB": "1267/1503",
+        "AFL": "0/56",
+        "SVT": "0/34"
+      },
+      "per_class": {
+        "SR": {
+          "n": 17454,
+          "auroc": 0.9203
+        },
+        "SBRAD": {
+          "n": 632,
+          "auroc": 0.922
+        },
+        "STACH": {
+          "n": 805,
+          "auroc": 0.9934
+        },
+        "AFIB": {
+          "n": 1503,
+          "auroc": 0.9883
+        },
+        "AFL": {
+          "n": 56,
+          "auroc": 0.982
+        },
+        "SVT": {
+          "n": 34,
+          "auroc": 0.9643
+        }
+      },
+      "confusion": {
+        "SR": {
+          "SR": 13885,
+          "SBRAD": 3038,
+          "STACH": 223,
+          "AFIB": 95,
+          "AFL": 155,
+          "SVT": 58
+        },
+        "SBRAD": {
+          "SR": 12,
+          "SBRAD": 614,
+          "STACH": 0,
+          "AFIB": 1,
+          "AFL": 2,
+          "SVT": 3
+        },
+        "STACH": {
+          "SR": 15,
+          "SBRAD": 0,
+          "STACH": 755,
+          "AFIB": 6,
+          "AFL": 13,
+          "SVT": 16
+        },
+        "AFIB": {
+          "SR": 42,
+          "SBRAD": 16,
+          "STACH": 17,
+          "AFIB": 1213,
+          "AFL": 163,
+          "SVT": 52
+        },
+        "AFL": {
+          "SR": 1,
+          "SBRAD": 1,
+          "STACH": 0,
+          "AFIB": 0,
+          "AFL": 53,
+          "SVT": 1
+        },
+        "SVT": {
+          "SR": 1,
+          "SBRAD": 0,
+          "STACH": 4,
+          "AFIB": 0,
+          "AFL": 7,
+          "SVT": 22
+        }
+      }
+    }
+  },
+  "training": {
+    "seed": 42,
+    "epochs": 30,
+    "split": "Chapman 85/15 stratifikatsiyalangan; tashqi: PTB-XL to'liq"
+  }
+}
