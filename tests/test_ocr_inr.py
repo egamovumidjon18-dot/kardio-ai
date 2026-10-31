@@ -62,3 +62,12 @@ def test_real_rapidocr_reads_rendered_text():
     img.save(buf, format="PNG")
     ev = assess_inr_image(buf.getvalue(), "af")
     assert not ev.abstained and ev.value == 2.5
+
+
+def test_parse_common_lab_formats():
+    from guardian.inr import parse_inr_text
+    assert parse_inr_text("MNO (INR): 3.8") == 3.8            # e2e tekshiruvida topilgan xato: ilgari None edi
+    assert parse_inr_text("INR(МНО) = 3,1") == 3.1
+    assert parse_inr_text("МНО [INR] - 4,2") == 4.2
+    assert parse_inr_text("MNO 2.5 (norma 2.0-3.0)") == 2.5
+    assert parse_inr_text("INR: 1.2\nmaqsad INR 2.5") is None   # ikki xil qiymat — taxmin qilinmaydi

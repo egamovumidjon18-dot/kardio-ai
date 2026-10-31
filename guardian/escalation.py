@@ -34,6 +34,7 @@ class Escalation:
     reasons: list[str] = field(default_factory=list)
     patient_message: str = ""
     notified: bool = False
+    message: str = ""                 # jarrohga ketgan matn — yetkazilmasa, qayta yuborish uchun saqlanadi
 
     def to_dict(self) -> dict:
         return {"alert": self.alert.value, "reasons": self.reasons,
@@ -94,5 +95,6 @@ def escalate(patient_ref: str, day: int | None, items: list[Evidence], notifier:
     if alert != Alert.GREEN:
         head = "🔴 SHOSHILINCH" if alert == Alert.RED else "🟠 Bugun ko'rib chiqing"
         day_s = f", operatsiyadan keyin {day}-kun" if day is not None else ""
-        esc.notified = notifier.send(f"{head} — bemor {patient_ref}{day_s}\n" + "\n".join(f"• {r}" for r in reasons))
+        esc.message = f"{head} — bemor {patient_ref}{day_s}\n" + "\n".join(f"• {r}" for r in reasons)
+        esc.notified = notifier.send(esc.message)
     return esc

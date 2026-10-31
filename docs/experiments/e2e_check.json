@@ -1,0 +1,104 @@
+{
+ "seconds": 119.1,
+ "models_loaded": {
+  "ecg": "ecg_cnn_ptbxl",
+  "angio": "angio_stenosis_unet",
+  "echo_ef": "echo_ef_r2plus1d",
+  "ecg_low_ef": "ecg_lowef_echonext",
+  "ecg_shd": "ecg_shd_echonext"
+ },
+ "pcg_model": "pcg_murmur_cnn",
+ "shadow_runs": 60,
+ "results": {
+  "pcg": {
+   "name": "Yurak tovushi: shovqin bor/yo'q",
+   "data": "CirCor test (bemor darajasida)",
+   "n_pos": 15,
+   "n_neg": 15,
+   "tp": 12,
+   "fn": 0,
+   "tn": 15,
+   "fp": 0,
+   "abstain": 3,
+   "errors": 0
+  },
+  "ecg_afib": {
+   "name": "EKG: bo'lmachalar fibrillyatsiyasi",
+   "data": "PTB-XL fold 10 (500 Hz, mV)",
+   "n_pos": 15,
+   "n_neg": 15,
+   "tp": 13,
+   "fn": 1,
+   "tn": 15,
+   "fp": 0,
+   "abstain": 1,
+   "errors": 0
+  },
+  "ecg_low_ef": {
+   "name": "AI-EKG: past EF (≤45%)",
+   "data": "EchoNext test (250 Hz, oldindan standartlashtirilgan)",
+   "n_pos": 15,
+   "n_neg": 15,
+   "tp": 7,
+   "fn": 0,
+   "tn": 5,
+   "fp": 3,
+   "abstain": 15,
+   "errors": 0
+  },
+  "ecg_shd": {
+   "name": "AI-EKG: tuzilmaviy kasallik",
+   "data": "EchoNext test, xuddi shu EKG'lar",
+   "n_pos": 22,
+   "n_neg": 8,
+   "tp": 10,
+   "fn": 0,
+   "tn": 1,
+   "fp": 2,
+   "abstain": 17,
+   "errors": 0
+  },
+  "angio": {
+   "name": "Angiografiya: stenoz nomzodi",
+   "data": "ARCADE test (stenozli kadrlar)",
+   "n_pos": 30,
+   "n_neg": 0,
+   "tp": 30,
+   "fn": 0,
+   "tn": 0,
+   "fp": 0,
+   "abstain": 0,
+   "errors": 0
+  },
+  "inr_ocr": {
+   "name": "MNO qog'ozi: raqamni o'qish",
+   "data": "sun'iy laboratoriya rasmi (qiymat ma'lum)",
+   "n_pos": 4,
+   "n_neg": 0,
+   "tp": 4,
+   "fn": 0,
+   "tn": 0,
+   "fp": 0,
+   "abstain": 0,
+   "errors": 0,
+   "detail": [
+    [
+     1.6,
+     1.6
+    ],
+    [
+     2.5,
+     2.5
+    ],
+    [
+     3.8,
+     3.8
+    ],
+    [
+     5.2,
+     5.2
+    ]
+   ]
+  }
+ }
+}

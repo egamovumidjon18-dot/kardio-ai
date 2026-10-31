@@ -178,3 +178,7 @@ html, body { background: linear-gradient(180deg, var(--pm-bg-1), var(--pm-bg-2))
 .lrow2 { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .6rem; align-items: center; padding: .7rem 0; border-bottom: 1px solid var(--cp-border); }
 .lrow2:last-child { border-bottom: 0; } .lrow2 small { display: block; color: var(--cp-ink-muted); font-size: var(--cp-text-xs); }
 .wave { width: 140px; height: 22px; fill: var(--cp-brand); display: block; margin-top: .3rem; }
+
+/* ---- yetkazish holati */
+.dl { display: inline-flex; gap: .35rem; align-items: center; font-size: var(--cp-text-xs); font-weight: 700; color: var(--cp-ink-muted); }
+.dl--ok { color: var(--cp-success); } .dl--bad { color: var(--cp-danger); }

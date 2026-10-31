@@ -25,7 +25,9 @@ TARGETS: dict[str, tuple[float, float, float]] = {
 }
 
 # "MHO" — OCR kirill "МНО" ni ko'pincha lotin harflari bilan o'qiydi.
-_PATTERN = re.compile(r"\b(?:INR|MNO|MHO|МНО)\b\s*[:=\-]?\s*(\d{1,2}(?:[.,]\d{1,2})?)", re.IGNORECASE)
+# Laboratoriya qog'ozlarida ko'pincha ikki nom birga yoziladi: «MNO (INR): 3.8», «INR(МНО) = 3,1» — qavsdagi nom ham qabul qilinadi.
+_KEY = r"(?:INR|MNO|MHO|МНО)"
+_PATTERN = re.compile(rf"\b{_KEY}\b(?:\s*[(\[]\s*{_KEY}\s*[)\]])?\s*[:=\-]?\s*(\d{{1,2}}(?:[.,]\d{{1,2}})?)", re.IGNORECASE)
 
 
 def parse_inr_text(text: str) -> Optional[float]:

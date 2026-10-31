@@ -85,7 +85,7 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
                models_dir: Optional[Path] = None, running_version: str = "baseline",
                auth: Optional[AuthService] = None, low_ef_model: Optional[LowEFFromECG] = None,
                shd_model: Optional[StructuralFromECG] = None, shadow_models: Optional[list[ShadowRhythmModel]] = None,
-               shadow_store: Optional[ShadowStore] = None) -> FastAPI:
+               shadow_store: Optional[ShadowStore] = None, delivery_retry_s: Optional[float] = None) -> FastAPI:
     # Kirish yoqilgan bo'lsa: har bir so'rov huquq jadvali bo'yicha tekshiriladi; API hujjatlari (/docs) ochiq qolmaydi.
     app = FastAPI(title="CardioPath AI", version="0.1.0",
                   description="Kardiologiya va kardioxirurgiya yagona AI-CDSS platformasi. " + DISCLAIMER,
@@ -134,12 +134,27 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
                        shadow_models=shadow_models, shadow_store=shadow_store)
     if shadow_store is not None:
         shadow_routes.register(app, shadow_store, [m.key for m in shadow_models or []])
-    alerts_api.register(app, store, _get)
+    alerts_api.register(app, store, _get, notifier)
     auth_routes.register_status(app, auth is not None)
     if auth is not None:
         auth_routes.register(app, auth, store)
     if models_dir is not None:
         learning_routes.register(app, store, models_dir, recordings_dir, running_version, auth_enabled=auth is not None)
+
+    if delivery_retry_s:
+        import asyncio
+        import logging
+
+        @app.on_event("startup")
+        async def _delivery_loop() -> None:
+            async def loop() -> None:
+                while True:
+                    try:
+                        await asyncio.to_thread(alerts_api.retry_deliveries, store, notifier)
+                    except Exception as exc:          # noqa: BLE001 — navbat to'xtab qolmasin
+                        logging.getLogger("cardiopath.alerts").warning("qayta yuborish xatosi: %s", exc)
+                    await asyncio.sleep(delivery_retry_s)
+            app.state.delivery_task = asyncio.create_task(loop())
 
     @app.get("/health")
     def health() -> dict:
@@ -350,4 +365,4 @@ def default_app() -> FastAPI:
                       ecg_model=ECGModel.from_dir(os.environ.get("CARDIOPATH_ECG_WEIGHTS", "weights/ecg")),
                       angio_model=AngioModel.from_dir(os.environ.get("CARDIOPATH_ANGIO_WEIGHTS", "weights/angio")),
                       ef_model=_load_ef(), auth=auth, low_ef_model=_load_low_ef(), shd_model=_load_shd(),
-                      shadow_models=_load_shadow(), shadow_store=ShadowStore(db_path))
+                      shadow_models=_load_shadow(), shadow_store=ShadowStore(db_path), delivery_retry_s=60)

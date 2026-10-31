@@ -63,7 +63,15 @@ class EpisodeStore(ABC):
     def security_events(self, limit: int = 100) -> list[dict]: ...
 
     @abstractmethod
-    def add_alert(self, episode_id: str, patient_ref: str, level: str, source: str, reasons: list[str]) -> dict: ...
+    def add_alert(self, episode_id: str, patient_ref: str, level: str, source: str, reasons: list[str],
+                  message: str = "", delivered: Optional[bool] = None) -> dict: ...
+
+    @abstractmethod
+    def undelivered_alerts(self, max_attempts: int = 10) -> list[dict]:
+        """Ochiq, lekin jarrohga yetkazilmagan signallar (qayta yuborish navbati)."""
+
+    @abstractmethod
+    def mark_delivery(self, alert_id: int, ok: bool) -> Optional[dict]: ...
 
     @abstractmethod
     def alerts(self, status: str = "open", level: Optional[str] = None, episode_id: Optional[str] = None,
@@ -110,6 +118,12 @@ class SqliteEpisodeStore(EpisodeStore):
                 "patient_ref TEXT, level TEXT NOT NULL, source TEXT, reasons TEXT, created_at TEXT, "
                 "ack_by TEXT, ack_at TEXT, ack_note TEXT)")
             self._conn.execute("CREATE INDEX IF NOT EXISTS alerts_open ON alerts (ack_at, level, created_at)")
+            # yetkazish holati (eski bazalarga ustun qo'shiladi): none | sent | failed
+            have = {r[1] for r in self._conn.execute("PRAGMA table_info(alerts)")}
+            for col, ddl in (("message", "TEXT"), ("delivery", "TEXT DEFAULT 'none'"), ("attempts", "INTEGER DEFAULT 0"),
+                             ("delivered_at", "TEXT"), ("last_attempt_at", "TEXT")):
+                if col not in have:
+                    self._conn.execute(f"ALTER TABLE alerts ADD COLUMN {col} {ddl}")
             self._conn.execute("CREATE INDEX IF NOT EXISTS alerts_episode ON alerts (episode_id)")
 
     def save(self, ep: Episode, actor: str, action: str, detail: Optional[dict] = None) -> None:
@@ -192,18 +206,41 @@ class SqliteEpisodeStore(EpisodeStore):
     def _alert_row(r) -> dict:
         return {"id": r[0], "episode_id": r[1], "patient_ref": r[2], "level": r[3], "source": r[4],
                 "reasons": json.loads(r[5] or "[]"), "created_at": r[6], "acknowledged": r[8] is not None,
-                "ack_by": r[7], "ack_at": r[8], "ack_note": r[9]}
+                "ack_by": r[7], "ack_at": r[8], "ack_note": r[9],
+                "delivery": {"status": r[10] or "none", "attempts": r[11] or 0, "delivered_at": r[12], "last_attempt_at": r[13]}}
 
-    _ALERT_COLS = "id, episode_id, patient_ref, level, source, reasons, created_at, ack_by, ack_at, ack_note"
+    _ALERT_COLS = ("id, episode_id, patient_ref, level, source, reasons, created_at, ack_by, ack_at, ack_note, "
+                   "delivery, attempts, delivered_at, last_attempt_at")
 
-    def add_alert(self, episode_id: str, patient_ref: str, level: str, source: str, reasons: list[str]) -> dict:
+    def add_alert(self, episode_id: str, patient_ref: str, level: str, source: str, reasons: list[str],
+                  message: str = "", delivered: Optional[bool] = None) -> dict:
         now = utcnow()
+        delivery = "none" if delivered is None else ("sent" if delivered else "failed")
         with self._lock, self._conn:
             cur = self._conn.execute(
-                "INSERT INTO alerts (episode_id, patient_ref, level, source, reasons, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-                (episode_id, patient_ref, level, source, json.dumps(reasons, ensure_ascii=False), now))
+                "INSERT INTO alerts (episode_id, patient_ref, level, source, reasons, created_at, message, delivery, attempts, "
+                "delivered_at, last_attempt_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (episode_id, patient_ref, level, source, json.dumps(reasons, ensure_ascii=False), now, message, delivery,
+                 0 if delivered is None else 1, now if delivered else None, None if delivered is None else now))
             row = self._conn.execute(f"SELECT {self._ALERT_COLS} FROM alerts WHERE id = ?", (cur.lastrowid,)).fetchone()
         return self._alert_row(row)
+
+    def undelivered_alerts(self, max_attempts: int = 10) -> list[dict]:
+        with self._lock:
+            rows = self._conn.execute(
+                f"SELECT {self._ALERT_COLS}, message FROM alerts WHERE ack_at IS NULL AND delivery = 'failed' AND attempts < ? "
+                "ORDER BY CASE level WHEN 'red' THEN 0 ELSE 1 END, created_at", (max_attempts,)).fetchall()
+        return [{**self._alert_row(r), "message": r[14]} for r in rows]
+
+    def mark_delivery(self, alert_id: int, ok: bool) -> Optional[dict]:
+        now = utcnow()
+        with self._lock, self._conn:
+            self._conn.execute(
+                "UPDATE alerts SET attempts = attempts + 1, last_attempt_at = ?, delivery = ?, "
+                "delivered_at = CASE WHEN ? THEN ? ELSE delivered_at END WHERE id = ?",
+                (now, "sent" if ok else "failed", ok, now, alert_id))
+            row = self._conn.execute(f"SELECT {self._ALERT_COLS} FROM alerts WHERE id = ?", (alert_id,)).fetchone()
+        return self._alert_row(row) if row else None
 
     def alerts(self, status: str = "open", level: Optional[str] = None, episode_id: Optional[str] = None,
                limit: int = 50, offset: int = 0) -> tuple[int, list[dict]]:
