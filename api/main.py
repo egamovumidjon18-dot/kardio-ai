@@ -31,7 +31,7 @@ from core.episode import Episode, Stage, TransitionError
 from core.evidence import DISCLAIMER
 from core.handoff import Handoff
 from core.registry import deploy_mode
-from core.store import EpisodeStore, SqliteEpisodeStore, episode_to_dict
+from core.store import EpisodeConflict, EpisodeStore, SqliteEpisodeStore, episode_to_dict
 from guardian.escalation import LogNotifier, Notifier, TelegramNotifier
 from adapters.echo_ef import EchoEFAdapter
 from angio.model import AngioModel
@@ -92,6 +92,34 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
                   dependencies=[Depends(auth_routes.make_dependency(auth))] if auth else None,
                   docs_url=None if auth else "/docs", redoc_url=None if auth else "/redoc",
                   openapi_url=None if auth else "/openapi.json")
+
+    # Bitta bemorga keladigan o'zgartiruvchi so'rovlar navbat bilan bajariladi (o'qish → o'zgartirish → saqlash aralashmasin).
+    # Bu bitta jarayon ichida; bir necha jarayon/server uchun store'dagi versiya tekshiruvi (EpisodeConflict) xavfsizlik to'ri.
+    import re as _re
+    import threading as _th
+
+    import anyio
+    _ep_locks: dict[str, _th.Lock] = {}
+    _ep_locks_guard = _th.Lock()
+    _ep_path = _re.compile(r"^/episodes/([^/]+)/")
+
+    @app.middleware("http")
+    async def serialize_episode_writes(request, call_next):
+        m = _ep_path.match(request.url.path) if request.method != "GET" else None
+        if not m:
+            return await call_next(request)
+        with _ep_locks_guard:
+            lock = _ep_locks.setdefault(m.group(1), _th.Lock())
+        await anyio.to_thread.run_sync(lock.acquire)          # hodisalar siklini bloklamasdan kutish
+        try:
+            return await call_next(request)
+        finally:
+            lock.release()
+
+    @app.exception_handler(EpisodeConflict)
+    async def _conflict(request, exc):
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=409, content={"detail": str(exc)})
 
     @app.middleware("http")
     async def no_stale_pages(request, call_next):

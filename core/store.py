@@ -87,6 +87,10 @@ class AlertAckError(ValueError):
     pass
 
 
+class EpisodeConflict(RuntimeError):
+    """Bemor yozuvi o'qilgandan keyin boshqa so'rov uni o'zgartirgan: eskirgan nusxa yozilmaydi (ma'lumot yo'qolmasin)."""
+
+
 def episode_summary(doc: dict, updated_at: Optional[str]) -> dict:
     """Ro'yxat qatori: to'liq hujjatsiz, faqat tanlash va ustuvorlik uchun kerakli ma'lumot."""
     triage = next((e for e in reversed(doc["evidence"]) if e["kind"] == "screening.triage"), None)
@@ -110,6 +114,8 @@ class SqliteEpisodeStore(EpisodeStore):
         with self._lock, self._conn:
             self._conn.execute(
                 "CREATE TABLE IF NOT EXISTS episodes (id TEXT PRIMARY KEY, doc TEXT NOT NULL, updated_at TEXT)")
+            if "rev" not in {r[1] for r in self._conn.execute("PRAGMA table_info(episodes)")}:
+                self._conn.execute("ALTER TABLE episodes ADD COLUMN rev INTEGER NOT NULL DEFAULT 0")
             self._conn.execute(
                 "CREATE TABLE IF NOT EXISTS audit_log (seq INTEGER PRIMARY KEY AUTOINCREMENT, "
                 "episode_id TEXT, actor TEXT, action TEXT, detail TEXT, at TEXT)")
@@ -129,19 +135,30 @@ class SqliteEpisodeStore(EpisodeStore):
     def save(self, ep: Episode, actor: str, action: str, detail: Optional[dict] = None) -> None:
         now = utcnow()
         actor = effective_actor(actor)
+        doc = json.dumps(episode_to_dict(ep), ensure_ascii=False)
+        rev = getattr(ep, "_rev", None)            # get() qo'yadi; yangi epizodda yo'q
         with self._lock, self._conn:
-            self._conn.execute(
-                "INSERT INTO episodes (id, doc, updated_at) VALUES (?, ?, ?) "
-                "ON CONFLICT(id) DO UPDATE SET doc = excluded.doc, updated_at = excluded.updated_at",
-                (ep.id, json.dumps(episode_to_dict(ep), ensure_ascii=False), now))
+            if rev is None:
+                try:
+                    self._conn.execute("INSERT INTO episodes (id, doc, updated_at, rev) VALUES (?, ?, ?, 1)", (ep.id, doc, now))
+                except sqlite3.IntegrityError:
+                    raise EpisodeConflict(f"epizod {ep.id} allaqachon mavjud") from None
+            elif self._conn.execute("UPDATE episodes SET doc = ?, updated_at = ?, rev = rev + 1 WHERE id = ? AND rev = ?",
+                                    (doc, now, ep.id, rev)).rowcount == 0:
+                raise EpisodeConflict("bemor yozuvini boshqa foydalanuvchi hozirgina o'zgartirdi — sahifani yangilab, qayta urining")
+            ep._rev = (rev or 0) + 1
             self._conn.execute(
                 "INSERT INTO audit_log (episode_id, actor, action, detail, at) VALUES (?, ?, ?, ?, ?)",
                 (ep.id, actor, action, json.dumps(detail or {}, ensure_ascii=False), now))
 
     def get(self, episode_id: str) -> Optional[Episode]:
         with self._lock:
-            row = self._conn.execute("SELECT doc FROM episodes WHERE id = ?", (episode_id,)).fetchone()
-        return episode_from_dict(json.loads(row[0])) if row else None
+            row = self._conn.execute("SELECT doc, rev FROM episodes WHERE id = ?", (episode_id,)).fetchone()
+        if not row:
+            return None
+        ep = episode_from_dict(json.loads(row[0]))
+        ep._rev = row[1]
+        return ep
 
     def audit(self, episode_id: str) -> list[dict]:
         with self._lock:
