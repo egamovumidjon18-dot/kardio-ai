@@ -43,6 +43,22 @@ const I = {
     vit_spo2: "SpO₂", vit_pcg: "Yurak tovushi", vit_ef: "EF (LVEF)", vit_risk: "Xavf", notEnteredShort: "Kiritilmagan", aiAdvice: "AI tavsiyasi", nextStep: "Keyingi qadam", noAdvice: "Hozircha muhokama talab qiladigan AI topilmasi yo'q.", heartMap: "Auskultatsiya nuqtalari", heartNote: "Yozuv olingan nuqtalar; eng yuqori shovqin ehtimoli belgilangan.", notRecorded: "Yurak tovushi yozilmagan", v_aorta: "Aorta", v_pulm: "Pulmonal", v_tric: "Trikuspid", v_mitral: "Mitral", topPoint: "eng yuqori",
     hello_m: "Xayrli tong", hello_d: "Xayrli kun", hello_e: "Xayrli kech", hello_sub: "Bugungi klinik holat bir qarashda", chart_stages: "Bemorlar bosqichlar bo'yicha", chart_risk: "Xavf taqsimoti", total: "jami", quick_alerts: "Ogohlantirishlar",
     act_glink: "Bemor havolasi (uy kuzatuvi)", glinkCopied: "Havola nusxalandi — bemorga yuboring",
+    mg_eyebrow: "Model governance", mg_title: "AI modellarini boshqarish", mg_sub: "Versiyalar, litsenziyalar, qabul mezonlari, klinik tasdiq va qaytarish tarixi",
+    mg_need: "Kardiolog tasdig'i talab etiladi", st_live: "Faol", st_shadow: "Shadow", st_blocked: "Bloklangan", st_off: "Ulanmagan",
+    mg_metric: "Asosiy ko'rsatkich", mg_license: "Litsenziya", mg_data: "Ma'lumot", mg_version: "Versiya", mg_research: "faqat tadqiqot", mg_ok_com: "ochiq",
+    mg_learning: "Yurak tovushi modeli: o'z-o'zini o'rgatish", mg_running: "Ishlayotgan", mg_current: "Tasdiqlangan", mg_restart: "Yangi versiya tasdiqlangan — dasturni qayta ishga tushiring.",
+    mg_cand: "Nomzod model", mg_noCand: "Hozircha nomzod yo'q. Yetarli yangi tasdiqlangan holat to'plangach dastur o'zi tayyorlaydi.",
+    mg_gates: "Qabul mezonlari (oldindan belgilangan)", mg_pass: "O'tdi", mg_fail: "O'tmadi", mg_failNote: "Mezon bajarilmadi — tasdiqlab bo'lmaydi.",
+    mg_approve: "Tasdiqlash", mg_rollback: "Qaytarish · sababini yozish", mg_reason: "Sabab (kamida 5 belgi)", mg_note: "Izoh", mg_authOff: "Tasdiqlash uchun kirish tizimi yoqilgan bo'lishi kerak. Buyruq:",
+    mg_history: "O'zgarishlar tarixi", mg_noHistory: "Tarix bo'sh", mg_confirm: "Rostdan ham bu versiyani joriy qilasizmi?", mg_rbConfirm: "Oldingi versiyaga qaytarilsinmi?",
+    mg_blockedTitle: "Ulanmagan yoki rad etilgan", mg_shadowTitle: "Shadow rejimidagi modellar", mg_shadowNote: "Javobi hech kimga ko'rsatilmaydi; shifokorning ko'r bahosi bilan solishtiriladi.",
+    sh_eyebrow: "Shadow mode / ko'r baholash", sh_title: "EKG ritmini mustaqil belgilash", sh_sub: "Kandidat model javoblari baholovchiga ko'rsatilmaydi",
+    sh_queue: "Baholash navbati", sh_waiting: "{n} ta EKG kutmoqda", sh_blind: "Model javobi ataylab ko'rsatilmaydi — ko'r baholash.", sh_rate: "Shifokorning mustaqil ritm bahosi",
+    sh_orig: "EKG'ni asl yozuvdan (qurilma yoki qog'oz) o'qing — dastur EKG'ni saqlamaydi.", sh_save: "Bahoni saqlash", sh_none: "Baholash kutayotgan EKG yo'q.",
+    sh_report: "Agregat hisobot", sh_early: "Hali erta — yetarli namuna yig'ilmagan.", sh_ready: "Yetarli namuna yig'ildi.", sh_afib: "AFIB bilan", sh_nonafib: "AFIB'siz",
+    sh_compare: "Yakuniy taqqoslash", sh_locked: "Hozircha mavjud emas", sh_lockedNote: "Jonli model, shadow va shifokor taqqoslanishi dastlabki namuna mezoni bajarilgach ochiladi.",
+    sh_live: "Jonli model", sh_shadowM: "Shadow model", sh_sens: "AFIB sezgirligi", sh_spec: "O'ziga xoslik", sh_fast: "Tez ritm → AFIB", sh_agree: "Ritm mosligi", sh_selected: "Tanlangan",
+    rh_SR: "Sinus ritmi", rh_SBRAD: "Sinus bradikardiyasi", rh_STACH: "Sinus taxikardiyasi", rh_AFIB: "Bo'lmachalar fibrillyatsiyasi", rh_AFL: "Bo'lmachalar titrashi", rh_SVT: "SVT", rh_OTHER: "Boshqa / aniqlab bo'lmaydi",
     skip: "Asosiy qismga o'tish", research: "Tadqiqot rejimi", search: "Bemor kodi bo'yicha qidirish", newEpisode: "Yangi epizod",
     nav_dash: "Bosh panel", nav_eps: "Epizodlar", nav_screen: "Skrining", nav_alerts: "Ogohlantirishlar", nav_models: "Modellar", nav_shadow: "Shadow",
     welcome: "Xush kelibsiz", signInTitle: "Tizimga kirish", tagline: "Kardiologiya va kardioxirurgiya uchun AI yordamchi",
@@ -116,6 +132,22 @@ const I = {
     vit_spo2: "SpO₂", vit_pcg: "Тоны сердца", vit_ef: "ФВ (ФВЛЖ)", vit_risk: "Риск", notEnteredShort: "Не внесено", aiAdvice: "Рекомендация ИИ", nextStep: "Следующий шаг", noAdvice: "Пока нет находок ИИ, требующих обсуждения.", heartMap: "Точки аускультации", heartNote: "Точки с записью; отмечена точка с наибольшей вероятностью шума.", notRecorded: "Тоны сердца не записаны", v_aorta: "Аорта", v_pulm: "Лёгочная", v_tric: "Трикуспидальная", v_mitral: "Митральная", topPoint: "максимум",
     hello_m: "Доброе утро", hello_d: "Добрый день", hello_e: "Добрый вечер", hello_sub: "Клиническая картина дня одним взглядом", chart_stages: "Пациенты по этапам", chart_risk: "Распределение риска", total: "всего", quick_alerts: "Оповещения",
     act_glink: "Ссылка для пациента (наблюдение)", glinkCopied: "Ссылка скопирована — отправьте пациенту",
+    mg_eyebrow: "Управление моделями", mg_title: "Управление моделями ИИ", mg_sub: "Версии, лицензии, критерии приёмки, клиническое утверждение и история отката",
+    mg_need: "Требуется утверждение кардиолога", st_live: "Активна", st_shadow: "Тень", st_blocked: "Заблокирована", st_off: "Не подключена",
+    mg_metric: "Ключевой показатель", mg_license: "Лицензия", mg_data: "Данные", mg_version: "Версия", mg_research: "только исследования", mg_ok_com: "открытая",
+    mg_learning: "Модель тонов сердца: самообучение", mg_running: "Работает", mg_current: "Утверждена", mg_restart: "Новая версия утверждена — перезапустите программу.",
+    mg_cand: "Модель-кандидат", mg_noCand: "Кандидата пока нет. Программа подготовит его, когда наберётся достаточно новых подтверждённых случаев.",
+    mg_gates: "Критерии приёмки (заданы заранее)", mg_pass: "Пройден", mg_fail: "Не пройден", mg_failNote: "Критерий не выполнен — утвердить нельзя.",
+    mg_approve: "Утвердить", mg_rollback: "Откатить · указать причину", mg_reason: "Причина (не менее 5 символов)", mg_note: "Комментарий", mg_authOff: "Для утверждения нужен включённый вход в систему. Команда:",
+    mg_history: "История изменений", mg_noHistory: "История пуста", mg_confirm: "Сделать эту версию текущей?", mg_rbConfirm: "Вернуться к предыдущей версии?",
+    mg_blockedTitle: "Не подключены или отклонены", mg_shadowTitle: "Модели в теневом режиме", mg_shadowNote: "Ответ никому не показывается; сравнивается со слепой оценкой врача.",
+    sh_eyebrow: "Теневой режим / слепая оценка", sh_title: "Независимая разметка ритма ЭКГ", sh_sub: "Ответы модели-кандидата оценщику не показываются",
+    sh_queue: "Очередь оценки", sh_waiting: "Ожидают ЭКГ: {n}", sh_blind: "Ответ модели намеренно скрыт — слепая оценка.", sh_rate: "Независимая оценка ритма врачом",
+    sh_orig: "Читайте ЭКГ с исходной записи (прибор или бумага) — программа ЭКГ не хранит.", sh_save: "Сохранить оценку", sh_none: "Нет ЭКГ, ожидающих оценки.",
+    sh_report: "Сводный отчёт", sh_early: "Пока рано — недостаточно случаев.", sh_ready: "Случаев достаточно.", sh_afib: "С ФП", sh_nonafib: "Без ФП",
+    sh_compare: "Итоговое сравнение", sh_locked: "Пока недоступно", sh_lockedNote: "Сравнение живой модели, тени и врача откроется после достижения порога выборки.",
+    sh_live: "Живая модель", sh_shadowM: "Теневая модель", sh_sens: "Чувствительность ФП", sh_spec: "Специфичность", sh_fast: "Быстрый ритм → ФП", sh_agree: "Совпадение ритма", sh_selected: "Выбрано",
+    rh_SR: "Синусовый ритм", rh_SBRAD: "Синусовая брадикардия", rh_STACH: "Синусовая тахикардия", rh_AFIB: "Фибрилляция предсердий", rh_AFL: "Трепетание предсердий", rh_SVT: "СВТ", rh_OTHER: "Другое / не определить",
     skip: "Перейти к содержимому", research: "Исследовательский режим", search: "Поиск по коду пациента", newEpisode: "Новый эпизод",
     nav_dash: "Панель", nav_eps: "Эпизоды", nav_screen: "Скрининг", nav_alerts: "Оповещения", nav_models: "Модели", nav_shadow: "Тень",
     welcome: "Добро пожаловать", signInTitle: "Вход в систему", tagline: "ИИ-помощник для кардиологии и кардиохирургии",
@@ -189,6 +221,22 @@ const I = {
     vit_spo2: "SpO₂", vit_pcg: "Heart sounds", vit_ef: "EF (LVEF)", vit_risk: "Risk", notEnteredShort: "Not entered", aiAdvice: "AI suggestion", nextStep: "Next step", noAdvice: "No AI finding needs discussion yet.", heartMap: "Auscultation points", heartNote: "Recorded points; the point with the highest murmur probability is marked.", notRecorded: "No heart sounds recorded", v_aorta: "Aortic", v_pulm: "Pulmonary", v_tric: "Tricuspid", v_mitral: "Mitral", topPoint: "highest",
     hello_m: "Good morning", hello_d: "Good afternoon", hello_e: "Good evening", hello_sub: "Today's clinical picture at a glance", chart_stages: "Patients by stage", chart_risk: "Risk distribution", total: "total", quick_alerts: "Alerts",
     act_glink: "Patient link (home follow-up)", glinkCopied: "Link copied — send it to the patient",
+    mg_eyebrow: "Model governance", mg_title: "AI model governance", mg_sub: "Versions, licences, acceptance gates, clinical approval and rollback history",
+    mg_need: "Cardiologist approval required", st_live: "Live", st_shadow: "Shadow", st_blocked: "Blocked", st_off: "Not loaded",
+    mg_metric: "Key metric", mg_license: "Licence", mg_data: "Dataset", mg_version: "Version", mg_research: "research only", mg_ok_com: "open",
+    mg_learning: "Heart-sound model: supervised self-learning", mg_running: "Running", mg_current: "Approved", mg_restart: "A new version was approved — restart the app.",
+    mg_cand: "Candidate model", mg_noCand: "No candidate yet. The app prepares one once enough new confirmed cases are collected.",
+    mg_gates: "Acceptance gates (pre-registered)", mg_pass: "Passed", mg_fail: "Failed", mg_failNote: "A gate failed — cannot be approved.",
+    mg_approve: "Approve", mg_rollback: "Roll back · give a reason", mg_reason: "Reason (at least 5 characters)", mg_note: "Note", mg_authOff: "Approval needs sign-in enabled. Command:",
+    mg_history: "Change history", mg_noHistory: "No history", mg_confirm: "Make this version current?", mg_rbConfirm: "Roll back to the previous version?",
+    mg_blockedTitle: "Not loaded or rejected", mg_shadowTitle: "Models in shadow mode", mg_shadowNote: "Output is never shown; compared with the clinician's blinded reading.",
+    sh_eyebrow: "Shadow mode / blinded reading", sh_title: "Independent ECG rhythm labelling", sh_sub: "Candidate model outputs are hidden from the reader",
+    sh_queue: "Reading queue", sh_waiting: "{n} ECGs waiting", sh_blind: "The model's answer is deliberately hidden — blinded reading.", sh_rate: "Clinician's independent rhythm reading",
+    sh_orig: "Read the ECG from the original tracing (device or paper) — the app does not store ECGs.", sh_save: "Save reading", sh_none: "No ECGs awaiting a reading.",
+    sh_report: "Aggregate report", sh_early: "Too early — not enough cases yet.", sh_ready: "Enough cases collected.", sh_afib: "With AF", sh_nonafib: "Without AF",
+    sh_compare: "Final comparison", sh_locked: "Not available yet", sh_lockedNote: "Live vs shadow vs clinician comparison unlocks after the pre-set sample size.",
+    sh_live: "Live model", sh_shadowM: "Shadow model", sh_sens: "AF sensitivity", sh_spec: "Specificity", sh_fast: "Fast rhythm → AF", sh_agree: "Rhythm agreement", sh_selected: "Selected",
+    rh_SR: "Sinus rhythm", rh_SBRAD: "Sinus bradycardia", rh_STACH: "Sinus tachycardia", rh_AFIB: "Atrial fibrillation", rh_AFL: "Atrial flutter", rh_SVT: "SVT", rh_OTHER: "Other / cannot tell",
     skip: "Skip to content", research: "Research mode", search: "Search by patient code", newEpisode: "New episode",
     nav_dash: "Dashboard", nav_eps: "Episodes", nav_screen: "Screening", nav_alerts: "Alerts", nav_models: "Models", nav_shadow: "Shadow",
     welcome: "Welcome", signInTitle: "Sign in", tagline: "AI assistant for cardiology and cardiac surgery",
@@ -367,8 +415,8 @@ function navItems() {
     { href: "#/episodes", key: "nav_eps", icon: "folder", on: (h) => h.startsWith("#/episodes") || h.startsWith("#/e/"), perm: "episode.read" },
     { href: "/screening", key: "nav_screen", icon: "steth", perm: "screening.run" },
     { href: "#/alerts", key: "nav_alerts", icon: "bell", on: (h) => h.startsWith("#/alerts"), perm: "alerts.read", count: true },
-    { href: "/models-ui", key: "nav_models", icon: "layers", perm: "learning.read" },
-    { href: "/shadow-ui", key: "nav_shadow", icon: "pulse", perm: "shadow.label", alt: "shadow.report" },
+    { href: "#/models", key: "nav_models", icon: "layers", on: (h) => h.startsWith("#/models"), perm: "learning.read" },
+    { href: "#/shadow", key: "nav_shadow", icon: "pulse", on: (h) => h.startsWith("#/shadow"), perm: "shadow.label", alt: "shadow.report" },
   ].filter((n) => !n.perm || can(n.perm) || (n.alt && can(n.alt)));
 }
 function paintNav() {
@@ -454,6 +502,8 @@ async function route() {
     if (parts.length === 0) await dashboard();
     else if (parts[0] === "episodes") await episodesPage(params);
     else if (parts[0] === "alerts") await alertsPage(params);
+    else if (parts[0] === "models") await modelsPage(params);
+    else if (parts[0] === "shadow") await shadowPage(params);
     else if (parts[0] === "e" && parts[1]) {
       const sub = parts[2];
       if (sub === "ecg") await ecgPage(parts[1]);
@@ -945,6 +995,114 @@ async function alertsPage(params) {
   $("refresh").onclick = () => route();
   bindAck(() => route());
   paintNav();
+}
+
+
+/* ------------------------------------------------------------------ 8. Modellar (governance) */
+function keyMetric(card) {
+  const m = card.metrics || {}, test = m.test || m.external_ptbxl || {};
+  const find = (o, d = 0) => { if (!o || typeof o !== "object" || d > 2) return null;
+    for (const [k, v] of Object.entries(o)) { if (/auroc/i.test(k) && typeof v === "number") return [k, v]; }
+    for (const v of Object.values(o)) { const r = find(v, d + 1); if (r) return r; } return null; };
+  if (typeof m.val_mae_pct === "number") return ["MAE", m.val_mae_pct + "%"];
+  const r = find(test) || find(m); return r ? ["AUROC", Number(r[1]).toFixed(3)] : null;
+}
+async function modelsPage(params) {
+  const [models, health_, learn, shadow] = await Promise.all([api("/models"), api("/health"),
+    api("/learning/status").catch(() => null), can("shadow.report") || can("shadow.label") ? api("/shadow/report").catch(() => null) : null]);
+  const cards = [];
+  if (health_.pcg_model) cards.push({ key: "pcg", c: health_.pcg_model, st: "live", icon: "steth" });
+  [["ecg", "pulse"], ["ecg_low_ef", "heart"], ["ecg_shd", "heart"], ["angio", "chart"], ["echo_ef", "heart"]].forEach(([k, icon]) => {
+    if (models[k]) cards.push({ key: k, c: models[k], st: "live", icon });
+  });
+  (shadow && shadow.shadow_models || []).forEach((m) => cards.push({ key: "shadow:" + m, c: { name: m.split("@")[0], version: m.split("@")[1], dataset: "PTB-XL + Chapman + CPSC 2018 + Georgia", dataset_license: "CC-BY 4.0 / CC0", commercial_use: true, metrics: {} }, st: "shadow", icon: "pulse" }));
+  Object.entries(models.blocked || {}).forEach(([k, why]) => cards.push({ key: "blocked:" + k, c: { name: k, version: "—", dataset: why }, st: "blocked", icon: "x" }));
+  const sel = params.get("m") || (learn ? "pcg" : cards[0] && cards[0].key);
+  const stPill = (st) => `<span class="pill ${st === "live" ? "pill--ok" : st === "blocked" ? "pill--bad" : "pill--ai"}">${esc(t("st_" + st))}</span>`;
+  const grid = cards.map((x) => { const km = x.st === "live" ? keyMetric(x.c) : null;
+    return `<a class="mcard ${x.key === sel ? "is-sel" : ""}" href="#/models?m=${encodeURIComponent(x.key)}"><div class="mcard__top"><span class="mcard__icon">${ic(x.icon)}</span>${stPill(x.st)}</div>
+      <b>${esc(x.c.name)}</b><small>${esc(x.st === "blocked" ? x.c.dataset : (x.c.dataset || "") + " · v" + (x.c.version || ""))}</small>${km ? `<span class="mcard__metric">${esc(km[0])} <b>${esc(km[1])}</b></span>` : ""}</a>`; }).join("");
+  const cur = cards.find((x) => x.key === sel);
+  let detail = "";
+  if (sel === "pcg" && learn) {
+    const c = learn.latest_candidate;
+    detail = `<section class="cp-card"><h2 class="cp-card__title">${esc(t("mg_learning"))}</h2>
+      <div class="mg-kv"><div><small>${esc(t("mg_running"))}</small><b>${esc(learn.running_version)}</b></div><div><small>${esc(t("mg_current"))}</small><b>${esc(learn.current_version)}</b></div>
+        ${learn.data ? `<div><small>Data</small><b>${learn.data.confirmed_children}</b></div>` : ""}</div>
+      ${learn.restart_needed ? `<div class="urgentbox urgentbox--warn">${ic("alert")}<div><b>${esc(t("mg_restart"))}</b></div></div>` : ""}
+      <h3 class="mg-h">${esc(t("mg_cand"))}</h3>
+      ${!c ? `<p class="sub">${esc(t("mg_noCand"))}</p>` : `<p class="cp-meta">v${esc(c.version)} · ${esc(c.created_at || "")}</p><h3 class="mg-h">${esc(t("mg_gates"))}</h3>
+        ${c.gates.map((g) => `<div class="cp-gate cp-gate--${g.passed ? "pass" : "fail"}"><span class="cp-gate__state">${g.passed ? "✓ " + esc(t("mg_pass")) : "✕ " + esc(t("mg_fail"))}</span><div><b>${esc(g.name)}</b><div class="cp-meta">${esc(g.detail)}</div></div></div>`).join("")}
+        ${c.passed ? "" : `<div class="urgentbox" style="margin-top:1rem">${ic("alert")}<div><b>${esc(t("mg_failNote"))}</b></div></div>`}
+        ${!authOn ? `<div class="cp-doctor-notice">${esc(t("mg_authOff"))} <code>${esc(c.promote_command || "")}</code></div>`
+          : can("learning.approve") ? `<div class="actions" style="margin-top:1rem"><button class="cp-btn" type="button" id="mgApprove" ${c.passed ? "" : "disabled"}>${ic("check")}${esc(t("mg_approve"))}</button></div>` : ""}`}
+      ${authOn && can("learning.approve") ? `<div class="actions" style="margin-top:1rem"><button class="cp-btn btn-danger-solid" type="button" id="mgRollback">${ic("back")}${esc(t("mg_rollback"))}</button></div>` : ""}
+    </section>
+    <section class="cp-card"><h2 class="cp-card__title" style="margin-bottom:1rem">${esc(t("mg_history"))}</h2>
+      ${learn.history.length ? `<ol class="timeline">${[...learn.history].reverse().map((h) => `<li><div><b>${esc(h.event)} · ${esc(h.version || "")}</b><small>${esc(ago(h.at))} · ${esc(h.by || "")}${h.note ? " · " + esc(h.note) : ""}</small></div></li>`).join("")}</ol>` : `<p class="sub">${esc(t("mg_noHistory"))}</p>`}</section>`;
+  } else if (cur) {
+    const c = cur.c, km = keyMetric(c);
+    detail = `<section class="cp-card"><div class="cp-card__header"><h2 class="cp-card__title">${esc(c.name)}</h2>${stPill(cur.st)}</div>
+      ${cur.st === "blocked" ? `<p>${esc(c.dataset)}</p>` : `<div class="mg-kv"><div><small>${esc(t("mg_version"))}</small><b>v${esc(c.version)}</b></div><div><small>${esc(t("mg_data"))}</small><b>${esc(c.dataset)}</b></div>
+        <div><small>${esc(t("mg_license"))}</small><b>${esc(c.dataset_license || "—")}</b><small>${esc(c.commercial_use ? t("mg_ok_com") : t("mg_research"))}</small></div>${km ? `<div><small>${esc(t("mg_metric"))}</small><b>${esc(km[0])} ${esc(km[1])}</b></div>` : ""}</div>
+        ${c.task ? `<p class="cp-meta" style="margin-top:1rem">${esc(c.task)}</p>` : ""}
+        ${cur.st === "shadow" ? `<div class="cp-doctor-notice" style="margin-top:1rem">${esc(t("mg_shadowNote"))}</div><a class="cp-btn" style="margin-top:1rem" href="#/shadow">${ic("pulse")}${esc(t("nav_shadow"))}</a>` : ""}`}</section>`;
+  }
+  view.innerHTML = `<div class="pm-in"><div class="pagehead"><div><p class="eyebrow">${esc(t("mg_eyebrow"))}</p><h1>${esc(t("mg_title"))}</h1><p class="sub">${esc(t("mg_sub"))}</p></div>
+      <span class="pill pill--ai">${ic("shield")}${esc(t("mg_need"))}</span></div>
+    <div class="mgrid">${grid}</div><div class="split">${detail}</div></div>`;
+  const approve = $("mgApprove"), rb = $("mgRollback");
+  if (approve) approve.onclick = () => dialog(`<h2 class="cp-dialog__title">${esc(t("mg_confirm"))}</h2>
+      <div class="cp-field"><label class="cp-field__label" for="pn">${esc(t("mg_note"))}</label><input class="cp-input" id="pn" name="note" maxlength="300"></div><p class="cp-field__error" role="alert"></p>
+      <div class="cp-dialog__actions"><button class="cp-btn cp-btn--secondary" value="cancel" formnovalidate>${esc(t("cancel"))}</button><button class="cp-btn" type="submit">${esc(t("mg_approve"))}</button></div>`,
+    async (fd) => { await api("/learning/promote", { method: "POST", json: { version: learn.latest_candidate.version, note: fd.get("note") } }); toast(t("saved")); route(); });
+  if (rb) rb.onclick = () => dialog(`<h2 class="cp-dialog__title">${esc(t("mg_rbConfirm"))}</h2>
+      <div class="cp-field"><label class="cp-field__label" for="rn">${esc(t("mg_reason"))}</label><input class="cp-input" id="rn" name="note" minlength="5" maxlength="300" required></div><p class="cp-field__error" role="alert"></p>
+      <div class="cp-dialog__actions"><button class="cp-btn cp-btn--secondary" value="cancel" formnovalidate>${esc(t("cancel"))}</button><button class="cp-btn btn-danger-solid" type="submit">${esc(t("mg_rollback"))}</button></div>`,
+    async (fd) => { await api("/learning/rollback", { method: "POST", json: { note: fd.get("note") } }); toast(t("saved")); route(); });
+}
+
+/* ------------------------------------------------------------------ 9. Shadow — ko'r baholash */
+async function shadowPage(params) {
+  const canL = can("shadow.label"), canR = can("shadow.report");
+  const [pend, rep] = await Promise.all([canL ? api("/shadow/pending?limit=200") : { items: [], labels: [] }, canR ? api("/shadow/report") : null]);
+  const items = pend.items, sel = params.get("run") ? Number(params.get("run")) : (items[0] && items[0].run_id);
+  const cur = items.find((x) => x.run_id === sel);
+  const models = rep ? Object.entries(rep.models) : [];
+  const first = models[0] && models[0][1];
+  const nAf = first ? first.shadow_model.n_afib : 0, nNon = first ? first.shadow_model.n - first.shadow_model.n_afib : 0;
+  const minA = rep ? rep.min_required.afib : 30, minN = rep ? rep.min_required.non_afib : 100;
+  const pct = (v) => v === null || v === undefined ? "—" : (100 * v).toFixed(1) + "%";
+  const prog = (label, n, m) => `<div class="sh-prog"><div><span>${esc(label)}</span><b>${n} / ${m}</b></div><div class="bars__track"><div class="bars__fill" style="width:${Math.min(100, (n / m) * 100)}%;background:var(--pm-grad)"></div></div></div>`;
+  view.innerHTML = `<div class="pm-in"><div class="pagehead"><div><p class="eyebrow">${esc(t("sh_eyebrow"))}</p><h1>${esc(t("sh_title"))}</h1><p class="sub">${esc(t("sh_sub"))}</p></div>
+      <span class="pill pill--ai">${ic("shield")}${esc(t("sh_blind"))}</span></div>
+    <div class="split3">
+      ${canL ? `<section class="cp-card"><h2 class="cp-card__title">${esc(t("sh_queue"))}</h2><p class="sub">${esc(t("sh_waiting", { n: items.length }))}</p>
+        <div class="sh-queue">${items.length ? items.map((x) => `<a class="sh-item ${x.run_id === sel ? "is-sel" : ""}" href="#/shadow?run=${x.run_id}"><b>#${x.run_id}</b><small>${esc(hm(x.created_at))} · ${esc(ago(x.created_at))}</small></a>`).join("") : `<p class="sub">${esc(t("sh_none"))}</p>`}</div></section>` : ""}
+      ${canL ? `<section class="cp-card"><h2 class="cp-card__title">${esc(t("sh_rate"))}</h2>
+        <div class="infobar" style="margin:1rem 0">${ic("shield")}<span>${esc(t("sh_blind"))}</span></div>
+        ${cur ? `<p class="cp-meta">${esc(t("sh_selected"))}: #${cur.run_id} · ${esc(hm(cur.created_at))}</p><p class="cp-doctor-notice">${esc(t("sh_orig"))}</p>
+          <form id="shForm"><div class="rh-grid">${pend.labels.map((l) => `<label class="cp-guardian__choice rh"><input type="radio" name="rh" value="${l}" required>${esc(t("rh_" + l))}</label>`).join("")}</div>
+          <p class="cp-field__error" id="shErr" role="alert"></p><button class="cp-btn" type="submit">${ic("check")}${esc(t("sh_save"))}</button></form>` : `<div class="cp-empty">${ic("check")}<span>${esc(t("sh_none"))}</span></div>`}</section>` : ""}
+      ${canR ? `<section class="cp-card"><h2 class="cp-card__title">${esc(t("sh_report"))}</h2>
+        <div class="${first && first.ready ? "infobar" : "urgentbox urgentbox--warn"}" style="margin:1rem 0">${ic("clock")}<div><b>${esc(first && first.ready ? t("sh_ready") : t("sh_early"))}</b></div></div>
+        ${prog(t("sh_afib"), nAf, minA)}${prog(t("sh_nonafib"), nNon, minN)}
+        <h3 class="mg-h">${esc(t("sh_compare"))}</h3>
+        ${first && first.ready ? `<table class="cp-table" style="min-width:0"><tr><th></th><th>${esc(t("sh_live"))}</th><th>${esc(t("sh_shadowM"))}</th></tr>
+            <tr><td>${esc(t("sh_sens"))}</td><td>${pct(first.live_model.sensitivity)}</td><td>${pct(first.shadow_model.sensitivity)}</td></tr>
+            <tr><td>${esc(t("sh_spec"))}</td><td>${pct(first.live_model.specificity)}</td><td>${pct(first.shadow_model.specificity)}</td></tr>
+            <tr><td>${esc(t("sh_fast"))}</td><td>${pct(first.live_model.fast_called_afib)}</td><td>${pct(first.shadow_model.fast_called_afib)}</td></tr>
+            <tr><td>${esc(t("sh_agree"))}</td><td>—</td><td>${pct(first.rhythm_agreement)}</td></tr></table>`
+          : `<div class="cp-empty">${ic("shield")}<b>${esc(t("sh_locked"))}</b><span class="cp-meta">${esc(t("sh_lockedNote"))}</span></div>`}
+        <p class="cp-meta" style="margin-top:1rem">${esc(rep.shadow_models.join(", "))} · ${rep.runs} EKG · ${rep.labeled} ✓</p></section>` : ""}
+    </div></div>`;
+  const f = $("shForm");
+  if (f) f.addEventListener("submit", async (e) => {
+    e.preventDefault(); if (!requireActor()) return;
+    const rh = new FormData(f).get("rh");
+    try { await api(`/shadow/${cur.run_id}/label`, { method: "POST", json: { actor: actor(), rhythm: rh } }); toast(t("saved")); location.hash = "#/shadow"; route(); }
+    catch (err) { $("shErr").textContent = `${t("failed")}: ${err.message}`; }
+  });
 }
 
 /* ------------------------------------------------------------------ ishga tushirish */
