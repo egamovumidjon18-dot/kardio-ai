@@ -59,6 +59,18 @@ const I = {
     sh_compare: "Yakuniy taqqoslash", sh_locked: "Hozircha mavjud emas", sh_lockedNote: "Jonli model, shadow va shifokor taqqoslanishi dastlabki namuna mezoni bajarilgach ochiladi.",
     sh_live: "Jonli model", sh_shadowM: "Shadow model", sh_sens: "AFIB sezgirligi", sh_spec: "O'ziga xoslik", sh_fast: "Tez ritm → AFIB", sh_agree: "Ritm mosligi", sh_selected: "Tanlangan",
     rh_SR: "Sinus ritmi", rh_SBRAD: "Sinus bradikardiyasi", rh_STACH: "Sinus taxikardiyasi", rh_AFIB: "Bo'lmachalar fibrillyatsiyasi", rh_AFL: "Bo'lmachalar titrashi", rh_SVT: "SVT", rh_OTHER: "Boshqa / aniqlab bo'lmaydi",
+    sc_eyebrow: "Skrining", sc_title: "Skrining: SpO₂, klinik belgilar va yurak tovushi", sc_sub: "Qoidalar va AI birga ishlaydi; qaror shifokorda",
+    sc_new: "Yangi bemor skriningi", sc_cont: "Skrining bosqichidagi bemorlar", sc_start: "Skriningni boshlash", sc_none: "Skrining bosqichida bemor yo'q.",
+    sc_wrongStage: "Skrining faqat «Skrining» bosqichida o'tkaziladi.", sc_age: "Yoshi", u_day: "kun", u_month: "oy", u_year: "yil",
+    sc_spo2: "Kislorod saturatsiyasi (SpO₂)", sc_spo2Hint: "Yangi tug'ilganlarda (24–48 soat) o'ng qo'l va oyoqda o'lchang. Kattalarda faqat «tinch holatda».",
+    sc_rh: "O'ng qo'l, %", sc_foot: "Oyoq, %", sc_attempt: "Urinish", sc_rest: "Tinch holatda, %", sc_flags: "Klinik belgilar", sc_major: "jiddiy",
+    sc_ausc: "Yurak tovushi yozuvlari", sc_auscHint: "Nuqtani bosing yoki fayl tanlang. WAV, har nuqtada kamida 5 soniya (yaxshisi 15–20). Bitta nuqta ham yetarli.",
+    sc_device: "Stetoskop modeli", sc_consent: "Bemor (yoki ota-ona) yozma roziligi olindi — yozuvlar tadqiqot uchun saqlansin",
+    sc_short: "Juda qisqa (5 s dan kam)", sc_ready: "Tayyor", sc_needAge: "Yoshni kiriting.", sc_needPair: "O'ng qo'l va oyoq SpO₂ ikkalasi kerak.",
+    sc_result: "Skrining natijasi", sc_findings: "Topilmalar", sc_echo: "Keyingi qadam: epizodni «Tekshiruv» bosqichiga o'tkazing (ExoKG).",
+    loc_AV: "Aorta", loc_PV: "O'pka arteriyasi", loc_TV: "Trikuspidal", loc_MV: "Mitral (cho'qqi)",
+    locw_AV: "to'sh suyagining o'ng chetida, 2-qovurg'a oralig'i", locw_PV: "to'sh suyagining chap chetida, 2-qovurg'a oralig'i",
+    locw_TV: "to'sh suyagining chap chetida, 4-qovurg'a oralig'i", locw_MV: "chap o'rta o'mrov chizig'i, 5-qovurg'a oralig'i",
     skip: "Asosiy qismga o'tish", research: "Tadqiqot rejimi", search: "Bemor kodi bo'yicha qidirish", newEpisode: "Yangi epizod",
     nav_dash: "Bosh panel", nav_eps: "Epizodlar", nav_screen: "Skrining", nav_alerts: "Ogohlantirishlar", nav_models: "Modellar", nav_shadow: "Shadow",
     welcome: "Xush kelibsiz", signInTitle: "Tizimga kirish", tagline: "Kardiologiya va kardioxirurgiya uchun AI yordamchi",
@@ -148,6 +160,18 @@ const I = {
     sh_compare: "Итоговое сравнение", sh_locked: "Пока недоступно", sh_lockedNote: "Сравнение живой модели, тени и врача откроется после достижения порога выборки.",
     sh_live: "Живая модель", sh_shadowM: "Теневая модель", sh_sens: "Чувствительность ФП", sh_spec: "Специфичность", sh_fast: "Быстрый ритм → ФП", sh_agree: "Совпадение ритма", sh_selected: "Выбрано",
     rh_SR: "Синусовый ритм", rh_SBRAD: "Синусовая брадикардия", rh_STACH: "Синусовая тахикардия", rh_AFIB: "Фибрилляция предсердий", rh_AFL: "Трепетание предсердий", rh_SVT: "СВТ", rh_OTHER: "Другое / не определить",
+    sc_eyebrow: "Скрининг", sc_title: "Скрининг: SpO₂, клинические признаки и тоны сердца", sc_sub: "Правила и ИИ работают вместе; решение — за врачом",
+    sc_new: "Скрининг нового пациента", sc_cont: "Пациенты на этапе скрининга", sc_start: "Начать скрининг", sc_none: "Пациентов на этапе скрининга нет.",
+    sc_wrongStage: "Скрининг проводится только на этапе «Скрининг».", sc_age: "Возраст", u_day: "дн.", u_month: "мес.", u_year: "лет",
+    sc_spo2: "Сатурация (SpO₂)", sc_spo2Hint: "У новорождённых (24–48 ч) — правая рука и нога. У взрослых — только «в покое».",
+    sc_rh: "Правая рука, %", sc_foot: "Нога, %", sc_attempt: "Попытка", sc_rest: "В покое, %", sc_flags: "Клинические признаки", sc_major: "серьёзный",
+    sc_ausc: "Записи тонов сердца", sc_auscHint: "Нажмите точку или выберите файл. WAV, не менее 5 с в точке (лучше 15–20). Достаточно одной точки.",
+    sc_device: "Модель стетоскопа", sc_consent: "Получено письменное согласие пациента (или родителей) — сохранить записи для исследования",
+    sc_short: "Слишком коротко (< 5 с)", sc_ready: "Готово", sc_needAge: "Укажите возраст.", sc_needPair: "Нужны SpO₂ и правой руки, и ноги.",
+    sc_result: "Результат скрининга", sc_findings: "Находки", sc_echo: "Следующий шаг: переведите эпизод на этап «Обследование» (ЭхоКГ).",
+    loc_AV: "Аорта", loc_PV: "Лёгочная артерия", loc_TV: "Трикуспидальная", loc_MV: "Митральная (верхушка)",
+    locw_AV: "у правого края грудины, 2-е межреберье", locw_PV: "у левого края грудины, 2-е межреберье",
+    locw_TV: "у левого края грудины, 4-е межреберье", locw_MV: "левая среднеключичная линия, 5-е межреберье",
     skip: "Перейти к содержимому", research: "Исследовательский режим", search: "Поиск по коду пациента", newEpisode: "Новый эпизод",
     nav_dash: "Панель", nav_eps: "Эпизоды", nav_screen: "Скрининг", nav_alerts: "Оповещения", nav_models: "Модели", nav_shadow: "Тень",
     welcome: "Добро пожаловать", signInTitle: "Вход в систему", tagline: "ИИ-помощник для кардиологии и кардиохирургии",
@@ -237,6 +261,18 @@ const I = {
     sh_compare: "Final comparison", sh_locked: "Not available yet", sh_lockedNote: "Live vs shadow vs clinician comparison unlocks after the pre-set sample size.",
     sh_live: "Live model", sh_shadowM: "Shadow model", sh_sens: "AF sensitivity", sh_spec: "Specificity", sh_fast: "Fast rhythm → AF", sh_agree: "Rhythm agreement", sh_selected: "Selected",
     rh_SR: "Sinus rhythm", rh_SBRAD: "Sinus bradycardia", rh_STACH: "Sinus tachycardia", rh_AFIB: "Atrial fibrillation", rh_AFL: "Atrial flutter", rh_SVT: "SVT", rh_OTHER: "Other / cannot tell",
+    sc_eyebrow: "Screening", sc_title: "Screening: SpO₂, clinical signs and heart sounds", sc_sub: "Rules and AI work together; the clinician decides",
+    sc_new: "Screen a new patient", sc_cont: "Patients at the screening stage", sc_start: "Start screening", sc_none: "No patients at the screening stage.",
+    sc_wrongStage: "Screening is only done at the Screening stage.", sc_age: "Age", u_day: "days", u_month: "months", u_year: "years",
+    sc_spo2: "Oxygen saturation (SpO₂)", sc_spo2Hint: "Newborns (24–48 h): right hand and foot. Adults: resting only.",
+    sc_rh: "Right hand, %", sc_foot: "Foot, %", sc_attempt: "Attempt", sc_rest: "At rest, %", sc_flags: "Clinical signs", sc_major: "major",
+    sc_ausc: "Heart sound recordings", sc_auscHint: "Tap a point or choose a file. WAV, at least 5 s per point (15–20 is better). One point is enough.",
+    sc_device: "Stethoscope model", sc_consent: "Written consent from the patient (or parents) — keep recordings for research",
+    sc_short: "Too short (< 5 s)", sc_ready: "Ready", sc_needAge: "Enter the age.", sc_needPair: "Both right-hand and foot SpO₂ are needed.",
+    sc_result: "Screening result", sc_findings: "Findings", sc_echo: "Next step: move the episode to Work-up (echocardiography).",
+    loc_AV: "Aortic", loc_PV: "Pulmonary", loc_TV: "Tricuspid", loc_MV: "Mitral (apex)",
+    locw_AV: "right sternal border, 2nd intercostal space", locw_PV: "left sternal border, 2nd intercostal space",
+    locw_TV: "left sternal border, 4th intercostal space", locw_MV: "left midclavicular line, 5th intercostal space",
     skip: "Skip to content", research: "Research mode", search: "Search by patient code", newEpisode: "New episode",
     nav_dash: "Dashboard", nav_eps: "Episodes", nav_screen: "Screening", nav_alerts: "Alerts", nav_models: "Models", nav_shadow: "Shadow",
     welcome: "Welcome", signInTitle: "Sign in", tagline: "AI assistant for cardiology and cardiac surgery",
@@ -413,7 +449,7 @@ function navItems() {
   return [
     { href: "#/", key: "nav_dash", icon: "grid", on: (h) => h === "#/" || h === "" },
     { href: "#/episodes", key: "nav_eps", icon: "folder", on: (h) => h.startsWith("#/episodes") || h.startsWith("#/e/"), perm: "episode.read" },
-    { href: "/screening", key: "nav_screen", icon: "steth", perm: "screening.run" },
+    { href: "#/screening", key: "nav_screen", icon: "steth", on: (h) => h.startsWith("#/screening") || /^#\/e\/[^/]+\/screening/.test(h), perm: "screening.run" },
     { href: "#/alerts", key: "nav_alerts", icon: "bell", on: (h) => h.startsWith("#/alerts"), perm: "alerts.read", count: true },
     { href: "#/models", key: "nav_models", icon: "layers", on: (h) => h.startsWith("#/models"), perm: "learning.read" },
     { href: "#/shadow", key: "nav_shadow", icon: "pulse", on: (h) => h.startsWith("#/shadow"), perm: "shadow.label", alt: "shadow.report" },
@@ -503,10 +539,12 @@ async function route() {
     else if (parts[0] === "episodes") await episodesPage(params);
     else if (parts[0] === "alerts") await alertsPage(params);
     else if (parts[0] === "models") await modelsPage(params);
+    else if (parts[0] === "screening") await screeningStart();
     else if (parts[0] === "shadow") await shadowPage(params);
     else if (parts[0] === "e" && parts[1]) {
       const sub = parts[2];
       if (sub === "ecg") await ecgPage(parts[1]);
+      else if (sub === "screening") await screeningPage(parts[1]);
       else if (sub === "risk") await riskPage(parts[1], params);
       else if (sub === "protocol") await protocolPage(parts[1]);
       else await episodePage(parts[1]);
@@ -541,11 +579,11 @@ function bindAck(after) {
     catch (e) { toast(`${t("failed")}: ${e.message}`, "error"); b.disabled = false; }
   }));
 }
-function episodeRows(items) {
+function episodeRows(items, suffix = "") {
   if (!items.length) return `<div class="empty-note">${esc(t("noEpisodes"))}</div>`;
   return `<div class="cp-table-scroll"><table class="cp-table"><thead><tr><th scope="col">${esc(t("col_ref"))}</th><th scope="col">${esc(t("col_pop"))}</th><th scope="col">${esc(t("col_stage"))}</th>
     <th scope="col">${esc(t("col_risk"))}</th><th scope="col">${esc(t("col_upd"))}</th><th scope="col">${esc(t("col_disc"))}</th></tr></thead><tbody>
-    ${items.map((e) => `<tr><td><span class="pt-ava" aria-hidden="true">${esc(e.patient_ref.replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase())}</span><a href="#/e/${esc(e.id)}">${esc(e.patient_ref)}</a>${e.open_alert_level ? ` <span class="badge-n" title="alerts">${e.open_alerts}</span>` : ""}</td>
+    ${items.map((e) => `<tr><td><span class="pt-ava" aria-hidden="true">${esc(e.patient_ref.replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase())}</span><a href="#/e/${esc(e.id)}${suffix}">${esc(e.patient_ref)}</a>${e.open_alert_level ? ` <span class="badge-n" title="alerts">${e.open_alerts}</span>` : ""}</td>
       <td>${esc(t("pop_" + e.population))}</td><td><span class="pill">${esc(t("stage_" + e.stage))}</span></td>
       <td>${riskBadge(e.overall_risk)}</td><td>${esc(ago(e.updated_at))}</td>
       <td><span class="pill ${e.n_discussion ? "" : "pill--muted"}">${esc(t("disc_n", { n: e.n_discussion }))}</span></td></tr>`).join("")}
@@ -601,7 +639,7 @@ async function dashboard() {
       ${liveEcg()}
       <div class="hello__actions">${can("episode.create") ? `<button class="cp-btn" type="button" id="heroNew">${ic("plus")}${esc(t("newEpisode"))}</button>` : ""}
         ${canAl ? `<a class="cp-btn" href="#/alerts">${ic("bell")}${esc(t("quick_alerts"))}${al.total ? ` · ${al.total}` : ""}</a>` : ""}
-        ${can("screening.run") ? `<a class="cp-btn" href="/screening">${ic("steth")}${esc(t("nav_screen"))}</a>` : ""}</div></section>
+        ${can("screening.run") ? `<a class="cp-btn" href="#/screening">${ic("steth")}${esc(t("nav_screen"))}</a>` : ""}</div></section>
     ${canAl ? `<h2 class="section-title">${ic("alert")}${esc(t("urgent"))} <span class="badge-n">${al.total}</span></h2>
       ${al.items.length ? `<div class="urgent-grid">${al.items.slice(0, 3).map(alertCard).join("")}</div>` : `<div class="cp-card" style="margin-bottom:1rem;padding:1rem"><span class="cp-risk cp-risk--low"><span aria-hidden="true">✓</span>${esc(t("noUrgent"))}</span></div>`}` : ""}
     ${canEp ? `<div class="stats">${stat("folder", t("st_active"), active, t("st_active_s"), "linear-gradient(135deg,#2f7cf6,#22c1e6)")}
@@ -720,7 +758,7 @@ async function episodePage(id) {
           <div class="actions" style="margin-top:1rem">${canUp ? `<a class="cp-btn cp-btn--secondary" href="#/e/${id}/ecg">${ic("upload")}${esc(t("act_ecg"))}</a>` : ""}
             ${canRisk ? `<a class="cp-btn cp-btn--secondary" href="#/e/${id}/risk">${ic("chart")}${esc(t("act_risk"))}</a>` : ""}
             ${canProto ? `<a class="cp-btn cp-btn--secondary" href="#/e/${id}/protocol">${ic("doc")}${esc(t("act_proto"))}</a>` : ""}
-            ${d.episode.stage === "screening" && can("screening.run") ? `<a class="cp-btn cp-btn--secondary" href="/screening">${ic("steth")}${esc(t("act_screen"))}</a>` : ""}
+            ${d.episode.stage === "screening" && can("screening.run") ? `<a class="cp-btn cp-btn--secondary" href="#/e/${id}/screening">${ic("steth")}${esc(t("act_screen"))}</a>` : ""}
             ${d.episode.stage === "guardian_30d" ? `<button class="cp-btn cp-btn--secondary" type="button" id="gLink">${ic("heart")}${esc(t("act_glink"))}</button>` : ""}</div></section>
       </div>
       <div class="cp-stack">
@@ -1102,6 +1140,117 @@ async function shadowPage(params) {
     const rh = new FormData(f).get("rh");
     try { await api(`/shadow/${cur.run_id}/label`, { method: "POST", json: { actor: actor(), rhythm: rh } }); toast(t("saved")); location.hash = "#/shadow"; route(); }
     catch (err) { $("shErr").textContent = `${t("failed")}: ${err.message}`; }
+  });
+}
+
+
+/* ------------------------------------------------------------------ 10. Skrining (SpO₂ + klinik belgilar + yurak tovushi) */
+async function screeningStart() {
+  const data = can("episode.read") ? await api("/episodes?stage=screening&limit=50") : { items: [] };
+  view.innerHTML = `<div class="pm-in"><div class="pagehead"><div><p class="eyebrow">${esc(t("sc_eyebrow"))}</p><h1>${esc(t("sc_title"))}</h1><p class="sub">${esc(t("sc_sub"))}</p></div></div>
+    <div class="split"><section class="cp-card"><h2 class="cp-card__title">${esc(t("sc_cont"))}</h2>
+        ${data.items.length ? episodeRows(data.items, "/screening") : `<p class="sub">${esc(t("sc_none"))}</p>`}</section>
+      ${can("episode.create") ? `<section class="cp-card"><h2 class="cp-card__title" style="margin-bottom:1rem">${esc(t("sc_new"))}</h2><form id="scNew" class="cp-stack">
+        <div class="cp-field"><label class="cp-field__label" for="scRef">${esc(t("ne_ref"))}</label><input class="cp-input" id="scRef" required maxlength="64" autocomplete="off"><span class="cp-field__hint">${esc(t("ne_refHint"))}</span></div>
+        <div class="cp-field"><label class="cp-field__label" for="scPop">${esc(t("ne_pop"))}</label><select class="cp-select" id="scPop"><option value="pediatric">${esc(t("pop_pediatric"))}</option><option value="adult">${esc(t("pop_adult"))}</option></select></div>
+        <p class="cp-field__error" id="scErr" role="alert"></p><button class="cp-btn" type="submit">${ic("arrow")}${esc(t("sc_start"))}</button></form></section>` : ""}</div></div>`;
+  const f = $("scNew");
+  if (f) f.onsubmit = async (e) => {
+    e.preventDefault(); if (!requireActor()) return;
+    try { const ep = await api("/episodes", { method: "POST", json: { patient_ref: $("scRef").value.trim(), population: $("scPop").value, actor: actor() } }); location.hash = `#/e/${ep.id}/screening`; }
+    catch (err) { $("scErr").textContent = `${t("failed")}: ${err.message}`; }
+  };
+}
+const LOC_POS = { AV: [104, 62], PV: [176, 58], TV: [92, 150], MV: [178, 156] };
+async function audioInfo(file) {
+  try {
+    const Ctx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    const audio = await new Ctx(1, 1, 44100).decodeAudioData(await file.arrayBuffer());
+    const ch = audio.getChannelData(0), N = 48, step = Math.max(1, Math.floor(ch.length / N)), bars = [];
+    for (let i = 0; i < N; i++) { let m = 0; for (let j = i * step; j < Math.min(ch.length, (i + 1) * step); j += 8) m = Math.max(m, Math.abs(ch[j])); bars.push(m); }
+    const peak = Math.max(...bars, 1e-6); return { dur: audio.duration, bars: bars.map((b) => b / peak) };
+  } catch (e) { return null; }
+}
+async function screeningPage(id) {
+  const [d, flags] = await Promise.all([api(`/episodes/${id}/digest`), api(`/screening/red-flags?lang=${lang}`)]);
+  const ped = d.episode.population === "pediatric";
+  if (d.episode.stage !== "screening") {
+    view.innerHTML = `<div class="pagehead"><div><p class="eyebrow"><a href="#/e/${id}">${esc(d.episode.patient_ref)}</a></p><h1>${esc(t("sc_title"))}</h1></div></div>
+      <div class="urgentbox urgentbox--warn">${ic("alert")}<div><b>${esc(t("sc_wrongStage"))}</b></div></div><a class="cp-btn cp-btn--secondary" href="#/e/${id}">${ic("back")}${esc(t("backToEp"))}</a>`;
+    return;
+  }
+  const files = {}, info = {};
+  const num = (idn, min, max, ph) => `<input class="cp-input" id="${idn}" type="number" inputmode="numeric" min="${min}" max="${max}" step="1" ${ph ? `placeholder="${ph}"` : ""}>`;
+  view.innerHTML = `<div class="pm-in"><div class="pagehead"><div><p class="eyebrow"><a href="#/e/${id}">${esc(d.episode.patient_ref)}</a> / ${esc(t("stage_screening"))}</p>
+      <h1>${esc(t("sc_title"))}</h1><p class="sub">${esc(t("sc_sub"))}</p></div><a class="cp-btn cp-btn--secondary" href="#/e/${id}">${ic("back")}${esc(t("backToEp"))}</a></div>
+    <form id="scForm" novalidate><div class="split3">
+      <div class="cp-stack">
+        <section class="cp-card"><h2 class="cp-card__title" style="margin-bottom:.75rem">${esc(t("sc_age"))}</h2>
+          <div style="display:flex;gap:.5rem"><input class="cp-input" id="scAge" type="number" min="0" step="1" required inputmode="numeric" aria-label="${esc(t("sc_age"))}">
+            <select class="cp-select" id="scUnit" style="max-width:8rem" aria-label="unit"><option value="1">${esc(t("u_day"))}</option><option value="30.44">${esc(t("u_month"))}</option><option value="365.25" selected>${esc(t("u_year"))}</option></select></div></section>
+        <section class="cp-card"><h2 class="cp-card__title">${esc(t("sc_spo2"))}</h2><p class="cp-meta">${esc(t("sc_spo2Hint"))}</p>
+          <div class="form-grid">${ped ? `<div class="cp-field"><label class="cp-field__label" for="scRh">${esc(t("sc_rh"))}</label>${num("scRh", 50, 100)}</div>
+            <div class="cp-field"><label class="cp-field__label" for="scFoot">${esc(t("sc_foot"))}</label>${num("scFoot", 50, 100)}</div>
+            <div class="cp-field"><label class="cp-field__label" for="scAtt">${esc(t("sc_attempt"))}</label><select class="cp-select" id="scAtt"><option>1</option><option>2</option></select></div>` : ""}
+            <div class="cp-field"><label class="cp-field__label" for="scRest">${esc(t("sc_rest"))}</label>${num("scRest", 50, 100)}</div></div></section>
+        <section class="cp-card"><h2 class="cp-card__title" style="margin-bottom:.5rem">${esc(t("sc_flags"))}</h2>
+          ${Object.entries(flags).map(([code, f]) => `<label class="check"><input type="checkbox" name="flag" value="${esc(code)}">${esc(f.name)}${f.major ? ` <span class="pill pill--bad">${esc(t("sc_major"))}</span>` : ""}</label>`).join("")}</section>
+      </div>
+      <section class="cp-card"><h2 class="cp-card__title">${esc(t("sc_ausc"))}</h2><p class="cp-meta">${esc(t("sc_auscHint"))}</p>
+        <div class="ausc"><svg class="heartmap" id="scMap" viewBox="0 0 280 230" role="group" aria-label="${esc(t("heartMap"))}"></svg><div id="scRows"></div></div>
+        <div class="cp-field" style="margin-top:1rem"><label class="cp-field__label" for="scDev">${esc(t("sc_device"))}</label><input class="cp-input" id="scDev" maxlength="80"></div>
+        <label class="check" style="margin-top:.5rem"><input type="checkbox" id="scConsent">${esc(t("sc_consent"))}</label>
+        <p class="cp-field__error" id="scErr" role="alert"></p>
+        <button class="cp-btn cp-btn--block" type="submit" id="scGo" style="margin-top:.75rem;min-height:52px">${ic("pulse")}${esc(t("analyze"))}</button></section>
+      <section><h2 class="section-title">${esc(t("sc_result"))}</h2><div id="scOut" aria-live="polite"><div class="cp-empty">${ic("steth")}<span class="cp-meta">${esc(t("sc_auscHint"))}</span></div></div></section>
+    </div></form></div>`;
+  const paint = () => {
+    $("scMap").innerHTML = `<path class="vessel" d="M128 70 C128 30 150 20 168 26"/><path class="vessel" d="M150 74 C156 44 186 36 204 46"/>
+      <path class="body" d="M140 214 C84 182 60 140 66 100 C70 70 96 54 120 64 C130 68 136 74 140 82 C146 72 156 64 170 62 C200 58 222 84 216 118 C210 154 182 186 140 214Z"/>
+      ${Object.entries(LOC_POS).map(([c, [x, y]]) => { const st = !files[c] ? "" : info[c] && info[c].dur < 5 ? "short" : "ok";
+        return `<g class="loc-pt ${st}" data-loc="${c}" role="button" tabindex="0" aria-label="${esc(c)} — ${esc(t("loc_" + c))}"><circle class="pt" cx="${x}" cy="${y}" r="15"/><text x="${x}" y="${y + 4}" text-anchor="middle" class="pt-l">${c}</text></g>`; }).join("")}`;
+    $("scRows").innerHTML = Object.keys(LOC_POS).map((c) => { const f = files[c], i = info[c];
+      return `<div class="lrow2"><div><b>${c} · ${esc(t("loc_" + c))}</b><small>${esc(t("locw_" + c))}</small>
+        ${f ? `<small>${esc(f.name)}${i ? ` · ${i.dur.toFixed(1)} s` : ""} · ${i && i.dur < 5 ? `<span class="chk-no">⚠ ${esc(t("sc_short"))}</span>` : `<span class="chk-ok">✓ ${esc(t("sc_ready"))}</span>`}</small>
+          ${i ? `<svg class="wave" viewBox="0 0 48 10" preserveAspectRatio="none" aria-hidden="true">${i.bars.map((v, k) => `<rect x="${k}" y="${5 - v * 5}" width=".6" height="${Math.max(.5, v * 10)}"/>`).join("")}</svg>` : ""}` : ""}</div>
+        <label class="cp-btn cp-btn--secondary" for="f_${c}" style="min-height:40px">${esc(t("choose"))}</label><input type="file" id="f_${c}" data-loc="${c}" accept=".wav,audio/wav,audio/x-wav" hidden></div>`; }).join("");
+    view.querySelectorAll("input[type=file][data-loc]").forEach((inp) => inp.addEventListener("change", async () => {
+      const c = inp.dataset.loc, f = inp.files[0]; if (!f) return; files[c] = f; info[c] = null; paint(); info[c] = await audioInfo(f); paint(); }));
+    view.querySelectorAll(".loc-pt").forEach((g) => { const open = () => $("f_" + g.dataset.loc).click(); g.onclick = open; g.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } }; });
+  };
+  paint();
+  $("scForm").addEventListener("submit", async (e) => {
+    e.preventDefault(); $("scErr").textContent = "";
+    if (!requireActor()) return;
+    const age = $("scAge").value; if (age === "") { $("scErr").textContent = t("sc_needAge"); return; }
+    const rh = $("scRh") ? $("scRh").value : "", foot = $("scFoot") ? $("scFoot").value : "";
+    if (!!rh !== !!foot) { $("scErr").textContent = t("sc_needPair"); return; }
+    const fd = new FormData();
+    fd.append("actor", actor()); fd.append("lang", lang); fd.append("age_days", String(Math.round(Number(age) * Number($("scUnit").value))));
+    if (rh) { fd.append("right_hand_spo2", rh); fd.append("foot_spo2", foot); fd.append("attempt", $("scAtt").value); }
+    if ($("scRest").value) fd.append("resting_spo2", $("scRest").value);
+    fd.append("red_flags", [...view.querySelectorAll("[name=flag]:checked")].map((c) => c.value).join(","));
+    fd.append("research_consent", $("scConsent").checked ? "true" : "false"); fd.append("device", $("scDev").value.trim());
+    Object.entries(files).forEach(([c, f]) => fd.append("recordings", f, `${c}.wav`));
+    const btn = $("scGo"); btn.disabled = true; btn.classList.add("cp-btn--loading");
+    $("scOut").innerHTML = `<div class="cp-card"><span class="cp-meta">${esc(t("analyzing", { t: hm(new Date().toISOString()) }))}</span></div>`;
+    try {
+      const r = await api(`/episodes/${id}/screening`, { method: "POST", body: fd });
+      const p = (r.plain_i18n && r.plain_i18n[lang]) || r.plain;
+      const cls = p.level === "red" ? "high" : p.level === "yellow" ? "moderate" : p.level === "green" ? "low" : "abstained";
+      const risk = { red: "high", yellow: "moderate", green: "low" }[p.level];
+      const icon = { red: "✕", yellow: "!", green: "✓" };
+      // natija darhol; qizil bo'lsa animatsiyasiz (data-clinical-urgent)
+      $("scOut").innerHTML = `<article class="cp-card cp-result cp-result--${cls}" ${cls === "high" ? "data-clinical-urgent" : ""}>
+          <div class="cp-card__header" style="margin-bottom:.25rem"><span class="cp-meta" style="font-weight:700">${esc(t("sc_result"))}</span>${riskBadge(risk, !risk)}</div>
+          <h3 class="cp-result__headline">${esc(p.headline)}</h3><p class="cp-result__action">${esc(t("whatToDo"))}: <span style="font-weight:500">${esc(p.todo)}</span></p>
+          ${p.attention ? `<p class="cp-meta">${esc(p.attention)}</p>` : ""}${r.warning ? `<p class="cp-meta">${esc(r.warning)}</p>` : ""}
+          <h4 style="margin:1rem 0 .3rem">${esc(t("sc_findings"))}</h4>
+          ${p.items.map((i) => `<div class="disc"><span class="cp-risk cp-risk--${i.level === "red" ? "high" : i.level === "yellow" ? "moderate" : i.level === "green" ? "low" : "unknown"}" style="padding:.1rem .45rem"><span aria-hidden="true">${icon[i.level] || "?"}</span></span><div><b>${esc(i.title)}</b><div class="cp-meta">${esc(i.text)}</div></div></div>`).join("")}
+          <p class="cp-result__disclaimer">${esc(t("aiAssist"))}</p></article>
+        <div class="cp-card" style="margin-top:1rem;padding:1rem"><p style="margin:0">${esc(t("sc_echo"))}</p><a class="cp-btn" style="margin-top:.75rem" href="#/e/${id}">${ic("arrow")}${esc(t("backToEp"))}</a></div>`;
+    } catch (err) { $("scOut").innerHTML = ""; $("scErr").textContent = `${t("failed")}: ${err.message}`; }
+    btn.disabled = false; btn.classList.remove("cp-btn--loading");
   });
 }
 

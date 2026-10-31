@@ -93,6 +93,14 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
                   docs_url=None if auth else "/docs", redoc_url=None if auth else "/redoc",
                   openapi_url=None if auth else "/openapi.json")
 
+    @app.middleware("http")
+    async def no_stale_pages(request, call_next):
+        # HTML sahifalar keshlanmasin: yangilangandan keyin shifokor eski interfeysni ko'rmasin
+        response = await call_next(request)
+        if response.headers.get("content-type", "").startswith("text/html"):
+            response.headers["Cache-Control"] = "no-cache"
+        return response
+
     def _get(eid: str) -> Episode:
         ep = store.get(eid)
         if ep is None:

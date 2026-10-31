@@ -167,3 +167,14 @@ html, body { background: linear-gradient(180deg, var(--pm-bg-1), var(--pm-bg-2))
 .rh-grid { display: grid; gap: .5rem; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); margin: 1rem 0; }
 .cp-guardian__choice.rh { min-height: 52px; font-size: var(--cp-text-sm); font-weight: 650; margin: 0; }
 .sh-prog { display: grid; gap: .35rem; margin-bottom: .9rem; } .sh-prog > div:first-child { display: flex; justify-content: space-between; font-size: var(--cp-text-sm); }
+
+/* ---- skrining: yurak sxemasi bosiladigan nuqtalar */
+.ausc { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); margin-top: .75rem; }
+.ausc .heartmap { max-width: 240px; }
+.loc-pt { cursor: pointer; } .loc-pt circle.pt { fill: var(--cp-border-control); transition: transform .2s; transform-box: fill-box; transform-origin: center; }
+.loc-pt:hover circle.pt, .loc-pt:focus circle.pt { transform: scale(1.12); } .loc-pt:focus { outline: none; } .loc-pt:focus-visible circle.pt { stroke: var(--cp-focus); stroke-width: 4; }
+.loc-pt.ok circle.pt { fill: var(--cp-success); } .loc-pt.short circle.pt { fill: var(--cp-warning); }
+.heartmap text.pt-l { fill: #fff; font-size: 11px; font-weight: 800; pointer-events: none; }
+.lrow2 { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .6rem; align-items: center; padding: .7rem 0; border-bottom: 1px solid var(--cp-border); }
+.lrow2:last-child { border-bottom: 0; } .lrow2 small { display: block; color: var(--cp-ink-muted); font-size: var(--cp-text-xs); }
+.wave { width: 140px; height: 22px; fill: var(--cp-brand); display: block; margin-top: .3rem; }
