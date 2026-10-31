@@ -13,9 +13,10 @@ T: dict[str, dict[str, str]] = {
     "ecg.afib.h": {"uz": "Bo'lmachalar fibrillyatsiyasi (aritmiya) ehtimoli yuqori",
                    "ru": "Высока вероятность фибрилляции предсердий (аритмии)",
                    "en": "Atrial fibrillation (irregular rhythm) is likely"},
-    "ecg.afib.t": {"uz": "EKGni shifokor ko'rib tasdiqlasin va bemor bilan bugun bog'laning.",
-                   "ru": "Врач должен просмотреть ЭКГ и подтвердить; свяжитесь с пациентом сегодня.",
-                   "en": "A doctor should review and confirm the ECG; contact the patient today."},
+    # Chapman tashqi tekshiruvi: yolg'on musbatlarning ko'pi SVT va bo'lmachalar titrashi (docs/experiments/ecg_chapman_external.md)
+    "ecg.afib.t": {"uz": "EKGni shifokor ko'rib tasdiqlasin va bemor bilan bugun bog'laning. Bo'lmachalar titrashi yoki boshqa tez ritm (SVT) ham bo'lishi mumkin.",
+                   "ru": "Врач должен просмотреть ЭКГ и подтвердить; свяжитесь с пациентом сегодня. Возможны также трепетание предсердий или другая тахикардия (СВТ).",
+                   "en": "A doctor should review and confirm the ECG; contact the patient today. It may also be atrial flutter or another fast rhythm (SVT)."},
     "ecg.other.h": {"uz": "EKGda o'zgarishlar bor", "ru": "На ЭКГ есть изменения", "en": "The ECG shows changes"},
     "ecg.other.t": {"uz": "Aritmiya topilmadi, lekin shifokor EKGni ko'rib chiqsin: {found}.",
                     "ru": "Аритмия не найдена, но врачу стоит посмотреть ЭКГ: {found}.",

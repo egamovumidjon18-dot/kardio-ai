@@ -1,0 +1,73 @@
+{
+ "n": 10646,
+ "n_afib": 1780,
+ "n_with_probability": 10246,
+ "auroc": 0.9499,
+ "auroc_ci95": [
+  0.9458,
+  0.9535
+ ],
+ "abstain_rate": 0.0376,
+ "quality_reject_rate": 0.0127,
+ "sensitivity": 0.996,
+ "specificity": 0.8444,
+ "ppv": 0.5678,
+ "npv": 0.999,
+ "tp": 1738,
+ "fn": 7,
+ "tn": 7178,
+ "fp": 1323,
+ "thresholds_from_ptbxl": {
+  "afib_low": 0.247087,
+  "afib_high": 0.247087
+ },
+ "flutter_called_afib": "414/436",
+ "fp_by_rhythm": {
+  "AF": 414,
+  "AT": 89,
+  "AVNRT": 16,
+  "AVRT": 8,
+  "SA": 7,
+  "SAAWR": 0,
+  "SB": 40,
+  "SR": 14,
+  "ST": 171,
+  "SVT": 564
+ },
+ "auroc_by_sex": {
+  "MALE": 0.9595,
+  "FEMALE": 0.9377
+ },
+ "auroc_by_age": {
+  "18-50": {
+   "n": 2484,
+   "afib": 58,
+   "auroc": 0.9601
+  },
+  "50-70": {
+   "n": 4620,
+   "afib": 527,
+   "auroc": 0.9638
+  },
+  "70-120": {
+   "n": 3142,
+   "afib": 1160,
+   "auroc": 0.9161
+  }
+ },
+ "criteria": {
+  "auroc": 0.9,
+  "auroc_ci_low": 0.88,
+  "sensitivity": 0.85,
+  "specificity": 0.85,
+  "max_abstain": 0.2
+ },
+ "checks": {
+  "auroc": true,
+  "auroc_ci_low": true,
+  "sensitivity": true,
+  "specificity": false,
+  "abstain": true
+ },
+ "passed": false
+}

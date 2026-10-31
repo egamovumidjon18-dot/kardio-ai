@@ -229,6 +229,8 @@ Boshqa toifalar AUROC: NORM 0.953, MI 0.934, STTC 0.934, CD 0.920, HYP 0.842 (CI
 - MI/STTC/CD/HYP chegaralari Youden bo'yicha oddiy; PTB-XL'da ~yarim yozuv patologik, shuning uchun MODERATE ko'p chiqadi.
 - Faqat kattalar, bitta ma'lumot manbai (Germaniya, 1989–96), tashqi validatsiya yo'q.
 
+**Tashqi tekshiruv (Chapman–Shaoxing, Xitoy, 10 646 EKG, qayta o'qitilmasdan):** AFIB AUROC 0.950 (0.946–0.954), sezgirlik 0.996, o'ziga xoslik **0.844** — oldindan qo'yilgan 0.85 mezonidan sal past, **o'tmadi**. Yolg'on musbatlarning ko'pi SVT va bo'lmachalar titrashi; shuning uchun AFIB matnida «titrash yoki SVT ham bo'lishi mumkin» deyiladi. Batafsil: [docs/experiments/ecg_chapman_external.md](docs/experiments/ecg_chapman_external.md).
+
 ## 5-modul: koronar angiografiya (`angio/`) — ARCADE, CC-BY 4.0
 
 U-Net (~1.9M parametr, 512 px, AMP) stenoz **nomzodlarini** segmentatsiya qiladi. Natija **"SYNTAX-ga yordamchi"** deb nomlanadi — **SYNTAX kalkulyatori emas** (segment nomi, okklyuziya, bifurkatsiya, kalsifikatsiya baholanmaydi).
