@@ -1,0 +1,96 @@
+{
+  "name": "ecg_afib_multi2",
+  "version": "2026.10.31",
+  "task": "12 tarmoqli EKG (10 s, 100 Hz) → ritm: SR / SBRAD / STACH / AFIB / AFL / SVT (softmax)",
+  "dataset": "PTB-XL + Chapman-Shaoxing + CPSC 2018 + Georgia (PhysioNet Challenge 2021)",
+  "dataset_license": "CC-BY-4.0 / CC0",
+  "weights": "ecg_afib_multi2.onnx",
+  "passed": false,
+  "gates": {
+    "auroc": 0.95,
+    "auroc_ci_low": 0.93,
+    "sensitivity": 0.9,
+    "specificity": 0.92,
+    "max_fast_called_afib": 0.15,
+    "min_fast_n": 30
+  },
+  "checks": {
+    "auroc": true,
+    "auroc_ci_low": true,
+    "sensitivity": true,
+    "specificity": true,
+    "not_worse_than_current": false,
+    "fast_called_afib": false
+  },
+  "thresholds": {
+    "classes": [
+      "SR",
+      "SBRAD",
+      "STACH",
+      "AFIB",
+      "AFL",
+      "SVT"
+    ],
+    "afib_threshold": 0.04665250703692436,
+    "fs": 100,
+    "n_samples": 1000,
+    "leads": [
+      "I",
+      "II",
+      "III",
+      "AVR",
+      "AVL",
+      "AVF",
+      "V1",
+      "V2",
+      "V3",
+      "V4",
+      "V5",
+      "V6"
+    ]
+  },
+  "metrics": {
+    "val": {
+      "mean_auroc": 0.9845,
+      "afib_auroc": 0.9873,
+      "afib_auroc_by_source": {
+        "ptbxl": 0.9788,
+        "chapman": 0.9949,
+        "cpsc2018": 0.9916,
+        "georgia": 0.9761
+      }
+    },
+    "external_cpsc_extra": {
+      "n": 3453,
+      "n_afib": 153,
+      "n_fast": 367,
+      "rhythm_label_counts": {
+        "SR": 14,
+        "SBRAD": 44,
+        "STACH": 299,
+        "AFIB": 153,
+        "AFL": 54,
+        "SVT": 14
+      },
+      "auroc": 0.9726,
+      "auroc_ci95": [
+        0.9564,
+        0.9842
+      ],
+      "afib_threshold": 0.04665250703692436,
+      "sensitivity": 0.9477,
+      "specificity": 0.9255,
+      "fast_called_afib": 0.158,
+      "current_model_auroc": 0.9732,
+      "current_model_sensitivity": 0.9412,
+      "current_model_specificity": 0.9121
+    }
+  },
+  "training": {
+    "seed": 42,
+    "epochs": 30,
+    "n_train": 34211,
+    "n_val": 4830,
+    "split": "PTB-XL fold 10 val; Chapman/CPSC 2018/Georgia 85/15; CPSC-Extra — faqat tashqi"
+  }
+}
