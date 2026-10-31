@@ -4,8 +4,10 @@ Haqiqiy o'qitish bu yerda emas (u sekin): sikl tartibi soxta dvigatel bilan, dar
 """
 import json
 import random
+import uuid
 from collections import Counter
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -202,8 +204,12 @@ def clinic(tmp_path_factory):
     store, rec = SqliteEpisodeStore(str(root / "c.db")), root / "rec"
     model = PCGModel(CARD, lambda x: (np.full(len(x), 0.1, np.float32), np.zeros(len(x), np.float32)))
     client = TestClient(create_app(store, model, recordings_dir=rec))
-    for i in range(120):
-        eid = client.post("/episodes", json={"patient_ref": f"K-{i}"}).json()["id"]
+    # epizod ID'si (uuid4) test/val/train bo'linishini belgilaydi. Tasodifiy ID bilan ~4% hollarda test guruhi juda kichik
+    # chiqib, darvozalar yiqilardi (48 urug'dan 2 tasi). Shuning uchun ID'lar doimiy urug'dan olinadi.
+    rnd = random.Random(0)
+    with patch("core.episode.uuid.uuid4", lambda: uuid.UUID(int=rnd.getrandbits(128), version=4)):
+        eids = [client.post("/episodes", json={"patient_ref": f"K-{i}"}).json()["id"] for i in range(120)]
+    for i, eid in enumerate(eids):
         client.post(f"/episodes/{eid}/screening", data={"actor": "dr", "age_days": "900", "research_consent": "true", "device": "S1"},
                     files=[("recordings", ("MV.wav", make_wav(seed=i), "audio/wav"))])
         client.post(f"/episodes/{eid}/echo-diagnosis", json={"actor": "dr", "diagnosis": "VSD" if i % 2 else "NORMAL"})
