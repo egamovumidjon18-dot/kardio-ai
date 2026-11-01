@@ -182,3 +182,10 @@ html, body { background: linear-gradient(180deg, var(--pm-bg-1), var(--pm-bg-2))
 /* ---- yetkazish holati */
 .dl { display: inline-flex; gap: .35rem; align-items: center; font-size: var(--cp-text-xs); font-weight: 700; color: var(--cp-ink-muted); }
 .dl--ok { color: var(--cp-success); } .dl--bad { color: var(--cp-danger); }
+
+/* ---- yordam */
+.help-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+.help-h { display: flex; gap: .75rem; align-items: center; margin-bottom: .75rem; }
+.help-steps, .help-list { margin: .25rem 0 0; padding-left: 1.3rem; display: grid; gap: .45rem; }
+.help-steps li::marker { color: var(--cp-brand); font-weight: 800; }
+.help-list { list-style: none; padding-left: 0; }

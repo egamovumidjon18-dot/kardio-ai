@@ -86,6 +86,7 @@ const I = {
     ev_auth_login: "Tizimga kirdi", ev_auth_login_failed: "Kirish muvaffaqiyatsiz", ev_auth_logout: "Tizimdan chiqdi", ev_auth_change_password: "Parolini o'zgartirdi", ev_auth_change_password_failed: "Parol o'zgartirilmadi", ev_user_create: "Foydalanuvchi qo'shildi", ev_user_disable: "Foydalanuvchi o'chirildi", ev_user_enable: "Foydalanuvchi yoqildi", ev_user_reset_password: "Parol yangilandi", ev_user_set_role: "Rol o'zgartirildi", ev_model_promote: "Model tasdiqlandi", ev_model_rollback: "Model qaytarildi",
     conc_not_comparable: "Solishtirib bo'lmaydi (o'lchovlar turli vaqtda)",
     bk_title: "Zaxira nusxalar", bk_sub: "Bemorlar bazasi har {h} soatda avtomatik saqlanadi; oxirgi {k} ta nusxa turadi.", bk_now: "Hozir nusxa olish", bk_none: "Hali nusxa yo'q.", bk_where: "Joyi", bk_tip: "Muhim: nusxalarni vaqti-vaqti bilan fleshka yoki boshqa diskka ham ko'chiring.", bk_off: "Avtomatik zaxiralash o'chiq.",
+    nav_help: "Yordam",
     skip: "Asosiy qismga o'tish", research: "Tadqiqot rejimi", search: "Bemor kodi bo'yicha qidirish", newEpisode: "Yangi bemor",
     nav_dash: "Bosh panel", nav_eps: "Bemorlar", nav_screen: "Skrining", nav_alerts: "Ogohlantirishlar", nav_models: "Modellar", nav_shadow: "Model sinovi",
     welcome: "Xush kelibsiz", signInTitle: "Tizimga kirish", tagline: "Kardiologiya va kardioxirurgiya uchun AI yordamchi",
@@ -202,6 +203,7 @@ const I = {
     ev_auth_login: "Вход в систему", ev_auth_login_failed: "Неудачный вход", ev_auth_logout: "Выход", ev_auth_change_password: "Смена пароля", ev_auth_change_password_failed: "Пароль не изменён", ev_user_create: "Пользователь добавлен", ev_user_disable: "Пользователь отключён", ev_user_enable: "Пользователь включён", ev_user_reset_password: "Пароль сброшен", ev_user_set_role: "Роль изменена", ev_model_promote: "Модель утверждена", ev_model_rollback: "Откат модели",
     conc_not_comparable: "Несопоставимо (измерения в разное время)",
     bk_title: "Резервные копии", bk_sub: "База пациентов сохраняется автоматически каждые {h} ч; хранятся последние {k} копий.", bk_now: "Сделать копию сейчас", bk_none: "Копий пока нет.", bk_where: "Папка", bk_tip: "Важно: периодически копируйте их на флешку или другой диск.", bk_off: "Автоматическое копирование выключено.",
+    nav_help: "Справка",
     skip: "Перейти к содержимому", research: "Исследовательский режим", search: "Поиск по коду пациента", newEpisode: "Новый пациент",
     nav_dash: "Панель", nav_eps: "Пациенты", nav_screen: "Скрининг", nav_alerts: "Оповещения", nav_models: "Модели", nav_shadow: "Испытание модели",
     welcome: "Добро пожаловать", signInTitle: "Вход в систему", tagline: "ИИ-помощник для кардиологии и кардиохирургии",
@@ -318,6 +320,7 @@ const I = {
     ev_auth_login: "Signed in", ev_auth_login_failed: "Failed sign-in", ev_auth_logout: "Signed out", ev_auth_change_password: "Changed password", ev_auth_change_password_failed: "Password not changed", ev_user_create: "User added", ev_user_disable: "User disabled", ev_user_enable: "User enabled", ev_user_reset_password: "Password reset", ev_user_set_role: "Role changed", ev_model_promote: "Model approved", ev_model_rollback: "Model rolled back",
     conc_not_comparable: "Not comparable (measured at different times)",
     bk_title: "Backups", bk_sub: "The patient database is saved automatically every {h} h; the last {k} copies are kept.", bk_now: "Back up now", bk_none: "No backups yet.", bk_where: "Folder", bk_tip: "Important: copy them to a USB drive or another disk from time to time.", bk_off: "Automatic backups are off.",
+    nav_help: "Help",
     skip: "Skip to content", research: "Research mode", search: "Search by patient code", newEpisode: "New patient",
     nav_dash: "Dashboard", nav_eps: "Patients", nav_screen: "Screening", nav_alerts: "Alerts", nav_models: "Models", nav_shadow: "Model trial",
     welcome: "Welcome", signInTitle: "Sign in", tagline: "AI assistant for cardiology and cardiac surgery",
@@ -499,6 +502,7 @@ function navItems() {
     { href: "#/models", key: "nav_models", icon: "layers", on: (h) => h.startsWith("#/models"), perm: "learning.read" },
     { href: "#/shadow", key: "nav_shadow", icon: "pulse", on: (h) => h.startsWith("#/shadow"), perm: "shadow.label", alt: "shadow.report" },
     { href: "#/users", key: "nav_users", icon: "user", on: (h) => h.startsWith("#/users"), perm: "users.manage" },
+    { href: "#/help", key: "nav_help", icon: "doc", on: (h) => h.startsWith("#/help") },
   ].filter((n) => (!n.perm || can(n.perm) || (n.alt && can(n.alt))));
 }
 function paintNav() {
@@ -587,6 +591,7 @@ async function route() {
     else if (parts[0] === "models") await modelsPage(params);
     else if (parts[0] === "screening") await screeningStart();
     else if (parts[0] === "users") await usersPage();
+    else if (parts[0] === "help") helpPage();
     else if (parts[0] === "shadow") await shadowPage(params);
     else if (parts[0] === "e" && parts[1]) {
       const sub = parts[2];
@@ -1416,6 +1421,18 @@ async function usersPage() {
       await api(`/users/${encodeURIComponent(b.dataset.role)}/role`, { method: "POST", json: { role, episode_id: role === "patient" ? await patientId(fd.get("c").trim()) : null } });
       toast(t("saved")); route();
     })));
+}
+
+
+/* ------------------------------------------------------------------ 12. Yordam (qo'llanma) */
+function helpPage() {
+  const H = (window.CP_HELP || {})[lang] || (window.CP_HELP || {}).uz;
+  if (!H) { view.innerHTML = ""; return; }
+  view.innerHTML = `<div class="pm-in"><div class="pagehead"><div><p class="eyebrow">CardioPath</p><h1>${esc(H.title)}</h1><p class="sub">${esc(H.sub)}</p></div></div>
+    <div class="help-grid">${H.sections.map((x, i) => `<section class="cp-card lift"><div class="help-h"><span class="mcard__icon">${ic(x.icon)}</span><h2 class="cp-card__title">${i + 1}. ${esc(x.h)}</h2></div>
+      ${(x.p || []).map((t_) => `<p>${esc(t_)}</p>`).join("")}
+      ${x.steps ? `<ol class="help-steps">${x.steps.map((t_) => `<li>${esc(t_)}</li>`).join("")}</ol>` : ""}
+      ${x.list ? `<ul class="help-list">${x.list.map((t_) => `<li>${esc(t_)}</li>`).join("")}</ul>` : ""}</section>`).join("")}</div></div>`;
 }
 
 /* ------------------------------------------------------------------ ishga tushirish */
