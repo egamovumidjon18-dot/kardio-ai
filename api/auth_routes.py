@@ -41,7 +41,7 @@ ROUTE_PERMS: dict[tuple[str, str], str] = {
     ("GET", "/users"): "users.manage", ("POST", "/users"): "users.manage",
     ("POST", "/users/{username}/disable"): "users.manage", ("POST", "/users/{username}/enable"): "users.manage",
     ("POST", "/users/{username}/role"): "users.manage", ("POST", "/users/{username}/password"): "users.manage",
-    ("GET", "/audit/security"): "users.manage",
+    ("GET", "/audit/security"): "users.manage", ("GET", "/backups"): "users.manage", ("POST", "/backups"): "users.manage",
     ("GET", "/shadow/pending"): "shadow.label", ("POST", "/shadow/{run_id}/label"): "shadow.label",
     ("GET", "/shadow/report"): "shadow.report",
 }

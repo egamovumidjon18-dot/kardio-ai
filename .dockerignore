@@ -10,3 +10,4 @@ models/
 weights/
 .env
 *.log
+backups/

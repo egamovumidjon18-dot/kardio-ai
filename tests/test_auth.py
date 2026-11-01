@@ -36,7 +36,7 @@ def env(tmp_path):
     auth.create_user("admin1", PW, "admin", by="test")
     model = PCGModel(CARD, lambda x: (np.full(len(x), 0.9, np.float32), np.full(len(x), 0.1, np.float32)))
     client = TestClient(create_app(store, model, auth=auth, recordings_dir=tmp_path / "rec", models_dir=tmp_path / "models",
-                                   shadow_store=ShadowStore(db)))
+                                   shadow_store=ShadowStore(db), backup_db=db, backup_dir=tmp_path / "bk", backup_every_h=0))
     return client, auth, store, clock, db
 
 

@@ -85,6 +85,7 @@ const I = {
     rd_surgeon: "+ ogohlantirishni qabul qilish", rd_icu: "bosqich, xavf, fayl yuklash", rd_patient: "faqat o'z uy kuzatuvi",
     ev_auth_login: "Tizimga kirdi", ev_auth_login_failed: "Kirish muvaffaqiyatsiz", ev_auth_logout: "Tizimdan chiqdi", ev_auth_change_password: "Parolini o'zgartirdi", ev_auth_change_password_failed: "Parol o'zgartirilmadi", ev_user_create: "Foydalanuvchi qo'shildi", ev_user_disable: "Foydalanuvchi o'chirildi", ev_user_enable: "Foydalanuvchi yoqildi", ev_user_reset_password: "Parol yangilandi", ev_user_set_role: "Rol o'zgartirildi", ev_model_promote: "Model tasdiqlandi", ev_model_rollback: "Model qaytarildi",
     conc_not_comparable: "Solishtirib bo'lmaydi (o'lchovlar turli vaqtda)",
+    bk_title: "Zaxira nusxalar", bk_sub: "Bemorlar bazasi har {h} soatda avtomatik saqlanadi; oxirgi {k} ta nusxa turadi.", bk_now: "Hozir nusxa olish", bk_none: "Hali nusxa yo'q.", bk_where: "Joyi", bk_tip: "Muhim: nusxalarni vaqti-vaqti bilan fleshka yoki boshqa diskka ham ko'chiring.", bk_off: "Avtomatik zaxiralash o'chiq.",
     skip: "Asosiy qismga o'tish", research: "Tadqiqot rejimi", search: "Bemor kodi bo'yicha qidirish", newEpisode: "Yangi bemor",
     nav_dash: "Bosh panel", nav_eps: "Bemorlar", nav_screen: "Skrining", nav_alerts: "Ogohlantirishlar", nav_models: "Modellar", nav_shadow: "Model sinovi",
     welcome: "Xush kelibsiz", signInTitle: "Tizimga kirish", tagline: "Kardiologiya va kardioxirurgiya uchun AI yordamchi",
@@ -200,6 +201,7 @@ const I = {
     rd_surgeon: "+ приём оповещений", rd_icu: "этапы, риск, загрузка файлов", rd_patient: "только своё домашнее наблюдение",
     ev_auth_login: "Вход в систему", ev_auth_login_failed: "Неудачный вход", ev_auth_logout: "Выход", ev_auth_change_password: "Смена пароля", ev_auth_change_password_failed: "Пароль не изменён", ev_user_create: "Пользователь добавлен", ev_user_disable: "Пользователь отключён", ev_user_enable: "Пользователь включён", ev_user_reset_password: "Пароль сброшен", ev_user_set_role: "Роль изменена", ev_model_promote: "Модель утверждена", ev_model_rollback: "Откат модели",
     conc_not_comparable: "Несопоставимо (измерения в разное время)",
+    bk_title: "Резервные копии", bk_sub: "База пациентов сохраняется автоматически каждые {h} ч; хранятся последние {k} копий.", bk_now: "Сделать копию сейчас", bk_none: "Копий пока нет.", bk_where: "Папка", bk_tip: "Важно: периодически копируйте их на флешку или другой диск.", bk_off: "Автоматическое копирование выключено.",
     skip: "Перейти к содержимому", research: "Исследовательский режим", search: "Поиск по коду пациента", newEpisode: "Новый пациент",
     nav_dash: "Панель", nav_eps: "Пациенты", nav_screen: "Скрининг", nav_alerts: "Оповещения", nav_models: "Модели", nav_shadow: "Испытание модели",
     welcome: "Добро пожаловать", signInTitle: "Вход в систему", tagline: "ИИ-помощник для кардиологии и кардиохирургии",
@@ -315,6 +317,7 @@ const I = {
     rd_surgeon: "+ acknowledge alerts", rd_icu: "stages, risk, uploads", rd_patient: "own home follow-up only",
     ev_auth_login: "Signed in", ev_auth_login_failed: "Failed sign-in", ev_auth_logout: "Signed out", ev_auth_change_password: "Changed password", ev_auth_change_password_failed: "Password not changed", ev_user_create: "User added", ev_user_disable: "User disabled", ev_user_enable: "User enabled", ev_user_reset_password: "Password reset", ev_user_set_role: "Role changed", ev_model_promote: "Model approved", ev_model_rollback: "Model rolled back",
     conc_not_comparable: "Not comparable (measured at different times)",
+    bk_title: "Backups", bk_sub: "The patient database is saved automatically every {h} h; the last {k} copies are kept.", bk_now: "Back up now", bk_none: "No backups yet.", bk_where: "Folder", bk_tip: "Important: copy them to a USB drive or another disk from time to time.", bk_off: "Automatic backups are off.",
     skip: "Skip to content", research: "Research mode", search: "Search by patient code", newEpisode: "New patient",
     nav_dash: "Dashboard", nav_eps: "Patients", nav_screen: "Screening", nav_alerts: "Alerts", nav_models: "Models", nav_shadow: "Model trial",
     welcome: "Welcome", signInTitle: "Sign in", tagline: "AI assistant for cardiology and cardiac surgery",
@@ -1321,12 +1324,27 @@ async function screeningPage(id) {
 
 /* ------------------------------------------------------------------ 11. Foydalanuvchilar (administrator) */
 const ROLE_LIST = ["clinician", "cardiologist", "surgeon", "icu", "admin", "patient"];
+
+async function backupCard() {
+  let b; try { b = await api("/backups"); } catch (e) { return ""; }
+  const size = (n) => n > 1e6 ? (n / 1e6).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1e3)) + " KB";
+  return `<section class="cp-card" style="margin-top:1rem"><div class="cp-card__header"><div><h2 class="cp-card__title">${esc(t("bk_title"))}</h2>
+      <p class="sub">${esc(b.every_h > 0 ? t("bk_sub", { h: b.every_h, k: b.keep }) : t("bk_off"))}</p></div>
+      <button class="cp-btn" type="button" id="bkNow">${ic("shield")}${esc(t("bk_now"))}</button></div>
+    ${b.items.length ? `<ol class="timeline">${b.items.slice(0, 8).map((x) => `<li><div><b>${esc(x.created_at.replace("T", " "))}</b><small>${esc(x.name)} · ${size(x.size_bytes)}</small></div></li>`).join("")}</ol>` : `<p class="sub">${esc(t("bk_none"))}</p>`}
+    <p class="cp-meta" style="margin-top:1rem">${esc(t("bk_where"))}: <code>${esc(b.dir)}</code></p><div class="cp-doctor-notice">${esc(t("bk_tip"))}</div></section>`;
+}
+function bindBackup() {
+  const b = $("bkNow"); if (!b) return;
+  b.onclick = async () => { b.disabled = true; try { await api("/backups", { method: "POST" }); toast(t("saved")); route(); } catch (e) { toast(`${t("failed")}: ${e.message}`, "error"); b.disabled = false; } };
+}
 async function usersPage() {
   if (!authOn) {
     view.innerHTML = `<div class="pm-in"><div class="pagehead"><div><p class="eyebrow">CardioPath</p><h1>${esc(t("us_title"))}</h1><p class="sub">${esc(t("us_sub"))}</p></div></div>
       <section class="cp-card"><div class="urgentbox urgentbox--warn">${ic("shield")}<div><b>${esc(t("us_authOff"))}</b><p>${esc(t("us_authSteps"))}</p></div></div>
       <h2 class="cp-card__title" style="margin:1rem 0 .5rem">${esc(t("us_role"))}</h2>
-      ${ROLE_LIST.map((r) => `<div class="row"><b>${esc(t("role_" + r))}</b><span class="cp-meta">${esc(t("rd_" + r))}</span></div>`).join("")}</section></div>`;
+      ${ROLE_LIST.map((r) => `<div class="row"><b>${esc(t("role_" + r))}</b><span class="cp-meta">${esc(t("rd_" + r))}</span></div>`).join("")}</section>${await backupCard()}</div>`;
+    bindBackup();
     return;
   }
   const [users, log] = await Promise.all([api("/users"), api("/audit/security?limit=40")]);
@@ -1348,7 +1366,8 @@ async function usersPage() {
       <ol class="timeline" style="margin-top:1rem">${log.map((e) => { const key = "ev_" + e.action.replace(/\./g, "_"), d = e.detail || {};
         const extra = [d.username, d.role ? t("role_" + d.role) : null, d.version].filter(Boolean).join(" · ");
         return `<li><div><b>${esc(I[lang][key] ? t(key) : e.action)}</b><small>${esc(e.actor)} · ${esc(ago(e.at))}${extra ? " · " + esc(extra) : ""}</small></div>
-          ${/failed/.test(e.action) ? `<span class="src" style="background:var(--cp-danger-bg);color:var(--cp-danger)">!</span>` : ""}</li>`; }).join("")}</ol></section></div>`;
+          ${/failed/.test(e.action) ? `<span class="src" style="background:var(--cp-danger-bg);color:var(--cp-danger)">!</span>` : ""}</li>`; }).join("")}</ol></section>${await backupCard()}</div>`;
+  bindBackup();
   const roleOpts = (cur) => ROLE_LIST.map((r) => `<option value="${r}" ${r === cur ? "selected" : ""}>${esc(t("role_" + r))} — ${esc(t("rd_" + r))}</option>`).join("");
   const patientId = async (code) => {
     if (!code) return null;

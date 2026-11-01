@@ -7,7 +7,8 @@ Muhit: CARDIOPATH_DB (sqlite fayl), CARDIOPATH_WEIGHTS (PCG og'irliklari papkasi
        CARDIOPATH_RECORDINGS (rozilik bilan saqlanadigan PCG yozuvlari papkasi),
        CARDIOPATH_ECG_WEIGHTS, CARDIOPATH_ANGIO_WEIGHTS, CARDIOPATH_EF_WEIGHTS (NeuroSon heart_echonet.onnx),
        CARDIOPATH_SHADOW (vergul bilan shadow model papkalari; bo'sh qiymat — o'chiq),
-       CARDIOPATH_LEARNING_EVERY_H + CARDIOPATH_CIRCOR_DIR (o'z-o'zini o'rgatish jadvali; nomzod faqat tasdiq bilan)
+       CARDIOPATH_LEARNING_EVERY_H + CARDIOPATH_CIRCOR_DIR (o'z-o'zini o'rgatish jadvali; nomzod faqat tasdiq bilan),
+       CARDIOPATH_BACKUP_DIR / _EVERY_H (24) / _KEEP (14) — bazaning avtomatik zaxira nusxalari (0 — o'chiq)
 """
 from __future__ import annotations
 
@@ -87,7 +88,8 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
                auth: Optional[AuthService] = None, low_ef_model: Optional[LowEFFromECG] = None,
                shd_model: Optional[StructuralFromECG] = None, shadow_models: Optional[list[ShadowRhythmModel]] = None,
                shadow_store: Optional[ShadowStore] = None, delivery_retry_s: Optional[float] = None,
-               learning_runner=None, learning_every_h: float = 0) -> FastAPI:
+               learning_runner=None, learning_every_h: float = 0,
+               backup_db: Optional[str] = None, backup_dir: Optional[Path] = None, backup_every_h: float = 24, backup_keep: int = 14) -> FastAPI:
     # Kirish yoqilgan bo'lsa: har bir so'rov huquq jadvali bo'yicha tekshiriladi; API hujjatlari (/docs) ochiq qolmaydi.
     app = FastAPI(title="CardioPath AI", version="0.1.0",
                   description="Kardiologiya va kardioxirurgiya yagona AI-CDSS platformasi. " + DISCLAIMER,
@@ -185,6 +187,43 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
                         logging.getLogger("cardiopath.alerts").warning("qayta yuborish xatosi: %s", exc)
                     await asyncio.sleep(delivery_retry_s)
             app.state.delivery_task = asyncio.create_task(loop())
+
+    if backup_db and backup_dir:
+        from core import backup as backup_mod
+
+        def _backup_due() -> bool:
+            items = backup_mod.list_backups(backup_dir)
+            if not items:
+                return True
+            import time as _t
+            return _t.time() - Path(items[0]["path"]).stat().st_mtime >= backup_every_h * 3600
+
+        @app.get("/backups")
+        def list_backups() -> dict:
+            return {"dir": str(backup_dir), "every_h": backup_every_h, "keep": backup_keep,
+                    "items": [{k: v for k, v in b.items() if k != "path"} for b in backup_mod.list_backups(backup_dir)]}
+
+        @app.post("/backups", status_code=201)
+        def backup_now() -> dict:
+            path = backup_mod.create_backup(backup_db, backup_dir, backup_keep)
+            store.log_event(effective_actor("admin"), "backup.create", {"file": path.name})
+            return {"name": path.name, "size_bytes": path.stat().st_size}
+
+        if backup_every_h > 0:
+            import asyncio
+
+            @app.on_event("startup")
+            async def _backup_loop() -> None:
+                async def loop() -> None:
+                    while True:
+                        try:
+                            if _backup_due():
+                                await asyncio.to_thread(backup_mod.create_backup, backup_db, backup_dir, backup_keep)
+                        except Exception as exc:      # noqa: BLE001 — zaxira xatosi ishni to'xtatmasin, lekin yozilsin
+                            import logging
+                            logging.getLogger("cardiopath.backup").error("zaxira nusxa olinmadi: %s", exc)
+                        await asyncio.sleep(3600)
+                app.state.backup_task = asyncio.create_task(loop())
 
     if learning_runner is not None and learning_every_h > 0 and models_dir is not None:
         import asyncio
@@ -418,4 +457,7 @@ def default_app() -> FastAPI:
                       angio_model=AngioModel.from_dir(os.environ.get("CARDIOPATH_ANGIO_WEIGHTS", "weights/angio")),
                       ef_model=_load_ef(), auth=auth, low_ef_model=_load_low_ef(), shd_model=_load_shd(),
                       shadow_models=_load_shadow(), shadow_store=ShadowStore(db_path), delivery_retry_s=60,
-                      learning_runner=runner, learning_every_h=every_h)
+                      learning_runner=runner, learning_every_h=every_h,
+                      backup_db=db_path, backup_dir=Path(os.environ.get("CARDIOPATH_BACKUP_DIR") or Path(db_path).resolve().parent / "backups"),
+                      backup_every_h=float(os.environ.get("CARDIOPATH_BACKUP_EVERY_H", "24") or 0),
+                      backup_keep=int(os.environ.get("CARDIOPATH_BACKUP_KEEP", "14")))

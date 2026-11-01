@@ -13,12 +13,14 @@ services:
     environment:
       CARDIOPATH_AUTH: ${CARDIOPATH_AUTH:-off}
       CARDIOPATH_MODE: ${CARDIOPATH_MODE:-research}
+      TZ: "<+05>-5"                         # Toshkent vaqti (UTC+5; tzdata kerak emas)
       # Telegram (Guardian ogohlantirishlari, ixtiyoriy): .env faylida bering, bu yerga yozmang
       CARDIOPATH_TG_TOKEN: ${CARDIOPATH_TG_TOKEN:-}
       CARDIOPATH_TG_CHAT: ${CARDIOPATH_TG_CHAT:-}
     volumes:
       - ./weights:/app/weights:ro          # model og'irliklari (faqat o'qish)
       - cardiopath-data:/data              # baza (cardiopath.db)
+      - ./backups:/data/backups            # kunlik zaxira nusxalar — Windows'da ko'rinadi, fleshkaga ko'chirish oson
       - cardiopath-models:/app/models      # shifokor tasdiqlagan yangi model versiyalari
 
 volumes:
