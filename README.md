@@ -190,7 +190,7 @@ Keyin brauzerda http://localhost:8010 ni oching. To'xtatish: `docker compose dow
 ### Zaxira nusxalar
 
 - **Avtomatik:** bemorlar bazasi har 24 soatda o'zi saqlanadi va oxirgi 14 ta nusxa turadi. Shunga bemorlar, jurnal, ogohlantirishlar va foydalanuvchilar kiradi.
-- **Qayerda:** Docker'da `kardio-aiackups` papkasida (Windows'da ko'rinadi), oddiy ishga tushirishda baza yonidagi `backups` papkasida.
+- **Qayerda:** Docker'da `kardio-ai\backups` papkasida (Windows'da ko'rinadi), oddiy ishga tushirishda baza yonidagi `backups` papkasida.
 - **Qo'lda:** «Foydalanuvchilar» sahifasidagi «Hozir nusxa olish» tugmasi yoki `python -m core.backup create`.
 - **Tiklash:** avval serverni to'xtating, keyin `python -m core.backup restore backups\<fayl>.db --db <baza>`. Avvalgi baza `.before-restore-…` nomi bilan saqlanib qoladi.
 - **Muhim:** nusxalarni vaqti-vaqti bilan fleshka yoki boshqa diskka ham ko'chiring. Kompyuter buzilsa, shu diskdagi nusxalar ham yo'qoladi.
