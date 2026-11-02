@@ -21,6 +21,7 @@ from risk.aki import AKIInput, AKIModel, thakar
 from risk.euroscore2 import EuroScoreInput, euroscore2
 from risk.protocol import heart_team_protocol
 from risk.rachs1 import PROCEDURES, Rachs1Input, rachs1
+from risk.kdigo import KDIGOInput, assess_kdigo
 
 # EuroSCORE II'da shifokor kiritmasa jim «eng past xavf» qiymati olinadigan maydonlar (LVEF alohida: AKI blokidan olinadi).
 SILENT_DEFAULTS = {
@@ -48,6 +49,16 @@ class RiskIn(BaseModel):
     aki: AKIInput
     lvef_measured_at: Optional[datetime] = None
 
+
+
+class KDIGOIn(BaseModel):
+    actor: str
+    baseline_creatinine: float = Field(gt=0, le=2000, description="µmol/L")
+    current_creatinine: float = Field(gt=0, le=2000, description="µmol/L")
+    creatinine_48h_rise: Optional[float] = Field(None, ge=0, le=1000)
+    urine_output_ml_kg_h: Optional[float] = Field(None, ge=0, le=20)
+    urine_hours: Optional[float] = Field(None, ge=0, le=168)
+    rrt: bool = False
 
 def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], aki_model: Optional[AKIModel]) -> None:
     @app.post("/episodes/{eid}/risk")
@@ -118,6 +129,26 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], a
         ev = rachs1(Rachs1Input(procedures=body.procedures, age_days=body.age_days, premature=body.premature))
         ep.add(ev)
         store.save(ep, body.actor, "risk.rachs1", {"category": ev.value, "procedures": body.procedures, "abstained": ev.abstained})
+        return {"evidence": ev.to_dict()}
+
+
+    @app.post("/episodes/{eid}/kdigo")
+    def assess_kdigo_endpoint(eid: str, body: KDIGOIn) -> dict:
+        ep = get(eid)
+        if ep.stage not in (Stage.ICU, Stage.DISCHARGE, Stage.GUARDIAN_30D):
+            raise HTTPException(409, f"KDIGO AKI baholash ICU, DISCHARGE yoki GUARDIAN_30D bosqichida (hozir: {ep.stage.value})")
+        ev = assess_kdigo(KDIGOInput(
+            baseline_creatinine=body.baseline_creatinine,
+            current_creatinine=body.current_creatinine,
+            creatinine_48h_rise=body.creatinine_48h_rise,
+            urine_output_ml_kg_h=body.urine_output_ml_kg_h,
+            urine_hours=body.urine_hours,
+            rrt=body.rrt,
+        ))
+        if ev.abstained:
+            raise HTTPException(422, "; ".join(ev.explanation))
+        ep.add(ev)
+        store.save(ep, body.actor, "risk.kdigo", {"stage": ev.value["stage"], "risk": ev.risk.value})
         return {"evidence": ev.to_dict()}
 
     @app.get("/episodes/{eid}/heart-team-protocol", response_class=PlainTextResponse)

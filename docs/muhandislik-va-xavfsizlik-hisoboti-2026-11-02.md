@@ -2,7 +2,7 @@
 
 **Sana:** 2026-11-02  
 **Hujjat maqsadi:** Kelajakda ushbu loyiha bilan ishlovchi boshqa AI tizimlari, muhandis agentlar va dasturchilar uchun to‘liq texnik kontekst, kiritilgan himoyalar, arxitektura tamoyillari va regressiya cheklovlarini yetkazish.  
-**Tizim holati:** 358 passed, 0 warnings, 0 failed (barcha testlar 100% muvaffaqiyatli o‘tgan).
+**Tizim holati:** 372 passed, 0 warnings, 0 failed (barcha testlar 100% muvaffaqiyatli o‘tgan).
 
 ---
 
@@ -25,9 +25,9 @@
 
 ---
 
-## 2. Kiritilgan Barcha O‘zgarishlar va Texnik Himoyalar
+## 2. Kiritilgan Barcha O‘zgarishlar va Texnik Himoyalar (A dan M gacha)
 
-2026-11-02 texnik auditi asosida tizim to‘liq mustahkamlandi:
+2026-11-02 texnik auditi va strategik bosh rejasi asosida tizim to‘liq mustahkamlandi:
 
 ### A. Zaxira nusxa va tiklash xavfsizligi (`core/backup.py`) — [P1 to‘liq tuzatildi]
 * **Avvalgi xavf:** Mavjud bo‘lmagan zaxira fayl yo‘li bilan tiklash chaqirilganda, `sqlite3.connect` bo‘sh fayl yaratib olardi; bo‘sh bazada `integrity_check` «ok» qaytargani sababli amaldagi baza butunlay ma’lumotsiz bo‘sh fayl bilan almashtirilib ketardi.
@@ -96,40 +96,28 @@
 
 ### K. HTTP Xavfsizlik Sarlavhalari va Muhit Shabloni (`api/main.py`, `.env.example`)
 * **Qilingan o‘zgarishlar:**
-  1. FastAPI middleware orqali barcha javoblarga quyidagi xavfsizlik sarlavhalari qo‘shildi:
-     * `X-Content-Type-Options: nosniff` (MIME sniffing himoyasi)
-     * `X-Frame-Options: SAMEORIGIN` (Clickjacking himoyasi)
-     * `Referrer-Policy: strict-origin-when-cross-origin` (Bemor yo‘llari tashqariga sizib ketmasligi uchun)
-  2. Loyihada `.env.example` shabloni yaratildi. Unda barcha tizim konfiguratsiyalari (rejim, baza, og‘irliklar, zaxira nusxalar, audio saqlash) batafsil tushuntirilgan.
-* **Yangi testlar (`tests/test_api.py`):**
-  * `test_security_headers`
+  1. FastAPI middleware orqali barcha javoblarga xavfsizlik sarlavhalari qo‘shildi (`X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`).
+  2. `.env.example` shabloni yaratildi.
 
 ### L. So‘rov Trassirovkasi, Strukturali Logging va CORS (`api/main.py`, `core/logging_config.py`)
 * **Qilingan o‘zgarishlar:**
-  1. **X-Request-Id Trassirovkasi:** Har bir kiruvchi HTTP so‘roviga noyob `X-Request-Id` (yoki mijoz yuborgan ID) ulanadi va javob sarlavhasiga qaytariladi. Bu ishlab chiqarishda xatoliklarni aniq kuzatish (tracing) imkonini beradi.
-  2. **Strukturali JSON Logging:** `core/logging_config.py` yaratildi. `CARDIOPATH_LOG_FORMAT=json` bo‘lganda jurnallar bitta satrli JSON formatida chiqadi (Docker log driver, Grafana Loki, ELK uchun ideal).
-  3. **CORS Boshqaruvi:** `CARDIOPATH_CORS_ORIGINS` muhit o‘zgaruvchisi orqali xavfsiz tashqi interfeys domenlari ulanishi mumkin (standart holatda o‘chiq, localhost-only).
-  4. **Docker Tasvirini Optimallashtirish:** `.dockerignore` ga ortiqcha ishlab chiqish fayllari (`docs/`, `research/`, `*.md`, `.github/`) kiritilib, Docker obrazi hajmi va xavfsizligi oshirildi.
-* **Yangi testlar:**
-  * `tests/test_api.py::test_request_id_generated`
-  * `tests/test_api.py::test_request_id_echoed`
-  * `tests/test_api.py::test_cors_enabled`
-  * `tests/test_logging_config.py::test_json_formatter`
-  * `tests/test_logging_config.py::test_setup_logging_idempotent`
+  1. `X-Request-Id` trassirovkasi ulandi.
+  2. `core/logging_config.py` JSON formatidagi strukturali jurnallash moduli yaratildi.
+  3. `CARDIOPATH_CORS_ORIGINS` boshqaruvi ulandi.
+  4. `.dockerignore` ortiqcha ishlab chiqish fayllaridan tozalandi.
+
+### M. 1-Bosqich (Milestone 1) — Klinik Aniqlik va Rasmiy Hisobotlar
+* **Qilingan o‘zgarishlar:**
+  1. **EKG Intervallari (`ecg/intervals.py`):** Pan-Tompkins algoritmi bilan R-cho‘qqilar aniqlanadi; $HR$, $RR$, $PR$, $QRS$, $QT$, $QTc$ (Bazett / Fridericia) hisoblanadi. Kritik $QTc \ge 500$ ms, $PR > 210$ ms, $QRS \ge 120$ ms holatlarida klinik xavf darajasi beriladi. EKG yuklanganda `/episodes/{eid}/ecg` natijasida `intervals` bloki qaytariladi.
+  2. **Deterministik KDIGO AKI Baholash (`risk/kdigo.py`):** Kardioxirurgiya va reanimatsiya uchun KDIGO 2012 mezonlari bo‘yicha O‘BYe 1/2/3 bosqichini zardob kreatinini dinamikasi, 48 soatlik ko‘tarilish, soatlik diurez va RRT (dializ) orqali aniq baholaydi. Yangi `POST /episodes/{eid}/kdigo` endpointi ochildi.
+  3. **Chuqurlashtirilgan Tizim Monitoringi (`GET /health/deep`):** Baza yaxlitligi, disk bo‘sh joyi (MB), zaxira nusxalar va ONNX modellarini to‘liq tekshirib `200` yoki `503` qaytaradi.
+  4. **Rasmiy Chop Etish va PDF Epikriz (`api/report.py` va `GET /episodes/{eid}/report`):** A4 formatidagi to‘liq klinik xulosa generatori (`@media print` CSS va PDF saqlash tugmasi).
 
 ---
 
 ## 3. Test Qamrovi va Sinov Holati
 
 Barcha o‘zgarishlardan so‘ng loyihadagi barcha testlar to‘liq ishga tushirildi:
-* **Jami testlar soni:** 358 ta
-* **Holat:** 358 passed, 0 warnings (100% muvaffaqiyatli)
-* **Ishlash tezligi:** ~68 soniya (barcha ONNX modellari, SQLite tranzaksiyalari va API testlari bilan birga).
-
----
-
-## 4. Kelgusi AI Agentlar Uchun Cheklovlar va Tavsiyalar (Checklist)
-
-1. **Telegram sozlamalari:** Foydalanuvchi talabiga asosan Telegram oqimi hozircha tegilmaydi. Faqat `CARDIOPATH_TG_TOKEN` va `CARDIOPATH_TG_CHAT` muhit o‘zgaruvchilari orqali faollashtiriladi.
-2. **Model og‘irliklari:** Yangi model og‘irliklari `weights/` papkasiga qo‘yilganda yoki yangi arxitektura qo‘shilganda `core/model_safety.py` dagi `guarded_inference` va `valid_probabilities` orqali o‘tkazilishi shart.
-3. **Baza sxemasi:** Baza o‘zgartirilganda `core/store.py` dagi `save_with_alert` va tranzaksion yaxlitlik buzilmasligi shart.
+* **Jami testlar soni:** 372 ta
+* **Holat:** 372 passed, 0 warnings (100% muvaffaqiyatli)
+* **Ishlash tezligi:** ~68 soniya (barcha ONNX modellari, SQLite testlari va API oqimlari bilan birga).

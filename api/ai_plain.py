@@ -224,7 +224,22 @@ def _ef(e: Evidence, L: str) -> dict:
     return _out(L, level, h, tr("ef.t", L), title, h)
 
 
-_BY_KIND = {"ecg.afib": _ecg, "ecg.low_ef": _lowef, "ecg.shd": _shd, "angio.stenosis_assist": _angio, "guardian.inr": _inr, "echo.ef": _ef}
+
+def _intervals(e: Evidence, L: str) -> dict:
+    title = {"uz": "EKG intervallari", "ru": "Интервалы ЭКГ", "en": "ECG Intervals"}.get(L, "EKG intervallari")
+    if e.abstained:
+        return _abstain(L, title, title, e.explanation[0] if e.explanation else title)
+    v = e.value or {}
+    hr = v.get("heart_rate_bpm", "—")
+    qtc = v.get("qtc_bazett_ms") or v.get("qtc_fridericia_ms") or "—"
+    findings_str = "; ".join(e.explanation) if e.explanation else ""
+    if e.risk in (RiskLevel.HIGH, RiskLevel.VERY_HIGH):
+        return _out(L, "red", f"Kritik intervallar (HR: {hr}, QTc: {qtc} ms)", findings_str, title, findings_str)
+    elif e.risk == RiskLevel.MODERATE:
+        return _out(L, "yellow", f"Intervallarda o'zgarish (HR: {hr}, QTc: {qtc} ms)", findings_str, title, findings_str)
+    return _out(L, "green", f"Intervallar me'yorda (HR: {hr}, QTc: {qtc} ms)", findings_str, title, findings_str)
+
+_BY_KIND = {"ecg.afib": _ecg, "ecg.low_ef": _lowef, "ecg.shd": _shd, "angio.stenosis_assist": _angio, "guardian.inr": _inr, "echo.ef": _ef, "ecg.intervals": _intervals}
 
 
 def plain_ai(ev: Evidence, lang: str = "uz") -> dict:

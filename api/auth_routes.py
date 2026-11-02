@@ -17,7 +17,7 @@ from core.identity import current_user
 from core.store import EpisodeStore
 
 # ochiq yo'llar: kirishsiz ham (sahifaning o'zi, holat, kirish)
-PUBLIC = {("GET", "/"), ("GET", "/screening"), ("GET", "/guardian"), ("GET", "/models-ui"), ("GET", "/shadow-ui"), ("GET", "/health"), ("GET", "/auth/status"), ("POST", "/auth/login")}
+PUBLIC = {("GET", "/"), ("GET", "/screening"), ("GET", "/guardian"), ("GET", "/models-ui"), ("GET", "/shadow-ui"), ("GET", "/health"), ("GET", "/health/deep"), ("GET", "/auth/status"), ("POST", "/auth/login")}
 
 _ANY = "auth.any"          # istalgan kirgan foydalanuvchi
 ROUTE_PERMS: dict[tuple[str, str], str] = {
@@ -25,12 +25,14 @@ ROUTE_PERMS: dict[tuple[str, str], str] = {
     ("GET", "/screening/red-flags"): _ANY, ("GET", "/models"): _ANY,
     ("GET", "/episodes"): "episode.read", ("POST", "/episodes"): "episode.create",
     ("GET", "/episodes/{eid}"): "episode.read", ("GET", "/episodes/{eid}/digest"): "episode.read",
+    ("GET", "/episodes/{eid}/report"): "episode.read",
     ("GET", "/episodes/{eid}/audit"): "episode.audit",
     ("POST", "/episodes/{eid}/transition"): "episode.transition",
     ("POST", "/episodes/{eid}/screening"): "screening.run",
     ("POST", "/episodes/{eid}/echo-diagnosis"): "echo.diagnosis",
     ("POST", "/episodes/{eid}/risk"): "risk.assess", ("GET", "/episodes/{eid}/heart-team-protocol"): "protocol.read",
     ("POST", "/episodes/{eid}/rachs1"): "risk.assess", ("GET", "/rachs1/procedures"): _ANY,
+    ("POST", "/episodes/{eid}/kdigo"): "risk.assess",
     ("POST", "/episodes/{eid}/ecg"): "ai.upload", ("POST", "/episodes/{eid}/angio"): "ai.upload",
     ("POST", "/episodes/{eid}/echo-ef"): "ai.upload",
     ("POST", "/episodes/{eid}/guardian/checkin"): "guardian.submit", ("POST", "/episodes/{eid}/guardian/inr"): "guardian.submit",

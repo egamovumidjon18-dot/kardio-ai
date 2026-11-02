@@ -139,3 +139,22 @@ def test_cors_enabled(tmp_path, monkeypatch):
     c = TestClient(create_app(SqliteEpisodeStore(str(tmp_path / "cors.db")), None))
     r = c.get("/health", headers={"Origin": "https://panel.example.com"})
     assert r.headers.get("access-control-allow-origin") == "https://panel.example.com"
+
+def test_deep_health(client):
+    r = client.get("/health/deep")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["status"] in ("ok", "degraded")
+    assert body["checks"]["database"]["status"] == "ok"
+    assert "disk" in body["checks"]
+    assert "models" in body["checks"]
+
+
+def test_clinical_report_html(client):
+    eid = new_episode(client)
+    r = client.get(f"/episodes/{eid}/report")
+    assert r.status_code == 200
+    assert "text/html" in r.headers["content-type"]
+    assert "window.print()" in r.text
+    assert "PSV-001" in r.text
+    assert "O'ZBEKISTON RESPUBLIKASI SOG'LIQNI SAQLASH VAZIRLIGI" in r.text

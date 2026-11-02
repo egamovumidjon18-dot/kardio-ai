@@ -127,6 +127,10 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
                     result = guarded_inference(model, kind, partial(model.analyze, sig, fs, leads, age_years))
                     result.measured_at = measured
                     results.append((key, result))
+            from ecg.intervals import measure_intervals
+            interv = measure_intervals(sig, fs, leads)
+            interv.measured_at = measured
+            results.append(("intervals", interv))
             return results
 
         results = await anyio.to_thread.run_sync(analyze_bundle, limiter=app.state.inference_limiter)

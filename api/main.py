@@ -282,6 +282,53 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
                 "pcg_model": pcg.card.to_dict() if pcg else None,
                 "aki_model": aki_model.card.to_dict() if aki_model else None}
 
+    @app.get("/health/deep")
+    def deep_health():
+        import shutil
+        status = "ok"
+        checks = {}
+
+        try:
+            with store._lock:
+                n_ep = store._conn.execute("SELECT count(*) FROM episodes").fetchone()[0]
+                n_audit = store._conn.execute("SELECT count(*) FROM audit_log").fetchone()[0]
+            checks["database"] = {"status": "ok", "episodes_count": n_ep, "audit_count": n_audit}
+        except Exception as exc:
+            status = "unhealthy"
+            checks["database"] = {"status": "error", "detail": str(exc)}
+
+        try:
+            total, used, free = shutil.disk_usage(Path(backup_db or "cardiopath.db").resolve().parent)
+            free_mb = round(free / (1024 * 1024), 1)
+            is_low = free_mb < 500
+            if is_low and status == "ok":
+                status = "degraded"
+            checks["disk"] = {"status": "warning" if is_low else "ok", "free_mb": free_mb,
+                              "total_mb": round(total / (1024 * 1024), 1)}
+        except Exception as exc:
+            checks["disk"] = {"status": "error", "detail": str(exc)}
+
+        if backup_dir and Path(backup_dir).exists():
+            from core import backup as b_mod
+            b_list = b_mod.list_backups(backup_dir)
+            checks["backups"] = {"status": "ok", "count": len(b_list),
+                                 "latest": b_list[0]["created_at"] if b_list else None}
+        else:
+            checks["backups"] = {"status": "not_configured"}
+
+        checks["models"] = {
+            "pcg": pcg is not None,
+            "ecg": ecg_model is not None,
+            "angio": angio_model is not None,
+            "aki": aki_model is not None,
+            "echo_ef": ef_model is not None,
+        }
+
+        from fastapi.responses import JSONResponse
+        http_code = 200 if status in ("ok", "degraded") else 503
+        return JSONResponse(status_code=http_code, content={"status": status, "checks": checks})
+
+
     @app.post("/episodes", status_code=201)
     def create_episode(body: EpisodeIn) -> dict:
         ep = Episode(patient_ref=body.patient_ref, population=body.population)
@@ -312,6 +359,15 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
         ep = _get(eid)
         _, open_alerts = store.alerts(status="open", episode_id=eid, limit=200)
         return episode_digest(ep, open_alerts)
+
+    @app.get("/episodes/{eid}/report", response_class=HTMLResponse)
+    def episode_report(eid: str) -> str:
+        from api.report import render_clinical_report
+        ep = _get(eid)
+        _, open_alerts = store.alerts(status="open", episode_id=eid, limit=200)
+        d = episode_digest(ep, open_alerts)
+        return render_clinical_report(ep, d)
+
 
     @app.get("/episodes/{eid}/audit")
     def get_audit(eid: str) -> list[dict]:
