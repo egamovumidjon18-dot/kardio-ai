@@ -2,7 +2,7 @@
 
 **Sana:** 2026-11-02  
 **Hujjat maqsadi:** Kelajakda ushbu loyiha bilan ishlovchi boshqa AI tizimlari, muhandis agentlar va dasturchilar uchun to‘liq texnik kontekst, kiritilgan himoyalar, arxitektura tamoyillari va regressiya cheklovlarini yetkazish.  
-**Tizim holati:** 353 passed, 0 warnings, 0 failed (barcha testlar 100% muvaffaqiyatli o‘tgan).
+**Tizim holati:** 358 passed, 0 warnings, 0 failed (barcha testlar 100% muvaffaqiyatli o‘tgan).
 
 ---
 
@@ -27,7 +27,7 @@
 
 ## 2. Kiritilgan Barcha O‘zgarishlar va Texnik Himoyalar
 
-2026-11-02 texnik auditi (`docs/texnik-tahlil-2026-11-02.md`) asosida tizim to‘liq mustahkamlandi:
+2026-11-02 texnik auditi asosida tizim to‘liq mustahkamlandi:
 
 ### A. Zaxira nusxa va tiklash xavfsizligi (`core/backup.py`) — [P1 to‘liq tuzatildi]
 * **Avvalgi xavf:** Mavjud bo‘lmagan zaxira fayl yo‘li bilan tiklash chaqirilganda, `sqlite3.connect` bo‘sh fayl yaratib olardi; bo‘sh bazada `integrity_check` «ok» qaytargani sababli amaldagi baza butunlay ma’lumotsiz bo‘sh fayl bilan almashtirilib ketardi.
@@ -104,14 +104,27 @@
 * **Yangi testlar (`tests/test_api.py`):**
   * `test_security_headers`
 
+### L. So‘rov Trassirovkasi, Strukturali Logging va CORS (`api/main.py`, `core/logging_config.py`)
+* **Qilingan o‘zgarishlar:**
+  1. **X-Request-Id Trassirovkasi:** Har bir kiruvchi HTTP so‘roviga noyob `X-Request-Id` (yoki mijoz yuborgan ID) ulanadi va javob sarlavhasiga qaytariladi. Bu ishlab chiqarishda xatoliklarni aniq kuzatish (tracing) imkonini beradi.
+  2. **Strukturali JSON Logging:** `core/logging_config.py` yaratildi. `CARDIOPATH_LOG_FORMAT=json` bo‘lganda jurnallar bitta satrli JSON formatida chiqadi (Docker log driver, Grafana Loki, ELK uchun ideal).
+  3. **CORS Boshqaruvi:** `CARDIOPATH_CORS_ORIGINS` muhit o‘zgaruvchisi orqali xavfsiz tashqi interfeys domenlari ulanishi mumkin (standart holatda o‘chiq, localhost-only).
+  4. **Docker Tasvirini Optimallashtirish:** `.dockerignore` ga ortiqcha ishlab chiqish fayllari (`docs/`, `research/`, `*.md`, `.github/`) kiritilib, Docker obrazi hajmi va xavfsizligi oshirildi.
+* **Yangi testlar:**
+  * `tests/test_api.py::test_request_id_generated`
+  * `tests/test_api.py::test_request_id_echoed`
+  * `tests/test_api.py::test_cors_enabled`
+  * `tests/test_logging_config.py::test_json_formatter`
+  * `tests/test_logging_config.py::test_setup_logging_idempotent`
+
 ---
 
 ## 3. Test Qamrovi va Sinov Holati
 
 Barcha o‘zgarishlardan so‘ng loyihadagi barcha testlar to‘liq ishga tushirildi:
-* **Jami testlar soni:** 353 ta
-* **Holat:** 353 passed, 0 warnings (100% muvaffaqiyatli)
-* **Ishlash tezligi:** ~68 soniya (barcha ONNX modellari va SQLite testlari bilan birga).
+* **Jami testlar soni:** 358 ta
+* **Holat:** 358 passed, 0 warnings (100% muvaffaqiyatli)
+* **Ishlash tezligi:** ~68 soniya (barcha ONNX modellari, SQLite tranzaksiyalari va API testlari bilan birga).
 
 ---
 

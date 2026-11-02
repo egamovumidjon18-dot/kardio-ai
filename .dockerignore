@@ -11,3 +11,8 @@ weights/
 .env
 *.log
 backups/
+.env.example
+docs/
+*.md
+.github/
+research/
