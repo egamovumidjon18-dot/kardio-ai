@@ -25,7 +25,7 @@
 
 ---
 
-## 2. Kiritilgan Barcha O‘zgarishlar va Texnik Himoyalar (A dan Q gacha)
+## 2. Kiritilgan Barcha O‘zgarishlar va Texnik Himoyalar (A dan R gacha)
 
 2026-11-02 texnik auditi va strategik bosh rejasi asosida tizim to‘liq mustahkamlandi:
 
@@ -98,6 +98,12 @@
   3. **Klinika Shifokorlari va Ma'murlar Uchun Amaliy Qo'llanma (`docs/shifokor-qollanmasi.md`):** Kardiolog, jarroh, qabulxona shifokori, hamshira va IT ma'muri uchun bosqichma-bosqich qo'llanma ishlab chiqildi.
   4. **Konteyner Arxitekturasi va Korporativ Profil (`docker-compose.yml`, `.env.example`):** Ko‘p terminalli yirik markazlar uchun PostgreSQL profili (`profiles: ["postgres"]`) hamda SMS eskalatsiya shlyuzi sozlamalari kiritildi.
 
+### R. Shifokor Veb-Interfeysi (UI) To'liq Integratsiyasi (`api/static/app.js`, `api/static/screening.html`) — [P1 to‘liq bajarildi]
+* **Qilingan o‘zgarishlar:**
+  1. **Skriningda Real-Vaqt Preflight Audio Sifat Tekshiruvi:** Shifokor WAV audio yuklaganda brauzer avtomatik ravishda `/screening/preflight` bilan bog'lanib, SNR (dB), kiyim ishqalanishi va kesilishni tekshiradi, yashil/sariq chiplar bilan darhol tavsiya ko'rsatadi.
+  2. **Epizod Kartasida Tezkor Harakatlar (1-Click Actions):** Rasmiy A4 epikrizni chop etish (`print`), HL7 FHIR R4 JSON eksport qilish, bemorning yozma klinik roziligini rasmiylashtirish dialogi (`#csBtn`) va jonlantirish bo'limi uchun KDIGO AKI kalkulyator dialogi (`#kdBtn`) bevosita veb-interfeysga ulandi.
+  3. **Klinik Ballar Paneli (Scores Panel):** EuroSCORE II va Thakar qatoriga KDIGO AKI bosqichi hamda EKG QTc (Bazett) intervallari dinamik ravishda chiqarildi.
+
 ---
 
 ## 3. Test Qamrovi va Sinov Holati
@@ -108,6 +114,7 @@ Barcha o‘zgarishlardan so‘ng loyihadagi barcha testlar to‘liq ishga tushir
 * **Milestone 2 dan so‘ng:** 377 ta
 * **Milestone 3 dan so‘ng:** 391 ta
 * **Milestone 4 dan so‘ng:** 404 ta
-* **Yakuniy testlar soni (Milestone 5):** 406 ta
+* **Milestone 5 dan so‘ng:** 406 ta
+* **UI integratsiyasidan so‘ng:** 406 ta
 * **Holat:** 406 passed, 0 warnings, 0 failed (100% muvaffaqiyatli)
-* **Ishlash tezligi:** ~72 soniya.
+* **Ishlash tezligi:** ~75 soniya.
