@@ -48,7 +48,7 @@ def test_product_mode_blocks_echonet(monkeypatch):
 @pytest.mark.parametrize("ef,risk", [(60, RiskLevel.LOW), (45, RiskLevel.MODERATE),
                                      (35, RiskLevel.HIGH), (25, RiskLevel.VERY_HIGH)])
 def test_ef_to_risk(tmp_path, ef, risk):
-    ev = adapter(ef).analyze(video(tmp_path))
+    ev = adapter(ef).analyze(video(tmp_path), age_years=60)
     assert not ev.abstained and ev.value == ef and ev.unit == "%" and ev.risk == risk and ev.uncertainty == echo_ef.MAE
     assert ev.provenance.dataset_license.startswith("Stanford")
     assert ef_risk(ef) == risk
@@ -57,11 +57,11 @@ def test_ef_to_risk(tmp_path, ef, risk):
 def test_abstain_cases(tmp_path):
     a = adapter(55)
     assert a.analyze(video(tmp_path), age_years=7).abstained
-    assert a.analyze(tmp_path / "yoq.avi").abstained
-    assert adapter(3).analyze(video(tmp_path)).abstained                 # fiziologik emas
+    assert a.analyze(tmp_path / "yoq.avi", age_years=60).abstained
+    assert adapter(3).analyze(video(tmp_path), age_years=60).abstained                 # fiziologik emas
     bad = tmp_path / "bad.avi"
     bad.write_bytes(b"xx")
-    assert a.analyze(bad).abstained
+    assert a.analyze(bad, age_years=60).abstained
 
 
 def test_from_env_missing_returns_none(monkeypatch, tmp_path):

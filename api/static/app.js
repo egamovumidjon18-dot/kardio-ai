@@ -779,7 +779,7 @@ async function episodePage(id) {
   ].join("");
   // AI tavsiyasi: faqat AI manbali muhokama punktlari (qoida/kiritish punktlari bu yerda takrorlanmaydi)
   const AI_CODES = ["afib_high", "lowef_echo_needed", "shd_echo", "angio_candidates", "ecg_lvef_disagree", "ef_disagree", "ef_ai_abstained", "screening_disagree", "screening_ai_abstained", "aki_disagree", "aki_ai_abstained"];
-  const aiDisc = d.discussion.find((x) => AI_CODES.includes(x.code));
+  const aiDisc = d.discussion.find((x) => AI_CODES.includes(x.code) || x.code === "ai_result_unavailable");
   const advice = aiDisc ? `<b style="color:var(--cp-ink)">${esc(aiDisc.topic)}:</b> ${esc(aiDisc.reason)}` : esc(t("noAdvice"));
   const nxt = d.next_stages.filter((s) => STAGES.indexOf(s) > STAGES.indexOf(d.episode.stage)).sort((a, b) => STAGES.indexOf(a) - STAGES.indexOf(b))[0];
   view.innerHTML = `
@@ -901,8 +901,8 @@ async function ecgPage(id) {
           <input class="cp-dropzone__input" id="ecgFile" type="file" accept=".csv,text/csv" required></label>
           <div class="form-grid" style="margin-top:1rem"><div class="cp-field"><label class="cp-field__label" for="ecgFs">${esc(t("fs"))}</label>
             <select class="cp-select" id="ecgFs">${[500, 1000, 250, 100].map((f) => `<option value="${f}">${f} Hz</option>`).join("")}</select></div>
-            <div class="cp-field"><label class="cp-field__label" for="ecgAge">${esc(t("age"))}</label><input class="cp-input" id="ecgAge" type="number" min="0" max="120" step="1" inputmode="numeric"></div></div>
-          <div id="sig" class="cp-meta" style="margin-top:1rem"></div>
+            <div class="cp-field"><label class="cp-field__label" for="ecgAge">${esc(t("age"))}</label><input class="cp-input" id="ecgAge" required type="number" min="0" max="120" step="1" inputmode="numeric"></div></div>
+          <div class="cp-field"><label for="ecgMeasured">${esc(({uz:"EKG olingan sana va vaqt",ru:"Дата и время записи ЭКГ",en:"ECG acquisition date and time"})[lang])}</label><input class="cp-input" id="ecgMeasured" type="datetime-local"><span class="cp-field__hint">${esc(({uz:"Sana noma’lum bo‘lsa, bo‘sh qoldiring: natijalar vaqt bo‘yicha solishtirilmaydi.",ru:"Если дата неизвестна, оставьте пустым: сравнение по времени недоступно.",en:"Leave blank if unknown: temporal comparison will be unavailable."})[lang])}</span></div><div id="sig" class="cp-meta" style="margin-top:1rem"></div>
           <button class="cp-btn cp-btn--block" style="margin-top:1rem" type="submit" id="ecgGo" ${can("ai.upload") ? "" : "disabled"}>${ic("pulse")}${esc(t("analyze"))}</button>
           <p class="cp-field__error" id="ecgErr" role="alert"></p></form></section>
       <section><h2 class="section-title">${esc(t("aiResults"))}</h2><div id="ecgOut" class="cp-stack" aria-live="polite"><div class="cp-empty">${ic("pulse")}<span class="cp-meta">${esc(t("ecgDrop"))}</span></div></div></section>
@@ -933,6 +933,7 @@ async function ecgPage(id) {
     const f = $("ecgFile").files[0]; if (!f) return;
     const fd = new FormData(); fd.append("actor", actor()); fd.append("lang", lang); fd.append("fs", $("ecgFs").value);
     if ($("ecgAge").value !== "") fd.append("age_years", $("ecgAge").value);
+    if ($("ecgMeasured").value) fd.append("measured_at", new Date($("ecgMeasured").value).toISOString());
     fd.append("file", f);
     const btn = $("ecgGo"); btn.disabled = true; btn.classList.add("cp-btn--loading");
     $("ecgOut").innerHTML = `<div class="cp-card cp-card--flat"><span class="cp-meta">${esc(t("analyzing", { t: hm(new Date().toISOString()) }))}</span></div>`;
@@ -977,6 +978,7 @@ async function riskPage(id, params) {
     <fieldset><legend>${esc(t("f_heart"))}</legend><div class="form-grid">
       ${field("nyha", t("f_nyha"), sel("nyha", [["1", "I"], ["2", "II"], ["3", "III"], ["4", "IV"]], true), t("assumedChip"))}
       ${field("lvef_percent", t("f_lvef"), num("lvef_percent", 5, 90, 1))}
+      ${field("lvef_measured_at", ({uz:"ExoKG o‘lchangan sana va vaqt (ma’lum bo‘lsa)",ru:"Дата и время измерения ЭхоКГ (если известны)",en:"Echo measurement date and time (if known)"})[lang], `<input class="cp-input" id="lvef_measured_at" name="lvef_measured_at" type="datetime-local">`)}
       ${field("pa_systolic_mmhg", t("f_pa"), `<input class="cp-input assumed" id="pa_systolic_mmhg" name="pa_systolic_mmhg" type="number" min="5" max="150" step="1">`, t("assumedChip"))}</div>
       <div class="form-grid" style="margin-top:.6rem">${[...ES_FLAGS, ["congestive_heart_failure", "fl_chf"], ["preop_iabp", "fl_iabp"]].map(([k, l]) => `<label class="check"><input type="checkbox" name="${k}">${esc(t(l))}</label>`).join("")}</div></fieldset>
     <fieldset><legend>${esc(t("f_op"))}</legend><div class="form-grid">
@@ -999,7 +1001,7 @@ async function riskPage(id, params) {
     const aki = { female: euro.female, congestive_heart_failure: b("congestive_heart_failure"), lvef_percent: n("lvef_percent"), preop_iabp: b("preop_iabp"),
       copd: b("chronic_lung_disease"), insulin_diabetes: b("insulin_diabetes"), previous_cardiac_surgery: b("previous_cardiac_surgery"),
       emergency: ["emergency", "salvage"].includes(f.get("urgency")), surgery: f.get("surgery"), creatinine_umol_l: euro.creatinine_umol_l };
-    try { paintEs(await api(`/episodes/${id}/risk`, { method: "POST", json: { actor: actor(), euroscore: euro, aki } })); }
+    try { paintEs(await api(`/episodes/${id}/risk`, { method: "POST", json: { actor: actor(), euroscore: euro, aki, lvef_measured_at: f.get("lvef_measured_at") ? new Date(f.get("lvef_measured_at")).toISOString() : null } })); }
     catch (err) { $("esErr").textContent = `${t("failed")}: ${err.message}`; }
   });
 }

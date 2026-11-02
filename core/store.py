@@ -43,6 +43,13 @@ class EpisodeStore(ABC):
     def save(self, ep: Episode, actor: str, action: str, detail: Optional[dict] = None) -> None: ...
 
     @abstractmethod
+    def save_with_alert(self, ep: Episode, actor: str, action: str,
+                        level: Optional[str] = None,
+                        reasons: Optional[list[str]] = None,
+                        message: str = "",
+                        delivered: Optional[bool] = None) -> Optional[dict]: ...
+
+    @abstractmethod
     def get(self, episode_id: str) -> Optional[Episode]: ...
 
     @abstractmethod
@@ -150,6 +157,45 @@ class SqliteEpisodeStore(EpisodeStore):
             self._conn.execute(
                 "INSERT INTO audit_log (episode_id, actor, action, detail, at) VALUES (?, ?, ?, ?, ?)",
                 (ep.id, actor, action, json.dumps(detail or {}, ensure_ascii=False), now))
+
+    def save_with_alert(self, ep: Episode, actor: str, action: str,
+                        level: Optional[str] = None,
+                        reasons: Optional[list[str]] = None,
+                        message: str = "",
+                        delivered: Optional[bool] = None) -> Optional[dict]:
+        doc = json.dumps(episode_to_dict(ep), ensure_ascii=False)
+        rev = getattr(ep, "_rev", None)
+        now = utcnow()
+        actor = effective_actor(actor)
+        created_alert = None
+        with self._lock, self._conn:
+            if rev is None:
+                try:
+                    self._conn.execute("INSERT INTO episodes (id, doc, updated_at, rev) VALUES (?, ?, ?, 1)", (ep.id, doc, now))
+                except sqlite3.IntegrityError:
+                    raise EpisodeConflict(f"epizod {ep.id} allaqachon mavjud") from None
+            elif self._conn.execute("UPDATE episodes SET doc = ?, updated_at = ?, rev = rev + 1 WHERE id = ? AND rev = ?",
+                                    (doc, now, ep.id, rev)).rowcount == 0:
+                raise EpisodeConflict("bemor yozuvini boshqa foydalanuvchi hozirgina o'zgartirdi — sahifani yangilab, qayta urining")
+            ep._rev = (rev or 0) + 1
+
+            if level in ("red", "amber"):
+                delivery = "none" if delivered is None else ("sent" if delivered else "failed")
+                cur = self._conn.execute(
+                    "INSERT INTO alerts (episode_id, patient_ref, level, source, reasons, created_at, message, delivery, attempts, "
+                    "delivered_at, last_attempt_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (ep.id, ep.patient_ref, level, action, json.dumps(reasons or [], ensure_ascii=False), now, message, delivery,
+                     0 if delivered is None else 1, now if delivered else None, None if delivered is None else now))
+                row = self._conn.execute(f"SELECT {self._ALERT_COLS} FROM alerts WHERE id = ?", (cur.lastrowid,)).fetchone()
+                created_alert = self._alert_row(row)
+
+            detail = {"alert": level, "notified": bool(delivered),
+                      "alert_id": created_alert["id"] if created_alert else None}
+            self._conn.execute(
+                "INSERT INTO audit_log (episode_id, actor, action, detail, at) VALUES (?, ?, ?, ?, ?)",
+                (ep.id, actor, action, json.dumps(detail, ensure_ascii=False), now))
+
+        return created_alert
 
     def get(self, episode_id: str) -> Optional[Episode]:
         with self._lock:

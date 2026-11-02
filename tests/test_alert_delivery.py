@@ -84,3 +84,34 @@ def test_old_database_gets_delivery_columns(tmp_path):
     con.commit(); con.close()
     _, items = SqliteEpisodeStore(db).alerts()
     assert items[0]["delivery"]["status"] == "none"
+
+
+def test_conflict_during_checkin_creates_no_orphan_alert(tmp_path):
+    store = SqliteEpisodeStore(str(tmp_path / "c.db"))
+    c = TestClient(create_app(store, None, notifier=FlakyNotifier(ok=True)))
+    eid = c.post("/episodes", json={"patient_ref": "TG-3", "actor": "dr", "population": "adult"}).json()["id"]
+    to_guardian(c, eid)
+
+    ep = store.get(eid)
+    ep._rev = 999
+    import pytest
+    from core.store import EpisodeConflict
+    with pytest.raises(EpisodeConflict):
+        store.save_with_alert(ep, "p", "guardian.checkin", level="red", reasons=["test"], message="msg", delivered=True)
+
+    total, items = store.alerts()
+    assert total == 0 and len(items) == 0
+
+
+def test_log_notifier_marks_delivery_as_none(tmp_path):
+    from guardian.escalation import LogNotifier
+    n = LogNotifier()
+    store = SqliteEpisodeStore(str(tmp_path / "log_notif.db"))
+    c = TestClient(create_app(store, None, notifier=n))
+    eid = c.post("/episodes", json={"patient_ref": "LN-1", "actor": "dr", "population": "adult"}).json()["id"]
+    to_guardian(c, eid)
+    r = c.post(f"/episodes/{eid}/guardian/checkin", json={"actor": "p", "symptoms": ["syncope"]})
+    assert r.status_code == 200
+    a = c.get("/alerts").json()["items"][0]
+    # LogNotifier is local console only; delivery status must be 'none', never falsely 'sent'
+    assert a["delivery"]["status"] == "none"

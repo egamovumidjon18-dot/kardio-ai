@@ -7,6 +7,7 @@ dizayn) va Heart Team protokoli bir xil manbadan foydalanadi — ikki joyda ikki
 from __future__ import annotations
 
 from typing import Optional
+import math
 
 from core.episode import ALLOWED, Episode, Stage
 from core.evidence import Evidence, risk_rank
@@ -20,7 +21,8 @@ AI_KINDS = {"pcg": "screening.pcg", "ecg": "ecg.afib", "ecg_low_ef": "ecg.low_ef
 def brief(ev: Evidence) -> dict:
     return {"id": ev.id, "kind": ev.kind, "value": ev.value, "unit": ev.unit, "risk": ev.risk.value,
             "source": ev.source.value, "abstained": ev.abstained, "explanation": ev.explanation,
-            "created_at": ev.created_at, "model": ev.provenance.name, "model_version": ev.provenance.version}
+            "created_at": ev.created_at, "measured_at": ev.measured_at,
+            "model": ev.provenance.name, "model_version": ev.provenance.version}
 
 
 def overall_risk(latest: dict[str, Evidence]) -> Optional[str]:
@@ -84,7 +86,7 @@ def episode_digest(ep: Episode, alerts: Optional[list[dict]] = None) -> dict:
     if ep.stage == Stage.HEART_TEAM and "risk.euroscore2" not in latest:
         add_discussion("euroscore_missing", "EuroSCORE II", "EuroSCORE II hisoblanmagan.", [])
     assumed = latest.get("risk.assumptions")
-    if assumed is not None:
+    if assumed is not None and assumed.value:
         add_discussion("assumed_defaults", "EuroSCORE II kiritishlari",
                        "Quyidagi maydonlar kiritilmadi, eng past xavfli standart qiymat olindi (xavf kam baholangan bo'lishi mumkin): "
                        + "; ".join(assumed.explanation), [assumed.id])
@@ -93,10 +95,22 @@ def episode_digest(ep: Episode, alerts: Optional[list[dict]] = None) -> dict:
         add_discussion("afib_high", "EKG", "EKGda bo'lmachalar fibrillyatsiyasi ehtimoli yuqori (AI) — shifokor EKGni "
                        "ko'rib tasdiqlaydi.", [afib.id])
     low_ef = latest.get("ecg.low_ef")
+    def valid_lvef(kind: str) -> bool:
+        ev = latest.get(kind)
+        return (ev is not None and not ev.abstained and isinstance(ev.value, (int, float))
+                and not isinstance(ev.value, bool) and math.isfinite(ev.value) and 0 < ev.value <= 100)
+
     if (low_ef is not None and not low_ef.abstained and low_ef.risk.value != "low"
-            and "clinician.lvef" not in latest and "echo.ef" not in latest):
+            and not valid_lvef("clinician.lvef") and not valid_lvef("echo.ef")):
         add_discussion("lowef_echo_needed", "LVEF", "AI-EKG: past EF (≤45%) ehtimoli, LVEF hali o'lchanmagan — ExoKG kerak.",
                        [low_ef.id])
+    # Failed or uncertain runs must remain visible even when another model has
+    # a valid low-risk result. Presence of a failed echo is not an EF measurement.
+    for name, kind in AI_KINDS.items():
+        ev = latest.get(kind)
+        if ev is not None and ev.abstained:
+            add_discussion("ai_result_unavailable", name,
+                           "AI xulosa bermadi: " + "; ".join(ev.explanation), [ev.id])
     shd = latest.get("ecg.shd")
     if shd is not None and not shd.abstained and isinstance(shd.value, dict) and shd.value.get("positive"):
         add_discussion("shd_echo", "Yurak tuzilishi",
@@ -110,7 +124,7 @@ def episode_digest(ep: Episode, alerts: Optional[list[dict]] = None) -> dict:
 
     suggestions = []
     ef_ai = latest.get("echo.ef")
-    if ef_ai is not None and not ef_ai.abstained and "clinician.lvef" not in latest:
+    if valid_lvef("echo.ef") and not valid_lvef("clinician.lvef"):
         suggestions.append({"code": "enter_lvef", "text": f"ExoKG videodan AI EF ≈ {ef_ai.value:.0f}% mavjud. Xavf baholashda "
                             "LVEF ni ExoKG shifokorining o'lchovi bilan kiriting; AI qiymati o'zi to'ldirilmaydi."})
 

@@ -14,6 +14,7 @@ import numpy as np
 from angio.image import SIZE, assess_quality, candidates, load_gray, to_model_input
 from core.evidence import Evidence, Provenance, RiskLevel, Source
 from core.registry import ModelCard, check_license
+from core.model_safety import valid_probabilities
 
 Backend = Callable[[np.ndarray], np.ndarray]   # [1,1,512,512] → [512,512] ehtimollik
 
@@ -65,6 +66,8 @@ class AngioModel:
         if not q.ok:
             return Evidence.abstain(kind, Source.MODEL, prov, "kadr yaroqsiz: " + "; ".join(q.reasons))
         prob = self.backend(to_model_input(gray))
+        if not valid_probabilities(prob, (SIZE, SIZE)):
+            return Evidence.abstain(kind, Source.MODEL, prov, "model ehtimolliklari noto'g'ri — qayta tekshirish kerak")
         cands = candidates(prob, self.thr, self.min_area)
         value = {"label": LABEL, "n_candidates": len(cands), "candidates": cands,
                  "size": SIZE, "prob_threshold": self.thr}

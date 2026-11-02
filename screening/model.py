@@ -15,6 +15,7 @@ from typing import Callable, Optional
 import numpy as np
 
 from core.evidence import Evidence, Provenance, RiskLevel, Source
+from core.model_safety import age_error, valid_probabilities
 from core.registry import ModelCard, check_license
 from screening.features import log_mel
 from screening.pcg import assess_quality, load_wav, preprocess, windows
@@ -76,12 +77,18 @@ class PCGModel:
                           reference=f"{self.card.task}; {self.card.dataset}",
                           dataset_license=self.card.dataset_license)
 
-    def analyze(self, recordings: list[Recording], age_days: Optional[float] = None) -> Evidence:
+    def analyze(self, recordings: list[Recording], age_days: Optional[float] = None,
+                age_range_days: Optional[tuple[float, float]] = None) -> Evidence:
         prov = self._provenance()
-        if age_days is not None and age_days < self.min_age_days:
-            return Evidence.abstain("screening.pcg", Source.MODEL, prov,
-                                    f"yosh {age_days:.0f} kun: model {self.min_age_days:.0f} kundan kichiklarda "
-                                    "validatsiya qilinmagan — pulsoksimetriya va klinik ko'rik asosiy")
+        reason = age_error(age_days, self.min_age_days, 365 * 21, "kun")
+        # Research datasets may give a documented age band instead of an exact age.
+        # Accept only if the ENTIRE band is eligible; never invent an exact age.
+        if age_days is None and age_range_days is not None:
+            lo, hi = age_range_days
+            if lo <= hi and not age_error(lo, self.min_age_days, 365 * 21, "kun") and not age_error(hi, self.min_age_days, 365 * 21, "kun"):
+                reason = None
+        if reason:
+            return Evidence.abstain("screening.pcg", Source.MODEL, prov, reason)
         per_rec, skipped = [], []
         for rec in recordings:
             raw, sr, clip = load_wav(rec.wav)
@@ -91,11 +98,14 @@ class PCGModel:
                 continue
             win = windows(preprocess(raw, sr))
             p_m, p_o = self.backend(log_mel(win))
+            if not valid_probabilities(p_m, (len(win),)) or not valid_probabilities(p_o, (len(win),)):
+                return Evidence.abstain("screening.pcg", Source.MODEL, prov,
+                                        "model ehtimolliklari noto'g'ri — qayta tekshirish kerak")
             p_rec = float(p_m.mean())
             agree = float(np.mean((p_m >= 0.5) == (p_rec >= 0.5)))
-            per_rec.append({"location": rec.location, "p_murmur": round(p_rec, 4),
+            per_rec.append({"location": rec.location, "p_murmur": p_rec,
                             "p_abnormal": round(float(p_o.mean()), 4),
-                            "window_agreement": round(agree, 3), "n_windows": int(len(p_m))})
+                            "window_agreement": agree, "n_windows": int(len(p_m))})
 
         if not per_rec:
             return Evidence.abstain("screening.pcg", Source.MODEL, prov,

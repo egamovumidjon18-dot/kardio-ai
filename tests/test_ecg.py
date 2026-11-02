@@ -39,27 +39,27 @@ def test_preprocess_shape_and_resample():
 
 
 def test_afib_high_probability_is_high_risk():
-    ev = model([0.95, 0.01, 0.1, 0.1, 0.1, 0.1]).analyze(fake_ecg(), 500)
+    ev = model([0.95, 0.01, 0.1, 0.1, 0.1, 0.1]).analyze(fake_ecg(), 500, age_years=60)
     assert not ev.abstained and ev.risk == RiskLevel.HIGH and ev.kind == "ecg.afib"
     assert "shifokor" in ev.explanation[0]
 
 
 def test_uncertain_zone_abstains():
-    ev = model([0.5, 0.5, 0.1, 0.1, 0.1, 0.1]).analyze(fake_ecg(), 500)
+    ev = model([0.5, 0.5, 0.1, 0.1, 0.1, 0.1]).analyze(fake_ecg(), 500, age_years=60)
     assert ev.abstained and "noaniq" in ev.explanation[0]
 
 
 def test_no_afib_other_findings_moderate_and_normal_low():
-    assert model([0.02, 0.1, 0.9, 0.1, 0.1, 0.1]).analyze(fake_ecg(), 500).risk == RiskLevel.MODERATE
-    ev = model([0.02, 0.9, 0.1, 0.1, 0.1, 0.1]).analyze(fake_ecg(), 500)
+    assert model([0.02, 0.1, 0.9, 0.1, 0.1, 0.1]).analyze(fake_ecg(), 500, age_years=60).risk == RiskLevel.MODERATE
+    ev = model([0.02, 0.9, 0.1, 0.1, 0.1, 0.1]).analyze(fake_ecg(), 500, age_years=60)
     assert ev.risk == RiskLevel.LOW and not ev.abstained
 
 
 def test_poor_quality_abstains():
     flat = fake_ecg()
     flat[:] = 0
-    assert model([0.9, 0, 0, 0, 0, 0]).analyze(flat, 500).abstained
-    ev = model([0.9, 0, 0, 0, 0, 0]).analyze(fake_ecg(seconds=4), 500)
+    assert model([0.9, 0, 0, 0, 0, 0]).analyze(flat, 500, age_years=60).abstained
+    ev = model([0.9, 0, 0, 0, 0, 0]).analyze(fake_ecg(seconds=4), 500, age_years=60)
     assert ev.abstained and "qisqa" in ev.explanation[0]
     noisy = fake_ecg()
     noisy += np.random.default_rng(1).standard_normal(noisy.shape).astype(np.float32) * 1.5
@@ -77,7 +77,7 @@ def test_one_or_two_bad_leads_tolerated_three_not():
 
 def test_missing_leads_and_children_abstain():
     m = model([0.9, 0, 0, 0, 0, 0])
-    ev = m.analyze(fake_ecg(n_leads=1), 500, ("II",))
+    ev = m.analyze(fake_ecg(n_leads=1), 500, ("II",), age_years=60)
     assert ev.abstained and "tarmoq" in ev.explanation[0]
     assert m.analyze(fake_ecg(), 500, age_years=9).abstained
 

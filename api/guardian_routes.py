@@ -12,7 +12,7 @@ from core.episode import Episode, Stage
 from core.evidence import Evidence
 from core.store import EpisodeStore
 from guardian.checkin import vitals_and_symptoms, weight_trend, wound
-from guardian.escalation import Notifier, escalate
+from guardian.escalation import Alert, Notifier, escalate
 from guardian.inr import Indication, assess_inr, parse_inr_text
 
 
@@ -59,9 +59,13 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
         for ev in items:
             ep.add(ev)
         esc = escalate(ep.patient_ref, _postop_day(ep, at), items, notifier)
-        alert = record_alert(store, ep, esc, action)
-        store.save(ep, actor, action, {"alert": esc.alert.value, "notified": esc.notified,
-                                       "alert_id": alert["id"] if alert else None})
+        alert = store.save_with_alert(
+            ep, actor, action,
+            level=esc.alert.value if esc.alert != Alert.GREEN else None,
+            reasons=esc.reasons,
+            message=esc.message,
+            delivered=esc.notified if (esc.message and getattr(notifier, "is_external", True)) else None,
+        )
         return {"escalation": esc.to_dict(), "evidence": [e.to_dict() for e in items],
                 "alert_id": alert["id"] if alert else None}
 
@@ -81,6 +85,7 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
             history = [(e.created_at, e.value) for e in ep.evidence if e.kind == "guardian.weight"]
             history = [(_aware(datetime.fromisoformat(d)).isoformat(), w) for d, w in history]
             ev = weight_trend(history + [(at.isoformat(), body.weight_kg)])
+            ev.value = body.weight_kg              # preserve the submitted measurement, even for a backdated entry
             ev.created_at = at.isoformat()            # o'lchov vaqti — keyingi trendlar uchun
             items.append(ev)
         if any(v is not None for v in (body.heart_rate, body.spo2, body.temperature_c)) or body.symptoms or body.unsure_symptoms or body.questionnaire:

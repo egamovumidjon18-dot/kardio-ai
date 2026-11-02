@@ -56,7 +56,7 @@ def evaluate(model: PCGModel, items: list[dict]) -> list[dict]:
     rows = []
     for it in items:
         try:
-            ev = model.analyze([Recording("UNK", it["path"])])
+            ev = model.analyze([Recording("UNK", it["path"])], age_days=it.get("age_days"))
         except ValueError as exc:                     # buzilgan WAV
             rows.append({**it, "p": None, "abstained": True, "decision": None, "reason": str(exc)})
             continue

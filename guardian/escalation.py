@@ -46,6 +46,8 @@ class Notifier(Protocol):
 
 
 class LogNotifier:
+    is_external: bool = False
+
     def __init__(self) -> None:
         self.sent: list[str] = []
 
@@ -56,6 +58,8 @@ class LogNotifier:
 
 
 class TelegramNotifier:
+    is_external: bool = True
+
     """CARDIOPATH_TG_TOKEN + CARDIOPATH_TG_CHAT (jarroh yoki navbatchi guruh)."""
 
     def __init__(self, token: str, chat_id: str) -> None:

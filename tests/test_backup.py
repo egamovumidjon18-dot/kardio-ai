@@ -52,3 +52,31 @@ def test_api_backup_now_and_list(tmp_path):
     r = c.post("/backups")
     assert r.status_code == 201 and r.json()["name"].startswith("cardiopath-")
     assert len(c.get("/backups").json()["items"]) == 1
+
+
+def test_restore_missing_backup_raises_and_does_not_replace(tmp_path):
+    db = tmp_path / "live.db"
+    SqliteEpisodeStore(str(db))
+    non_existent = tmp_path / "does_not_exist.db"
+    import pytest
+    with pytest.raises(FileNotFoundError):
+        restore_backup(non_existent, db)
+    # Target database must remain intact and non_existent must not be created
+    assert db.exists() and not non_existent.exists()
+
+
+def test_restore_empty_sqlite_db_rejected(tmp_path):
+    db = tmp_path / "live.db"
+    store = SqliteEpisodeStore(str(db))
+    store.save(store.get(store.ids()[0]) if store.ids() else None or __import__("core.episode", fromlist=["Episode"]).Episode("P1"), "dr", "init")
+    empty_db = tmp_path / "empty.db"
+    sqlite3.connect(str(empty_db)).close()
+    import pytest
+    with pytest.raises(ValueError, match="kerakli jadvallar yo'q"):
+        restore_backup(empty_db, db)
+
+
+def test_create_backup_missing_db_raises(tmp_path):
+    import pytest
+    with pytest.raises(FileNotFoundError):
+        create_backup(tmp_path / "nonexistent.db", tmp_path / "bk")

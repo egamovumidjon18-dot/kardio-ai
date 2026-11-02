@@ -1,4 +1,6 @@
 """AI modullarni tizimga ulash: EF solishtiruvi, kiritilmagan maydonlar, epizod xulosasi (digest), Heart Team protokoli."""
+from core.evidence import utcnow
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -34,12 +36,13 @@ def heart_team_episode(client, ref="HT-1"):
 
 
 def risk(client, eid, lvef=55, es_extra=None, **aki):
-    body = {"actor": "dr", "euroscore": {**ES, **(es_extra or {})}, "aki": {**AKI, "lvef_percent": lvef, **aki}}
+    body = {"actor": "dr", "lvef_measured_at": utcnow(), "euroscore": {**ES, **(es_extra or {})}, "aki": {**AKI, "lvef_percent": lvef, **aki}}
     return client.post(f"/episodes/{eid}/risk", json=body)
 
 
 def inject(store, eid, ev):
     ep = store.get(eid)
+    ev.measured_at = ev.measured_at or ev.created_at
     ep.add(ev)
     store.save(ep, "test", "inject")
     return ev
@@ -313,9 +316,9 @@ def test_measurements_far_apart_in_time_are_not_compared():
     ep = Episode(patient_ref="T-1", population="adult")
     old = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat()
     ecg = Evidence(kind="ecg.low_ef", value={"p_low_ef": .9}, source=Source.MODEL, provenance=Provenance(name="m"),
-                   risk=RiskLevel.MODERATE, created_at=old)
-    echo = Evidence(kind="echo.ef", value=30.0, source=Source.MODEL, provenance=Provenance(name="e"), risk=RiskLevel.HIGH, created_at=old)
-    ep.add(ecg); ep.add(echo); ep.add(lvef_evidence(62))
+                   risk=RiskLevel.MODERATE, created_at=old, measured_at=old)
+    echo = Evidence(kind="echo.ef", value=30.0, source=Source.MODEL, provenance=Provenance(name="e"), risk=RiskLevel.HIGH, created_at=old, measured_at=old)
+    ep.add(ecg); ep.add(echo); ep.add(lvef_evidence(62, utcnow()))
     c = ecg_lvef_concordance(ep)
     assert c["status"] == "not_comparable" and not c["needs_discussion"] and "90 kun" in c["message"]
     e = ef_concordance(ep)

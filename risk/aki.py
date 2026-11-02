@@ -8,6 +8,7 @@ Concordance faqat xavf TOIFASI darajasida, tolerance=1 bilan solishtiriladi.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+import math
 from pathlib import Path
 from typing import Callable, Literal, Optional
 
@@ -37,7 +38,8 @@ class AKIInput:
 
 def thakar(x: AKIInput) -> Evidence:
     prov = Provenance(name="thakar_cleveland", version="2005", reference=REFERENCE)
-    if x.creatinine_umol_l <= 0 or x.surgery not in SURGERY_POINTS:
+    if (not math.isfinite(x.creatinine_umol_l) or not math.isfinite(x.lvef_percent)
+            or x.creatinine_umol_l <= 0 or not 0 < x.lvef_percent <= 100 or x.surgery not in SURGERY_POINTS):
         return Evidence.abstain("risk.aki.rule", Source.RULE, prov, "kiritilgan qiymatlar noto'g'ri")
     cr = x.creatinine_umol_l / 88.4
     items = [
@@ -101,7 +103,11 @@ class AKIModel:
     def analyze(self, x: AKIInput) -> Evidence:
         prov = Provenance(name=self.card.name, version=self.card.version, reference=self.card.task,
                           dataset_license=self.card.dataset_license)
+        if thakar(x).abstained:
+            return Evidence.abstain("risk.aki.model", Source.MODEL, prov, "kiritilgan qiymatlar noto'g'ri")
         p = self.predict(featurize(x))
+        if not math.isfinite(p) or not 0 <= p <= 1:
+            return Evidence.abstain("risk.aki.model", Source.MODEL, prov, "model ehtimolligi noto'g'ri")
         th = self.card.thresholds
         band = th.get("abstain_band")
         if band and band[0] < p < band[1]:

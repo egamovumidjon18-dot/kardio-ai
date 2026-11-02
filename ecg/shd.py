@@ -16,6 +16,7 @@ from typing import Callable, Optional
 import numpy as np
 
 from core.evidence import Evidence, Provenance, RiskLevel, Source
+from core.model_safety import age_error, valid_probabilities
 from core.registry import ModelCard, check_license
 from ecg.signal import LEADS_12, N_SAMPLES, assess_quality, preprocess, select_leads
 
@@ -75,9 +76,9 @@ class StructuralFromECG:
     def analyze(self, signal: np.ndarray, fs: float, leads: tuple[str, ...] = LEADS_12,
                 age_years: Optional[float] = None) -> Evidence:
         prov = self._prov()
-        if age_years is not None and age_years < self.min_age_years:
-            return Evidence.abstain(KIND, Source.MODEL, prov,
-                                    f"yosh {age_years:.0f}: model faqat kattalarda (EchoNext) o'rgatilgan — ExoKG kerak")
+        reason = age_error(age_years, self.min_age_years, 120, "yil")
+        if reason:
+            return Evidence.abstain(KIND, Source.MODEL, prov, reason)
         try:
             x12 = select_leads(np.asarray(signal, dtype=np.float32), tuple(leads), self.leads)
         except ValueError as exc:
@@ -87,10 +88,13 @@ class StructuralFromECG:
             return Evidence.abstain(KIND, Source.MODEL, prov, "sifatsiz EKG: " + "; ".join(q.reasons))
         x = preprocess(x12, fs)
         assert x.shape[-1] == N_SAMPLES
-        p = self.backend(x[None])[0]
+        output = self.backend(x[None])
+        if not valid_probabilities(output, (1, len(self.labels))):
+            return Evidence.abstain(KIND, Source.MODEL, prov, "model ehtimolliklari noto'g'ri — qayta tekshirish kerak")
+        p = output[0]
         status, probs = {}, {}
         for n in self.enabled:
-            v = round(float(p[self.labels.index(n)]), 4)
+            v = float(p[self.labels.index(n)])
             lo, hi = float(self.th[n]["low"]), float(self.th[n]["high"])
             probs[n] = v
             status[n] = "positive" if v >= hi else "negative" if v <= lo else "uncertain"

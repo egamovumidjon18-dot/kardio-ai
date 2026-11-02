@@ -55,7 +55,7 @@ def test_models_endpoint_lists_blocked(tmp_path):
 def test_ecg_endpoint_records_evidence(tmp_path):
     c = make_client(tmp_path)
     eid = new(c)
-    r = c.post(f"/episodes/{eid}/ecg", data={"actor": "dr", "fs": "100"}, files={"file": ("e.csv", ecg_csv(), "text/csv")})
+    r = c.post(f"/episodes/{eid}/ecg", data={"actor": "dr", "fs": "100", "age_years": "60"}, files={"file": ("e.csv", ecg_csv(), "text/csv")})
     assert r.status_code == 200, r.text
     assert r.json()["evidence"]["kind"] == "ecg.afib" and r.json()["evidence"]["risk"] == "high"
     assert "escalation" not in r.json()
@@ -66,7 +66,7 @@ def test_ecg_in_guardian_stage_escalates_red(tmp_path):
     c = make_client(tmp_path)
     eid = new(c)
     to_guardian(c, eid)
-    r = c.post(f"/episodes/{eid}/ecg", data={"actor": "dr", "fs": "100"}, files={"file": ("e.csv", ecg_csv(), "text/csv")})
+    r = c.post(f"/episodes/{eid}/ecg", data={"actor": "dr", "fs": "100", "age_years": "60"}, files={"file": ("e.csv", ecg_csv(), "text/csv")})
     assert r.json()["escalation"]["alert"] == "red"
 
 

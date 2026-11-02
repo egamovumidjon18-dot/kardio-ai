@@ -17,7 +17,7 @@ from typing import Optional, Protocol
 
 from core.evidence import utcnow
 from core.store import EpisodeStore
-from learning.dataset import label_of, split_children, usable
+from learning.dataset import SPLIT_SCHEME, label_of, split_children, usable
 from learning.gates import CFG, dataset_gate, model_gate, paired_bootstrap_delta
 from learning.versions import ModelVersions
 from research.export_local import collect_children
@@ -65,6 +65,11 @@ def run_cycle(store: EpisodeStore, recordings_dir: Path, versions: ModelVersions
         (versions.root / "last_cycle.json").write_text(json.dumps(result, indent=2, ensure_ascii=False, default=float), encoding="utf-8")
         return result
 
+    current = versions.current()
+    if current and versions.report(current).get("split_scheme") != SPLIT_SCHEME:
+        return done("split_migration_required", message="joriy mahalliy model eski epizod bo'linishida o'qitilgan; "
+                    "mustaqil baholash uchun bazaviy modeldan yangi bemor bo'linishi bilan boshlash kerak")
+
     ds = dataset_gate(children, cfg)
     result["dataset_gate"] = ds
     if len(new) < cfg["min_new"] and not force:
@@ -80,7 +85,8 @@ def run_cycle(store: EpisodeStore, recordings_dir: Path, versions: ModelVersions
     d, lo, hi, n_pair = _paired(chall["rows_local"], champ["rows_local"])
     control = engine.control(split)
     gates = model_gate(champ, chall, (d, lo, hi), control, cfg)
-    report = {"children_ids": sorted(c["eid"] for c in use), "split_counts": {k: len(v) for k, v in split.items()},
+    report = {"split_scheme": SPLIT_SCHEME,
+              "children_ids": sorted(c["eid"] for c in use), "split_counts": {k: len(v) for k, v in split.items()},
               "dataset_gate": ds, "champion_version": result["champion"], "champion": {k: champ[k] for k in ("local", "circor")},
               "challenger": {k: chall[k] for k in ("local", "circor")},
               "delta_local": {"delta": d, "lo": lo, "hi": hi, "n_paired": n_pair}, "control_auroc": control, "gates": gates,

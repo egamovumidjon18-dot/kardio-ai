@@ -2,12 +2,18 @@
 from __future__ import annotations
 
 from typing import Callable, Optional
+from datetime import datetime
+import math
+from functools import partial
+import anyio
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 
 from core.episode import Episode, Stage
+from core.measurements import measurement_time
+from core.model_safety import guarded_inference
 from core.evidence import Evidence, Provenance, RiskLevel, Source
 from core.store import EpisodeStore
 from integration.concordances import aki_concordance, ef_concordance, lvef_evidence
@@ -40,6 +46,7 @@ class RiskIn(BaseModel):
     actor: str
     euroscore: EuroScoreInput
     aki: AKIInput
+    lvef_measured_at: Optional[datetime] = None
 
 
 def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], aki_model: Optional[AKIModel]) -> None:
@@ -49,20 +56,35 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], a
         if ep.stage not in (Stage.HEART_TEAM, Stage.ICU):
             raise HTTPException(409, f"xavf baholash HEART_TEAM yoki ICU bosqichida (hozir: {ep.stage.value})")
         raw_es = ((await request.json()).get("euroscore") or {})
+        try:
+            measured = measurement_time(body.lvef_measured_at)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
 
         # Bitta bemor — bitta LVEF. AKI blokida u majburiy; EuroSCORE'da berilgan bo'lsa, mos kelishi shart.
         lvef = body.aki.lvef_percent
+        if not math.isfinite(lvef) or not 0 < lvef <= 100:
+            raise HTTPException(422, "LVEF 0 dan katta va 100% dan oshmasligi kerak")
+        for es_key, aki_key in (("female", "female"), ("creatinine_umol_l", "creatinine_umol_l"),
+                                ("chronic_lung_disease", "copd"), ("insulin_diabetes", "insulin_diabetes"),
+                                ("previous_cardiac_surgery", "previous_cardiac_surgery")):
+            if es_key in raw_es and getattr(body.euroscore, es_key) != getattr(body.aki, aki_key):
+                raise HTTPException(422, f"ikki blokda {es_key} har xil — bitta bemor uchun qiymatlarni tekshiring")
         if "lvef_percent" in raw_es and abs(float(raw_es["lvef_percent"]) - lvef) > 1e-9:
             raise HTTPException(422, f"LVEF ikki blokda har xil: EuroSCORE {raw_es['lvef_percent']}%, AKI {lvef}% — "
                                      "bitta bemorda bitta qiymat bo'lishi kerak")
         body.euroscore.lvef_percent = lvef
 
         added = [euroscore2(body.euroscore), thakar(body.aki)]       # tartib: mavjud mijozlar evidence[0] = EuroSCORE'ga tayanadi
+        if any(e.abstained for e in added):
+            raise HTTPException(422, "; ".join(s for e in added if e.abstained for s in e.explanation))
         if aki_model is not None:
-            added.append(aki_model.analyze(body.aki))
-        added.append(lvef_evidence(lvef))
+            added.append(await anyio.to_thread.run_sync(
+                partial(guarded_inference, aki_model, "risk.aki.model", partial(aki_model.analyze, body.aki)),
+                limiter=app.state.inference_limiter))
+        added.append(lvef_evidence(lvef, measured))
         missing = [k for k in SILENT_DEFAULTS if k not in raw_es]
-        if missing:
+        if missing or ep.latest("risk.assumptions") is not None:
             added.append(Evidence(kind="risk.assumptions", value=missing, source=Source.RULE,
                                   provenance=Provenance(name="euroscore2_defaults", reference="EuroSCORE II"),
                                   risk=RiskLevel.UNKNOWN,

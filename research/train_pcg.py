@@ -57,6 +57,7 @@ def read_patients(data_dir: Path) -> list[dict]:
             recs.append({"path": wav, "location": loc, "murmur": m})
         extra = (r.get("Additional ID") or "").strip()
         patients.append({"id": pid, "murmur": murmur, "outcome": int(r["Outcome"].strip() == "Abnormal"),
+                         "age_group": r.get("Age", "").strip(),
                          "additional_id": extra if extra not in ("", "nan") else None, "recordings": recs})
     return [p for p in patients if p["recordings"]]
 

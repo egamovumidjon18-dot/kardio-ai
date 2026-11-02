@@ -23,7 +23,12 @@ from screening.model import PCGModel, Recording
 def run(model: PCGModel, patients: list[dict]) -> list[dict]:
     out = []
     for p in patients:
-        ev = model.analyze([Recording(r["location"], r["path"]) for r in p["recordings"]])
+        # PhysioNet CirCor 1.0.3 documents Child (1–11 years), Adolescent (12–18).
+        # Infant starts at 28 days, crossing our existing 29-day guard: exact age is required.
+        # https://physionet.org/content/circor-heart-sound/1.0.3/
+        bands = {"Child": (365, 12 * 366), "Adolescent": (12 * 365, 19 * 366)}
+        ev = model.analyze([Recording(r["location"], r["path"]) for r in p["recordings"]],
+                           age_days=p.get("age_days"), age_range_days=bands.get(p.get("age_group")))
         v = ev.value or {}
         out.append({"id": p["id"], "murmur": p["murmur"], "outcome": p["outcome"],
                     "p": v.get("p_murmur"), "p_abnormal": v.get("p_abnormal"),

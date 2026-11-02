@@ -13,12 +13,12 @@ from core.episode import Episode
 from core.evidence import Evidence, Provenance, Source
 
 
-def lvef_evidence(percent: float) -> Evidence:
+def lvef_evidence(percent: float, measured_at: Optional[str] = None) -> Evidence:
     """Shifokor kiritgan LVEF (ExoKG o'lchovi) — AI EF bilan solishtirish uchun «qoida tomoni»."""
     return Evidence(kind="clinician.lvef", value=round(float(percent), 1), unit="%", source=Source.CLINICIAN,
                     provenance=Provenance(name="clinician_input", reference="xavf baholashda kiritilgan LVEF (ExoKG)"),
                     risk=ef_risk(float(percent)),
-                    explanation=[f"shifokor kiritgan LVEF {percent:.0f}%"])
+                    explanation=[f"shifokor kiritgan LVEF {percent:.0f}%"], measured_at=measured_at)
 
 
 LOW_EF_CUTOFF = 45.0
@@ -27,7 +27,9 @@ MAX_GAP_DAYS = 30      # LVEF o'zgarishi mumkin: bundan uzoq vaqt farqidagi o'lc
 
 def _gap_days(a, b) -> Optional[float]:
     try:
-        return abs((datetime.fromisoformat(a.created_at) - datetime.fromisoformat(b.created_at)).total_seconds()) / 86400
+        if not a.measured_at or not b.measured_at:
+            return None
+        return abs((datetime.fromisoformat(a.measured_at) - datetime.fromisoformat(b.measured_at)).total_seconds()) / 86400
     except (TypeError, ValueError):
         return None
 
@@ -43,6 +45,10 @@ def ecg_lvef_concordance(ep: Episode) -> Optional[dict]:
     measured_low = float(lvef.value) <= LOW_EF_CUTOFF
     q = "Past EF: AI-EKG vs o'lchangan LVEF"
     gap = _gap_days(ai, lvef)
+    if gap is None:
+        return {"question": q, "status": "not_comparable", "needs_discussion": False,
+                "evidence_ids": [ai.id, lvef.id],
+                "message": "O'lchov sanasi noma'lum — natijalar vaqt bo'yicha solishtirilmaydi."}
     if gap is not None and gap > MAX_GAP_DAYS:
         return {"question": q, "status": "not_comparable", "needs_discussion": False, "evidence_ids": [ai.id, lvef.id],
                 "message": f"EKG va ExoKG o'lchovi orasida {gap:.0f} kun — LVEF o'zgargan bo'lishi mumkin, solishtirilmaydi. "
@@ -74,6 +80,10 @@ def ef_concordance(ep: Episode) -> Optional[ConcordanceResult]:
     if rule is None or ai is None:
         return None
     gap = _gap_days(rule, ai)
+    if gap is None:
+        return ConcordanceResult(question="LVEF: shifokor vs AI (ExoKG video)", status=Agreement.NOT_COMPARABLE,
+                                 rule=rule, ai=ai, final_risk=rule.risk,
+                                 message="O'lchov sanasi noma'lum — natijalar vaqt bo'yicha solishtirilmaydi.")
     if gap is not None and gap > MAX_GAP_DAYS:
         return ConcordanceResult(question="LVEF: shifokor vs AI (ExoKG video)", status=Agreement.NOT_COMPARABLE, rule=rule, ai=ai,
                                  final_risk=rule.risk, message=f"O'lchovlar orasida {gap:.0f} kun — solishtirilmaydi; shifokor o'lchovi asosiy.")

@@ -52,7 +52,7 @@ def test_flags_listed_by_name():
 
 def test_ai_murmur_and_disagreement(wav_factory):
     pcg = PCGModel(CARD, lambda x: (np.full(len(x), 0.95, np.float32), np.zeros(len(x), np.float32))) \
-        .analyze([Recording("MV", wav_factory())])
+        .analyze([Recording("MV", wav_factory())], age_days=900)
     r = report([resting_spo2(98), red_flags([])], pcg, uploaded=1)
     assert r["level"] == "yellow" and "mitral" in r["items"][-1]["text"] and r["attention"]
     no_tech(r)
@@ -62,7 +62,7 @@ def test_ai_abstain_reasons_are_actionable(wav_factory):
     model = PCGModel(CARD, lambda x: (np.full(len(x), 0.1, np.float32), np.zeros(len(x), np.float32)))
     newborn = report([red_flags([])], model.analyze([Recording("MV", wav_factory())], age_days=5), uploaded=1)
     assert "1 oydan kichik" in newborn["items"][-1]["text"]
-    short = report([red_flags([])], model.analyze([Recording("MV", wav_factory(seconds=2))]), uploaded=1)
+    short = report([red_flags([])], model.analyze([Recording("MV", wav_factory(seconds=2))], age_days=900), uploaded=1)
     assert "Qayta yozib ko'ring" in short["items"][-1]["text"]
     no_tech(newborn); no_tech(short)
 
@@ -89,8 +89,8 @@ def test_russian_and_english_have_no_uzbek(lang, wav_factory):
     cases = [
         ([newborn_pulse_ox(85, 95), red_flags(["cyanosis"])], None, 0),
         ([newborn_pulse_ox(93, 93), red_flags([])], None, 0),
-        ([resting_spo2(98), red_flags([])], model.analyze([Recording("MV", wav_factory())]), 1),
-        ([red_flags([])], model.analyze([Recording("MV", wav_factory(seconds=2))]), 1),
+        ([resting_spo2(98), red_flags([])], model.analyze([Recording("MV", wav_factory())], age_days=900), 1),
+        ([red_flags([])], model.analyze([Recording("MV", wav_factory(seconds=2))], age_days=900), 1),
     ]
     for rules, pcg, up in cases:
         r = plain_report(triage(rules, pcg), rules, pcg, up, True, lang)

@@ -71,6 +71,7 @@ class Evidence:
     explanation: list[str] = field(default_factory=list)  # qoida izi / abstain sababi
     id: str = field(default_factory=lambda: uuid.uuid4().hex)
     created_at: str = field(default_factory=utcnow)
+    measured_at: Optional[str] = None  # actual acquisition time; None means unknown, not "today"
 
     def to_dict(self) -> dict:
         return asdict(self)

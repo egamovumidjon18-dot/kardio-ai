@@ -15,6 +15,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from typing import Optional
+from functools import partial
 
 from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import HTMLResponse
@@ -26,6 +27,7 @@ from fastapi import Depends
 from api import ai_routes, auth_routes, guardian_routes, learning_routes, risk_routes, shadow_routes
 from core.auth import AuthService
 from core.identity import effective_actor
+from core.model_safety import guarded_inference
 from learning.versions import resolve_weights_dir
 from api import alerts as alerts_api
 from integration.digest import episode_digest
@@ -90,12 +92,76 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
                shadow_store: Optional[ShadowStore] = None, delivery_retry_s: Optional[float] = None,
                learning_runner=None, learning_every_h: float = 0,
                backup_db: Optional[str] = None, backup_dir: Optional[Path] = None, backup_every_h: float = 24, backup_keep: int = 14) -> FastAPI:
+    import asyncio
+    import logging
+    from contextlib import asynccontextmanager
+
+    @asynccontextmanager
+    async def _lifespan(app: FastAPI):
+        tasks = []
+        if delivery_retry_s:
+            async def _d_loop() -> None:
+                while True:
+                    try:
+                        await asyncio.to_thread(alerts_api.retry_deliveries, store, notifier)
+                    except Exception as exc:  # noqa: BLE001 — navbat to'xtab qolmasin
+                        logging.getLogger("cardiopath.alerts").warning("qayta yuborish xatosi: %s", exc)
+                    await asyncio.sleep(delivery_retry_s)
+            t_d = asyncio.create_task(_d_loop())
+            app.state.delivery_task = t_d
+            tasks.append(t_d)
+
+        if backup_db and backup_dir and backup_every_h > 0:
+            from core import backup as backup_mod
+
+            def _due() -> bool:
+                items = backup_mod.list_backups(backup_dir)
+                if not items:
+                    return True
+                import time as _t
+                return _t.time() - Path(items[0]["path"]).stat().st_mtime >= backup_every_h * 3600
+
+            async def _b_loop() -> None:
+                while True:
+                    try:
+                        if _due():
+                            await asyncio.to_thread(backup_mod.create_backup, backup_db, backup_dir, backup_keep)
+                    except Exception as exc:  # noqa: BLE001 — zaxira xatosi ishni to'xtatmasin, lekin yozilsin
+                        logging.getLogger("cardiopath.backup").error("zaxira nusxa olinmadi: %s", exc)
+                    await asyncio.sleep(3600)
+            t_b = asyncio.create_task(_b_loop())
+            app.state.backup_task = t_b
+            tasks.append(t_b)
+
+        if learning_runner is not None and learning_every_h > 0 and models_dir is not None:
+            from learning.schedule import maybe_run_cycle
+
+            async def _l_loop() -> None:
+                while True:
+                    try:                              # soatda bir tekshiradi; nomzod faqat tasdiq uchun tayyorlanadi
+                        await asyncio.to_thread(maybe_run_cycle, store, recordings_dir, models_dir, learning_every_h, learning_runner)
+                    except Exception as exc:          # noqa: BLE001
+                        logging.getLogger("cardiopath.learning").warning("sikl xatosi: %s", exc)
+                    await asyncio.sleep(3600)
+            t_l = asyncio.create_task(_l_loop())
+            app.state.learning_task = t_l
+            tasks.append(t_l)
+
+        try:
+            yield
+        finally:
+            for t in tasks:
+                t.cancel()
+            if tasks:
+                await asyncio.gather(*tasks, return_exceptions=True)
+
     # Kirish yoqilgan bo'lsa: har bir so'rov huquq jadvali bo'yicha tekshiriladi; API hujjatlari (/docs) ochiq qolmaydi.
     app = FastAPI(title="CardioPath AI", version="0.1.0",
                   description="Kardiologiya va kardioxirurgiya yagona AI-CDSS platformasi. " + DISCLAIMER,
                   dependencies=[Depends(auth_routes.make_dependency(auth))] if auth else None,
                   docs_url=None if auth else "/docs", redoc_url=None if auth else "/redoc",
-                  openapi_url=None if auth else "/openapi.json")
+                  openapi_url=None if auth else "/openapi.json",
+                  lifespan=_lifespan)
 
     # Bitta bemorga keladigan o'zgartiruvchi so'rovlar navbat bilan bajariladi (o'qish → o'zgartirish → saqlash aralashmasin).
     # Bu bitta jarayon ichida; bir necha jarayon/server uchun store'dagi versiya tekshiruvi (EpisodeConflict) xavfsizlik to'ri.
@@ -103,9 +169,13 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
     import threading as _th
 
     import anyio
-    _ep_locks: dict[str, _th.Lock] = {}
+    import weakref
+    # Waiting for a patient lock must not occupy the same worker pool that
+    # synchronous endpoints need to release it. Keep locks only while in use.
+    _ep_locks = weakref.WeakValueDictionary()
     _ep_locks_guard = _th.Lock()
     _ep_path = _re.compile(r"^/episodes/([^/]+)/")
+    app.state.inference_limiter = anyio.CapacityLimiter(2)
 
     @app.middleware("http")
     async def serialize_episode_writes(request, call_next):
@@ -114,7 +184,8 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
             return await call_next(request)
         with _ep_locks_guard:
             lock = _ep_locks.setdefault(m.group(1), _th.Lock())
-        await anyio.to_thread.run_sync(lock.acquire)          # hodisalar siklini bloklamasdan kutish
+        while not lock.acquire(blocking=False):
+            await anyio.sleep(0.01)
         try:
             return await call_next(request)
         finally:
@@ -173,30 +244,8 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
     if models_dir is not None:
         learning_routes.register(app, store, models_dir, recordings_dir, running_version, auth_enabled=auth is not None)
 
-    if delivery_retry_s:
-        import asyncio
-        import logging
-
-        @app.on_event("startup")
-        async def _delivery_loop() -> None:
-            async def loop() -> None:
-                while True:
-                    try:
-                        await asyncio.to_thread(alerts_api.retry_deliveries, store, notifier)
-                    except Exception as exc:          # noqa: BLE001 — navbat to'xtab qolmasin
-                        logging.getLogger("cardiopath.alerts").warning("qayta yuborish xatosi: %s", exc)
-                    await asyncio.sleep(delivery_retry_s)
-            app.state.delivery_task = asyncio.create_task(loop())
-
     if backup_db and backup_dir:
         from core import backup as backup_mod
-
-        def _backup_due() -> bool:
-            items = backup_mod.list_backups(backup_dir)
-            if not items:
-                return True
-            import time as _t
-            return _t.time() - Path(items[0]["path"]).stat().st_mtime >= backup_every_h * 3600
 
         @app.get("/backups")
         def list_backups() -> dict:
@@ -208,38 +257,6 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
             path = backup_mod.create_backup(backup_db, backup_dir, backup_keep)
             store.log_event(effective_actor("admin"), "backup.create", {"file": path.name})
             return {"name": path.name, "size_bytes": path.stat().st_size}
-
-        if backup_every_h > 0:
-            import asyncio
-
-            @app.on_event("startup")
-            async def _backup_loop() -> None:
-                async def loop() -> None:
-                    while True:
-                        try:
-                            if _backup_due():
-                                await asyncio.to_thread(backup_mod.create_backup, backup_db, backup_dir, backup_keep)
-                        except Exception as exc:      # noqa: BLE001 — zaxira xatosi ishni to'xtatmasin, lekin yozilsin
-                            import logging
-                            logging.getLogger("cardiopath.backup").error("zaxira nusxa olinmadi: %s", exc)
-                        await asyncio.sleep(3600)
-                app.state.backup_task = asyncio.create_task(loop())
-
-    if learning_runner is not None and learning_every_h > 0 and models_dir is not None:
-        import asyncio
-        from learning.schedule import maybe_run_cycle
-
-        @app.on_event("startup")
-        async def _learning_loop() -> None:
-            async def loop() -> None:
-                while True:
-                    try:                              # soatda bir tekshiradi; nomzod faqat tasdiq uchun tayyorlanadi
-                        await asyncio.to_thread(maybe_run_cycle, store, recordings_dir, models_dir, learning_every_h, learning_runner)
-                    except Exception as exc:          # noqa: BLE001
-                        import logging
-                        logging.getLogger("cardiopath.learning").warning("sikl xatosi: %s", exc)
-                    await asyncio.sleep(3600)
-            app.state.learning_task = asyncio.create_task(loop())
 
     @app.get("/health")
     def health() -> dict:
@@ -305,8 +322,8 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
         actor: str = Form(...),
         right_hand_spo2: Optional[float] = Form(None),
         foot_spo2: Optional[float] = Form(None),
-        attempt: int = Form(1),
-        age_hours: Optional[float] = Form(None),
+        attempt: int = Form(1, ge=1, le=2),
+        age_hours: Optional[float] = Form(None, ge=0, le=365 * 21 * 24),
         age_days: Optional[float] = Form(None, ge=0, le=365 * 21),
         resting: Optional[float] = Form(None, alias="resting_spo2"),
         flags: str = Form("", alias="red_flags", description="vergul bilan: cyanosis,hepatomegaly"),
@@ -327,14 +344,26 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
         if resting is not None:
             rule_items.append(resting_spo2(resting))
         rule_items.append(red_flags([c.strip() for c in flags.split(",") if c.strip()]))
+        if any(e.abstained for e in rule_items):
+            raise HTTPException(422, "; ".join(s for e in rule_items if e.abstained for s in e.explanation))
 
-        raw = [(_location(f.filename), await f.read()) for f in recordings]
+        if len(recordings) > 10:
+            raise HTTPException(413, "bir so'rovda ko'pi bilan 10 ta audio yozuv")
+        raw, remaining = [], 50 * 1024 * 1024
+        for f in recordings:
+            location = _location(f.filename)
+            data = await ai_routes._read(f, min(ai_routes.MAX_UPLOAD, remaining))
+            raw.append((location, data))
+            remaining -= len(data)
         if age_days is None and age_hours is not None:
             age_days = age_hours / 24
         pcg_ev = None
         if raw and pcg is not None:
             try:
-                pcg_ev = pcg.analyze([Recording(loc, data) for loc, data in raw], age_days=age_days)
+                predict = partial(pcg.analyze, [Recording(loc, data) for loc, data in raw], age_days=age_days)
+                pcg_ev = await anyio.to_thread.run_sync(
+                    partial(guarded_inference, pcg, "screening.pcg", predict, input_errors=(ValueError,)),
+                    limiter=app.state.inference_limiter)
             except ValueError as exc:  # buzilgan WAV
                 raise HTTPException(422, f"audio faylni o'qib bo'lmadi: {exc}") from None
 

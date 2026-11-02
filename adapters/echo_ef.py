@@ -20,6 +20,7 @@ from typing import Optional
 import numpy as np
 
 from core.evidence import Evidence, Provenance, RiskLevel, Source
+from core.model_safety import age_error
 from core.registry import ModelCard, check_license
 
 DEFAULT_ONNX = r"C:\Users\user\NeuroSon-AI\weights\heart_echonet.onnx"
@@ -105,9 +106,9 @@ class EchoEFAdapter:
 
     def analyze(self, video: str | Path, age_years: Optional[float] = None) -> Evidence:
         prov, kind = self._prov(), "echo.ef"
-        if age_years is not None and age_years < MIN_AGE_YEARS:
-            return Evidence.abstain(kind, Source.MODEL, prov,
-                                    f"yosh {age_years:.0f}: model kattalar ExoKG'sida o'rgatilgan — bolalarda baholanmagan")
+        reason = age_error(age_years, MIN_AGE_YEARS, 120, "yil")
+        if reason:
+            return Evidence.abstain(kind, Source.MODEL, prov, reason)
         if not Path(video).exists():
             return Evidence.abstain(kind, Source.MODEL, prov, "video fayl topilmadi")
         clip = sample_frames(video, self.num_frames, self.size)

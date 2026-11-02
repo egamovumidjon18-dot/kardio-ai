@@ -16,10 +16,14 @@ import time
 from pathlib import Path
 
 PREFIX = "cardiopath-"
+REQUIRED_TABLES = {"episodes", "audit_log"}
 
 
 def create_backup(db_path: str | Path, out_dir: str | Path, keep: int = 14) -> Path:
     """Izchil nusxa oladi, butunligini tekshiradi, eng yangi `keep` tadan eskilarini o'chiradi. Nusxa yo'lini qaytaradi."""
+    db_path = Path(db_path)
+    if not db_path.is_file():
+        raise FileNotFoundError(f"baza fayli topilmadi: {db_path}")
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     target = out_dir / f"{PREFIX}{time.strftime('%Y%m%d-%H%M%S')}.db"
@@ -27,7 +31,7 @@ def create_backup(db_path: str | Path, out_dir: str | Path, keep: int = 14) -> P
     while target.exists():
         target = target.with_name(f"{PREFIX}{time.strftime('%Y%m%d-%H%M%S')}-{n}.db"); n += 1
     tmp = target.with_suffix(".tmp")
-    src = sqlite3.connect(str(db_path))
+    src = sqlite3.connect(f"file:{db_path.resolve().as_posix()}?mode=ro", uri=True)
     dst = sqlite3.connect(str(tmp))
     try:
         src.backup(dst)                       # ishlab turgan bazadan ham to'g'ri nusxa (yozuvlar o'rtasida uzilmaydi)
@@ -56,18 +60,36 @@ def list_backups(out_dir: str | Path) -> list[dict]:
 def restore_backup(backup: str | Path, db_path: str | Path) -> Path:
     """Nusxani tiklaydi. Avvalgi baza «.before-restore» nomi bilan saqlanadi (adashib tiklansa, qaytarish mumkin)."""
     backup, db_path = Path(backup), Path(db_path)
-    con = sqlite3.connect(str(backup))
+    if not backup.is_file():
+        raise FileNotFoundError(f"zaxira nusxasi topilmadi: {backup}")
+    con = sqlite3.connect(f"file:{backup.resolve().as_posix()}?mode=ro", uri=True)
     try:
         ok = con.execute("PRAGMA integrity_check").fetchone()[0]
+        if ok != "ok":
+            raise RuntimeError(f"nusxa buzilgan, tiklanmadi: {ok}")
+        tables = {r[0] for r in con.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+        missing = REQUIRED_TABLES - tables
+        if missing:
+            raise ValueError(f"nusxada kerakli jadvallar yo'q: {missing}")
     finally:
         con.close()
-    if ok != "ok":
-        raise RuntimeError(f"nusxa buzilgan, tiklanmadi: {ok}")
-    kept = db_path.with_name(db_path.name + f".before-restore-{time.strftime('%Y%m%d-%H%M%S')}")
-    if db_path.exists():
-        shutil.copy2(db_path, kept)
-    shutil.copy2(backup, db_path)
-    return kept
+
+    tmp_restore = db_path.with_name(f"{db_path.name}.restore-{time.strftime('%Y%m%d-%H%M%S')}.tmp")
+    shutil.copy2(backup, tmp_restore)
+    try:
+        chk = sqlite3.connect(f"file:{tmp_restore.resolve().as_posix()}?mode=ro", uri=True)
+        try:
+            if chk.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+                raise RuntimeError("tiklangan vaqtinchalik nusxa tekshiruvdan o'tmadi")
+        finally:
+            chk.close()
+        kept = db_path.with_name(db_path.name + f".before-restore-{time.strftime('%Y%m%d-%H%M%S')}")
+        if db_path.exists():
+            shutil.copy2(db_path, kept)
+        shutil.move(str(tmp_restore), str(db_path))
+        return kept
+    finally:
+        tmp_restore.unlink(missing_ok=True)
 
 
 def main() -> None:

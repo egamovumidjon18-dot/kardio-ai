@@ -15,6 +15,7 @@ from typing import Callable, Optional
 import numpy as np
 
 from core.evidence import Evidence, Provenance, RiskLevel, Source
+from core.model_safety import age_error, valid_probabilities
 from core.registry import ModelCard, check_license
 from ecg.signal import LEADS_12, N_SAMPLES, assess_quality, preprocess, select_leads
 
@@ -70,10 +71,9 @@ class ECGModel:
                 age_years: Optional[float] = None) -> Evidence:
         """signal: [L, N] mV; leads — signal qatorlari nomlari (katta harf, 'AVR' shaklida)."""
         prov, kind = self._prov(), "ecg.afib"
-        if age_years is not None and age_years < self.min_age_years:
-            return Evidence.abstain(kind, Source.MODEL, prov,
-                                    f"yosh {age_years:.0f}: model faqat kattalarda (PTB-XL) o'rgatilgan — "
-                                    "bolalar EKG me'yorlari boshqa, kardiolog o'qiydi")
+        reason = age_error(age_years, self.min_age_years, 120, "yil")
+        if reason:
+            return Evidence.abstain(kind, Source.MODEL, prov, reason)
         try:
             x12 = select_leads(np.asarray(signal, dtype=np.float32), tuple(leads), self.leads)
         except ValueError as exc:
@@ -84,9 +84,12 @@ class ECGModel:
 
         x = preprocess(x12, fs)
         assert x.shape[-1] == N_SAMPLES
-        p = self.backend(x[None])[0]
+        output = self.backend(x[None])
+        if not valid_probabilities(output, (1, len(self.classes))):
+            return Evidence.abstain(kind, Source.MODEL, prov, "model ehtimolliklari noto'g'ri — qayta tekshirish kerak")
+        p = output[0]
         probs = {c: round(float(p[i]), 4) for i, c in enumerate(self.classes)}
-        p_af = probs["AFIB"]
+        p_af = float(p[self.classes.index("AFIB")])
         value = {"probabilities": probs, "p_afib": p_af, "bad_leads": q.bad_leads, "duration_s": round(q.duration_s, 1)}
         expl = [f"AFIB ehtimoli {p_af:.2f}"] + ([f"yaroqsiz tarmoqlar: {', '.join(q.bad_leads)}"] if q.bad_leads else [])
 
@@ -99,7 +102,7 @@ class ECGModel:
                             uncertainty=round(1.0 - abs(2 * p_af - 1), 4),
                             explanation=["bo'lmachalar fibrillyatsiyasi ehtimoli yuqori — shifokor EKGni ko'rib tasdiqlaydi"]
                                         + expl)
-        codes = [c for c in PATHOLOGY_NAMES if c in probs and probs[c] >= float(self.class_th.get(c, 0.5))]
+        codes = [c for c in PATHOLOGY_NAMES if c in probs and float(p[self.classes.index(c)]) >= float(self.class_th.get(c, 0.5))]
         found = [PATHOLOGY_NAMES[c] for c in codes]
         value["other_findings"], value["other_codes"] = found, codes
         if found:

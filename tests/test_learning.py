@@ -3,6 +3,7 @@
 Haqiqiy o'qitish bu yerda emas (u sekin): sikl tartibi soxta dvigatel bilan, darvozalar aniq raqamlar bilan sinaladi.
 """
 import json
+import hashlib
 import random
 import uuid
 from collections import Counter
@@ -33,13 +34,13 @@ def test_bucket_is_stable_and_roughly_proportional():
 
 
 def kid(i, dx, age=900, device="S1", t=None):
-    return {"eid": f"e{i:04d}", "created_at": t or f"2026-11-{1 + i // 40:02d}T{i % 24:02d}:{i % 60:02d}:00", "dx": dx,
+    return {"eid": f"e{i:04d}", "patient_key": f"e{i:04d}", "created_at": t or f"2026-11-{1 + i // 40:02d}T{i % 24:02d}:{i % 60:02d}:00", "dx": dx,
             "device": device, "age_days": age, "files": [{"location": "MV", "file": "MV.wav", "path": "x.wav"}]}
 
 
 def test_usable_excludes_ambiguous_and_neonates_and_labels_are_binary():
     ch = [kid(0, "VSD"), kid(1, "NORMAL"), kid(2, "PFO"), kid(3, "OTHER"), kid(4, "ASD", age=10), kid(5, "NORMAL", age=None)]
-    assert [c["eid"] for c in usable(ch)] == ["e0000", "e0001", "e0005"]
+    assert [c["eid"] for c in usable(ch)] == ["e0000", "e0001"]
     assert label_of("VSD") == 1 and label_of("NORMAL") == 0 and label_of("PFO") is None
     assert all(label_of(d) == 1 for d in CHD_POSITIVE)
     pts = to_patients([kid(0, "VSD"), kid(1, "NORMAL")])
@@ -204,11 +205,20 @@ def clinic(tmp_path_factory):
     store, rec = SqliteEpisodeStore(str(root / "c.db")), root / "rec"
     model = PCGModel(CARD, lambda x: (np.full(len(x), 0.1, np.float32), np.zeros(len(x), np.float32)))
     client = TestClient(create_app(store, model, recordings_dir=rec))
-    # epizod ID'si (uuid4) test/val/train bo'linishini belgilaydi. Tasodifiy ID bilan ~4% hollarda test guruhi juda kichik
-    # chiqib, darvozalar yiqilardi (48 urug'dan 2 tasi). Shuning uchun ID'lar doimiy urug'dan olinadi.
+    # Explicit balanced patient partitions; episode UUIDs do not determine the split.
+    refs = []
+    for i in range(120):
+        target = "test" if i % 10 < 3 else "val" if i % 10 < 5 else "train"
+        n = 0
+        while True:
+            ref = f"K-{i}-{n}"
+            if bucket(hashlib.sha256(ref.casefold().encode()).hexdigest()) == target:
+                refs.append(ref)
+                break
+            n += 1
     rnd = random.Random(0)
     with patch("core.episode.uuid.uuid4", lambda: uuid.UUID(int=rnd.getrandbits(128), version=4)):
-        eids = [client.post("/episodes", json={"patient_ref": f"K-{i}"}).json()["id"] for i in range(120)]
+        eids = [client.post("/episodes", json={"patient_ref": ref}).json()["id"] for ref in refs]
     for i, eid in enumerate(eids):
         client.post(f"/episodes/{eid}/screening", data={"actor": "dr", "age_days": "900", "research_consent": "true", "device": "S1"},
                     files=[("recordings", ("MV.wav", make_wav(seed=i), "audio/wav"))])

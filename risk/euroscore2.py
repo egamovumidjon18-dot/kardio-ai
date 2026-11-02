@@ -92,6 +92,13 @@ def risk_category(pct: float) -> RiskLevel:
 
 def euroscore2(x: EuroScoreInput) -> Evidence:
     prov = Provenance(name="euroscore2", version="2012", reference=REFERENCE)
+    numeric = [x.age, x.weight_kg, x.creatinine_umol_l, x.lvef_percent]
+    if x.pa_systolic_mmhg is not None:
+        numeric.append(x.pa_systolic_mmhg)
+    if (not all(math.isfinite(v) for v in numeric) or not 0 < x.lvef_percent <= 100
+            or (x.pa_systolic_mmhg is not None and x.pa_systolic_mmhg <= 0)
+            or x.urgency not in COEF["urgency"] or x.weight_of_intervention not in COEF["weight"]):
+        return Evidence.abstain("risk.euroscore2", Source.RULE, prov, "kiritilgan qiymatlar noto'g'ri")
     if not 18 <= x.age <= 95:
         return Evidence.abstain("risk.euroscore2", Source.RULE, prov,
                                 f"yosh {x.age}: EuroSCORE II 18–95 yosh uchun validatsiya qilingan")

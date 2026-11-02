@@ -4,17 +4,19 @@ Belgi: ExoKG tashxisi (oltin standart). Musbat — nuqson (ASD, VSD, PDA, AVSD, 
 PFO va OTHER noaniq (odatda shovqinsiz yoki turli) — o'qitishga ham, baholashga ham kirmaydi. 29 kundan kichik
 bolalar chiqariladi (platforma ularda yurak tovushi AI'ni ishlatmaydi).
 
-Bo'linish BOLA ID'sining xeshi bo'yicha barqaror: bola bir marta test/val/o'qitishga tushsa, keyingi sikllarda
+Bo'linish barqaror bemor kodining xeshi bo'yicha: bola bir marta test/val/o'qitishga tushsa, keyingi sikllarda
 ham o'sha yerda qoladi. Shunda test to'plami o'qitishga sizib kirmaydi va sikllar orasida solishtirsa bo'ladi.
 """
 from __future__ import annotations
 
 import hashlib
+import math
 from typing import Optional
 
 CHD_POSITIVE = {"ASD", "VSD", "PDA", "AVSD", "TOF", "COA", "PS", "AS"}
 MIN_AGE_DAYS = 29
 TEST_FRAC, VAL_FRAC = 0.25, 0.15
+SPLIT_SCHEME = "patient-ref-v1"
 
 
 def label_of(dx: str) -> Optional[int]:
@@ -24,12 +26,13 @@ def label_of(dx: str) -> Optional[int]:
 
 
 def usable(children: list[dict]) -> list[dict]:
-    return [c for c in children if label_of(c["dx"]) is not None
-            and not (c.get("age_days") is not None and c["age_days"] < MIN_AGE_DAYS)]
+    return [c for c in children if label_of(c["dx"]) is not None and c.get("patient_key")
+            and c.get("age_days") is not None and math.isfinite(c["age_days"])
+            and MIN_AGE_DAYS <= c["age_days"] <= 365 * 21]
 
 
 def bucket(eid: str) -> str:
-    """Barqaror bo'linish: 'test' (25%), 'val' (15%), qolgani 'train'."""
+    """Barqaror bemor kaliti bo'yicha: 'test' (25%), 'val' (15%), qolgani 'train'."""
     x = int(hashlib.sha256(eid.encode()).hexdigest()[:8], 16) / 2 ** 32
     if x < TEST_FRAC:
         return "test"
@@ -39,7 +42,7 @@ def bucket(eid: str) -> str:
 def split_children(children: list[dict]) -> dict[str, list[dict]]:
     out = {"train": [], "val": [], "test": []}
     for c in usable(children):
-        out[bucket(c["eid"])].append(c)
+        out[bucket(c["patient_key"])].append(c)
     return out
 
 

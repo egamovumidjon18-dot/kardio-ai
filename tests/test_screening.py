@@ -83,25 +83,25 @@ def const_backend(p_m, p_o=0.2):
 def test_model_decides_and_aggregates_max_location(wav_factory):
     calls = iter([0.1, 0.9])
     model = PCGModel(CARD, lambda x: (np.full(len(x), next(calls), np.float32), np.zeros(len(x), np.float32)))
-    e = model.analyze([Recording("AV", wav_factory()), Recording("MV", wav_factory(seed=1))])
+    e = model.analyze([Recording("AV", wav_factory()), Recording("MV", wav_factory(seed=1))], age_days=900)
     assert not e.abstained and e.risk == RiskLevel.MODERATE
     assert e.value["max_location"] == "MV" and e.value["p_murmur"] == pytest.approx(0.9)
     assert e.provenance.dataset_license == "ODC-By 1.0"
 
 
 def test_model_low_probability_is_low_risk(wav_factory):
-    e = PCGModel(CARD, const_backend(0.05)).analyze([Recording("AV", wav_factory())])
+    e = PCGModel(CARD, const_backend(0.05)).analyze([Recording("AV", wav_factory())], age_days=900)
     assert e.risk == RiskLevel.LOW and not e.abstained
 
 
 def test_model_abstains_in_gray_zone(wav_factory):
-    e = PCGModel(CARD, const_backend(0.5)).analyze([Recording("AV", wav_factory())])
+    e = PCGModel(CARD, const_backend(0.5)).analyze([Recording("AV", wav_factory())], age_days=900)
     assert e.abstained and "noaniq zona" in e.explanation[0]
 
 
 def test_model_abstains_on_window_disagreement(wav_factory):
     backend = lambda x: (np.array([0.95, 0.95, 0.1, 0.1][:len(x)], np.float32), np.zeros(len(x), np.float32))
-    e = PCGModel(CARD, backend).analyze([Recording("AV", wav_factory())])
+    e = PCGModel(CARD, backend).analyze([Recording("AV", wav_factory())], age_days=900)
     assert e.abstained and "kelishmadi" in e.explanation[0]
 
 
@@ -110,11 +110,11 @@ def test_model_abstains_for_neonates(wav_factory):
     e = model.analyze([Recording("AV", wav_factory())], age_days=10)
     assert e.abstained and "validatsiya qilinmagan" in e.explanation[0]
     assert not model.analyze([Recording("AV", wav_factory())], age_days=40).abstained
-    assert not model.analyze([Recording("AV", wav_factory())]).abstained      # yosh noma'lum
+    assert model.analyze([Recording("AV", wav_factory())]).abstained      # yosh noma'lum
 
 
 def test_model_abstains_without_quality_recordings(wav_factory):
-    e = PCGModel(CARD, const_backend(0.9)).analyze([Recording("AV", wav_factory(seconds=2))])
+    e = PCGModel(CARD, const_backend(0.9)).analyze([Recording("AV", wav_factory(seconds=2))], age_days=900)
     assert e.abstained and "sifatli yozuv yo'q" in e.explanation[0]
 
 
@@ -125,7 +125,7 @@ def test_triage_cchd_fail_overrides_everything():
 
 
 def test_triage_ai_escalates_but_flags_disagreement(wav_factory):
-    pcg = PCGModel(CARD, const_backend(0.9)).analyze([Recording("AV", wav_factory())])
+    pcg = PCGModel(CARD, const_backend(0.9)).analyze([Recording("AV", wav_factory())], age_days=900)
     r = triage([newborn_pulse_ox(98, 98), red_flags([])], pcg)
     assert r.concordance.status == Agreement.DISAGREE
     assert r.concordance.final_risk == RiskLevel.MODERATE and r.action.startswith("REJALI")

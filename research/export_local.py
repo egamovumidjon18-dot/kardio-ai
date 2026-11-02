@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import csv
 import shutil
+import hashlib
 from collections import Counter
 from pathlib import Path
 
@@ -82,9 +83,17 @@ def collect_children(store, recordings: Path) -> tuple[list[dict], Counter]:
                 continue
             files.append({"location": f["location"], "file": f["file"], "path": src})
         if files:
-            children.append({"eid": eid, "created_at": ep.created_at, "dx": dx.value, "device": rec.value.get("device", ""),
+            patient_key = hashlib.sha256(ep.patient_ref.strip().casefold().encode("utf-8")).hexdigest()
+            children.append({"eid": eid, "patient_key": patient_key, "created_at": ep.created_at, "dx": dx.value, "device": rec.value.get("device", ""),
                              "age_days": rec.value.get("age_days"), "files": files})
-    return children, skipped
+    # Repeated visits stay with the same patient. Keep one latest confirmed visit
+    # so repeated episodes cannot inflate patient counts or evaluation weight.
+    unique = {}
+    for child in sorted(children, key=lambda c: (c["created_at"], c["eid"])):
+        if child["patient_key"] in unique:
+            skipped["takroriy bemor epizodi"] += 1
+        unique[child["patient_key"]] = child
+    return list(unique.values()), skipped
 
 
 def main() -> None:

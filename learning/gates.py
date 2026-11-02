@@ -35,7 +35,9 @@ def dataset_gate(children: list[dict], cfg: dict = CFG) -> dict:
     items = [_gate("yetarli bola", len(use) >= cfg["min_children"], f"{len(use)} ta (kerak: {cfg['min_children']})"),
              _gate("har sinfdan yetarli", min(pos, neg) >= cfg["min_per_class"],
                    f"nuqsonli {pos}, sog' {neg} (har biri kamida {cfg['min_per_class']})")]
-    test = [c for c in use if bucket(c["eid"]) == "test"]
+    test = [c for c in use if bucket(c["patient_key"]) == "test"]
+    items.append(_gate("bemorlar takrorlanmagan", len({c["patient_key"] for c in use}) == len(use),
+                       "har bemor uchun bitta tasdiqlangan holat kerak"))
     t_pos = sum(label_of(c["dx"]) == 1 for c in test)
     items.append(_gate("mahalliy test to'plamida har sinfdan yetarli", min(t_pos, len(test) - t_pos) >= cfg["min_test_per_class"],
                        f"test: nuqsonli {t_pos}, sog' {len(test) - t_pos} (har biri kamida {cfg['min_test_per_class']})"))

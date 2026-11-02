@@ -5,16 +5,21 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 import logging
+from functools import partial
 from typing import Callable, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+import anyio
 
 from adapters.echo_ef import EchoEFAdapter
 from api.alerts import record_alert
 from angio.model import AngioModel
+from angio.image import load_gray
 from api.ai_plain import plain_ai
 from api.guardian_routes import _postop_day
 from core.episode import Episode, Stage
+from core.measurements import measurement_time
+from core.model_safety import guarded_inference
 from core.evidence import Evidence
 from core.shadow import ShadowRhythmModel, ShadowStore, input_hash
 from core.store import EpisodeStore
@@ -22,7 +27,7 @@ from ecg.low_ef import LowEFFromECG
 from ecg.model import ECGModel
 from ecg.shd import StructuralFromECG
 from ecg.signal import read_csv
-from guardian.escalation import Notifier, escalate
+from guardian.escalation import Alert, Notifier, escalate
 from guardian.inr import Indication, parse_inr_text
 from guardian.ocr import MIN_CONFIDENCE, Engine, assess_inr_image, rapid_engine, read_text
 
@@ -99,27 +104,57 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
     @app.post("/episodes/{eid}/ecg")
     async def ecg_endpoint(eid: str, actor: str = Form(...), lang: str = Form("uz", pattern="^(uz|ru|en)$"), fs: float = Form(500, gt=50, le=2000),
                            age_years: Optional[float] = Form(None, ge=0, le=120),
+                           measured_at: Optional[datetime] = Form(None),
                            file: UploadFile = File(..., description="CSV: 1-qator tarmoq nomlari (I,II,...,V6), mV")) -> dict:
         ep = get(eid)
         _need(ecg, "EKG")
         try:
-            sig, leads = read_csv(await _read(file, MAX_UPLOAD), fs)
+            measured = measurement_time(measured_at)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+        if age_years is not None and (ep.population == "pediatric") != (age_years < 18):
+            raise HTTPException(422, "yosh va epizod populyatsiyasi mos emas")
+        try:
+            data = await _read(file, MAX_UPLOAD)
+            sig, leads = await anyio.to_thread.run_sync(partial(read_csv, data, fs), limiter=app.state.inference_limiter)
         except ValueError as exc:
             raise HTTPException(422, f"EKG faylini o'qib bo'lmadi: {exc}") from None
-        ev = ecg.analyze(sig, fs, leads, age_years)
-        out = {"evidence": _save(ep, actor, "ecg.analyze", ev), "plain": plain_ai(ev, lang)}
-        _shadow(ep, sig, fs, leads, age_years, ev)      # javob QAYTARILMAYDI, faqat yoziladi
-        if low_ef is not None:                       # xuddi shu EKG'dan past EF skriningi (alohida dalil)
-            lev = low_ef.analyze(sig, fs, leads, age_years)
-            out["low_ef"] = {"evidence": _save(ep, actor, "ecg.low_ef", lev), "plain": plain_ai(lev, lang)}
-        if shd is not None:                          # tuzilmaviy kasalliklar (faqat mezondan o'tgan yorliqlar)
-            sev = shd.analyze(sig, fs, leads, age_years)
-            out["structural"] = {"evidence": _save(ep, actor, "ecg.shd", sev), "plain": plain_ai(sev, lang)}
+        def analyze_bundle():
+            results = []
+            for key, kind, model in ((None, "ecg.afib", ecg), ("low_ef", "ecg.low_ef", low_ef),
+                                     ("structural", "ecg.shd", shd)):
+                if model is not None:
+                    result = guarded_inference(model, kind, partial(model.analyze, sig, fs, leads, age_years))
+                    result.measured_at = measured
+                    results.append((key, result))
+            return results
+
+        results = await anyio.to_thread.run_sync(analyze_bundle, limiter=app.state.inference_limiter)
+        # Prepare the entire response before writing; store.save commits all model
+        # evidence and its audit record in one transaction/revision.
+        out = {}
+        for key, result in results:
+            section = {"evidence": result.to_dict(), "plain": plain_ai(result, lang)}
+            if key is None:
+                out.update(section)
+            else:
+                out[key] = section
+            ep.add(result)
+        store.save(ep, actor, "ecg.analyze", {"results": [
+            {"kind": e.kind, "evidence_id": e.id, "abstained": e.abstained, "risk": e.risk.value}
+            for _, e in results]})
+        ev = results[0][1]
+        await anyio.to_thread.run_sync(partial(_shadow, ep, sig, fs, leads, age_years, ev),
+                                       limiter=app.state.inference_limiter)
         if ep.stage == Stage.GUARDIAN_30D:           # POAF / operatsiyadan keyingi nazorat
             esc = escalate(ep.patient_ref, _postop_day(ep, datetime.now(timezone.utc)), [ev], notifier)
-            alert = record_alert(store, ep, esc, "guardian.ecg")
-            store.save(ep, actor, "guardian.ecg", {"alert": esc.alert.value, "notified": esc.notified,
-                                                   "alert_id": alert["id"] if alert else None})
+            alert = store.save_with_alert(
+                ep, actor, "guardian.ecg",
+                level=esc.alert.value if esc.alert != Alert.GREEN else None,
+                reasons=esc.reasons,
+                message=esc.message,
+                delivered=esc.notified if (esc.message and getattr(notifier, "is_external", True)) else None,
+            )
             out["escalation"] = esc.to_dict()
             out["alert_id"] = alert["id"] if alert else None
         return out
@@ -129,9 +164,12 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
         ep = get(eid)
         _need(angio, "Angiografiya")
         try:
-            ev = angio.analyze(await _read(file, MAX_UPLOAD))
+            data = await _read(file, MAX_UPLOAD)
+            gray = await anyio.to_thread.run_sync(partial(load_gray, data), limiter=app.state.inference_limiter)
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from None
+        ev = await anyio.to_thread.run_sync(partial(guarded_inference, angio, "angio.stenosis_assist",
+                                                   partial(angio.analyze, gray)), limiter=app.state.inference_limiter)
         return {"evidence": _save(ep, actor, "angio.analyze", ev), "plain": plain_ai(ev, lang)}
 
     @app.post("/episodes/{eid}/guardian/inr-read")
@@ -163,20 +201,33 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
         ev = assess_inr_image(await _read(file, MAX_UPLOAD), indication, ocr_engine)
         ep.add(ev)
         esc = escalate(ep.patient_ref, _postop_day(ep, datetime.now(timezone.utc)), [ev], notifier)
-        alert = record_alert(store, ep, esc, "guardian.inr_image")
-        store.save(ep, actor, "guardian.inr_image", {"alert": esc.alert.value, "notified": esc.notified,
-                                                     "alert_id": alert["id"] if alert else None})
+        alert = store.save_with_alert(
+            ep, actor, "guardian.inr_image",
+            level=esc.alert.value if esc.alert != Alert.GREEN else None,
+            reasons=esc.reasons,
+            message=esc.message,
+            delivered=esc.notified if (esc.message and getattr(notifier, "is_external", True)) else None,
+        )
         return {"escalation": esc.to_dict(), "evidence": [ev.to_dict()], "plain": plain_ai(ev, lang),
                 "alert_id": alert["id"] if alert else None}
 
     @app.post("/episodes/{eid}/echo-ef")
     async def echo_ef(eid: str, actor: str = Form(...), lang: str = Form("uz", pattern="^(uz|ru|en)$"), age_years: Optional[float] = Form(None, ge=0, le=120),
+                      measured_at: Optional[datetime] = Form(None),
                       file: UploadFile = File(..., description="ExoKG videosi (apikal 4 kamera)")) -> dict:
         ep = get(eid)
         _need(ef, "ExoKG EF")
+        try:
+            measured = measurement_time(measured_at)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+        if age_years is not None and (ep.population == "pediatric") != (age_years < 18):
+            raise HTTPException(422, "yosh va epizod populyatsiyasi mos emas")
         data = await _read(file, MAX_VIDEO)
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "clip.avi"
             path.write_bytes(data)
-            ev = ef.analyze(path, age_years)
+            ev = await anyio.to_thread.run_sync(partial(guarded_inference, ef, "echo.ef", partial(ef.analyze, path, age_years)),
+                                                limiter=app.state.inference_limiter)
+            ev.measured_at = measured
         return {"evidence": _save(ep, actor, "echo.ef", ev), "plain": plain_ai(ev, lang)}

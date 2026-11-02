@@ -25,7 +25,7 @@ def new_episode(client):
 def test_full_screening_flow_with_pcg_and_handoff(client, wav_factory):
     eid = new_episode(client)
     r = client.post(f"/episodes/{eid}/screening",
-                    data={"actor": "dr.a", "right_hand_spo2": "98", "foot_spo2": "97", "red_flags": ""},
+                    data={"actor": "dr.a", "age_days": "900", "right_hand_spo2": "98", "foot_spo2": "97", "red_flags": ""},
                     files=[("recordings", ("1234_MV.wav", wav_factory(), "audio/wav")),
                            ("recordings", ("1234_AV_1.wav", wav_factory(seed=2), "audio/wav"))])
     assert r.status_code == 200, r.text
@@ -91,7 +91,7 @@ def test_clinician_app_shell_is_served(client):
 def test_cchd_fail_without_audio(client):
     eid = new_episode(client)
     r = client.post(f"/episodes/{eid}/screening",
-                    data={"actor": "dr.a", "right_hand_spo2": "88", "foot_spo2": "95"})
+                    data={"actor": "dr.a", "age_days": "900", "right_hand_spo2": "88", "foot_spo2": "95"})
     assert r.json()["final_risk"] == "very_high"
 
 
@@ -101,7 +101,7 @@ def test_validation_errors(client, wav_factory):
                        data={"actor": "x", "right_hand_spo2": "98"}).status_code == 422
     assert client.post(f"/episodes/{eid}/screening", data={"actor": "x"},
                        files=[("recordings", ("heart.wav", wav_factory(), "audio/wav"))]).status_code == 422
-    assert client.post(f"/episodes/{eid}/screening", data={"actor": "x"},
+    assert client.post(f"/episodes/{eid}/screening", data={"actor": "x", "age_days": "900"},
                        files=[("recordings", ("MV.wav", b"not a wav", "audio/wav"))]).status_code == 422
     assert client.post(f"/episodes/{eid}/transition", json={
         "from_stage": "screening", "to_stage": "procedure", "author": "x"}).status_code == 409
