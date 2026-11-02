@@ -1,28 +1,54 @@
-# Ishga tushirish:   docker compose up -d --build      → http://localhost:8010
-# To'xtatish:        docker compose down
-# Administrator:     docker compose run --rm -it cardiopath python -m core.auth_cli create-user --username admin --role admin  (parolni o'zi so'raydi)
+# ==============================================================================
+# CardioPath AI — Ishlab Chiqarish va Klinika Konteyner Arxitekturasi
+# Ishga tushirish (Standart SQLite):   docker compose up -d --build      → http://localhost:8010
+# Ishga tushirish (PostgreSQL bilan):  docker compose --profile postgres up -d --build
+# To'xtatish:                          docker compose down
+# Administrator yaratish:              docker compose run --rm -it cardiopath python -m core.auth_cli create-user --username admin --role admin
+# ==============================================================================
 services:
   cardiopath:
     build: .
     image: cardiopath-ai:local
     container_name: cardiopath-ai
     restart: unless-stopped
-    # Faqat shu kompyuterdan ochiladi. Boshqa kompyuterlarga ochishdan OLDIN kirishni yoqing (CARDIOPATH_AUTH=on).
     ports:
       - "127.0.0.1:8010:8010"
     environment:
       CARDIOPATH_AUTH: ${CARDIOPATH_AUTH:-off}
       CARDIOPATH_MODE: ${CARDIOPATH_MODE:-research}
-      TZ: "<+05>-5"                         # Toshkent vaqti (UTC+5; tzdata kerak emas)
-      # Telegram (Guardian ogohlantirishlari, ixtiyoriy): .env faylida bering, bu yerga yozmang
+      CARDIOPATH_DB: ${CARDIOPATH_DB:-/data/cardiopath.db}
+      CARDIOPATH_PG_DSN: ${CARDIOPATH_PG_DSN:-}
+      CARDIOPATH_SMS_URL: ${CARDIOPATH_SMS_URL:-}
+      CARDIOPATH_SMS_TOKEN: ${CARDIOPATH_SMS_TOKEN:-}
+      CARDIOPATH_SMS_PHONE: ${CARDIOPATH_SMS_PHONE:-}
+      CARDIOPATH_BACKUP_DIR: /data/backups
+      CARDIOPATH_BACKUP_EVERY_H: ${CARDIOPATH_BACKUP_EVERY_H:-24}
+      CARDIOPATH_BACKUP_KEEP: ${CARDIOPATH_BACKUP_KEEP:-14}
+      TZ: "<+05>-5"                         # Toshkent vaqti (UTC+5)
       CARDIOPATH_TG_TOKEN: ${CARDIOPATH_TG_TOKEN:-}
       CARDIOPATH_TG_CHAT: ${CARDIOPATH_TG_CHAT:-}
     volumes:
       - ./weights:/app/weights:ro          # model og'irliklari (faqat o'qish)
       - cardiopath-data:/data              # baza (cardiopath.db)
-      - ./backups:/data/backups            # kunlik zaxira nusxalar — Windows'da ko'rinadi, fleshkaga ko'chirish oson
+      - ./backups:/data/backups            # kunlik zaxira nusxalar — Windows'da ko'rinadi, xavfsiz arxiv
       - cardiopath-models:/app/models      # shifokor tasdiqlagan yangi model versiyalari
+
+  # Korporativ shifoxona klasteri uchun PostgreSQL servisi (ixtiyoriy profil)
+  postgres:
+    profiles: ["postgres"]
+    image: postgres:16-alpine
+    container_name: cardiopath-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cardiopath_ai
+      POSTGRES_USER: cardiopath
+      POSTGRES_PASSWORD: ${CARDIOPATH_PG_PASSWORD:-cardiopath_secure_pwd}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - cardiopath-pgdata:/var/lib/postgresql/data
 
 volumes:
   cardiopath-data:
   cardiopath-models:
+  cardiopath-pgdata:

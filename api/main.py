@@ -393,6 +393,14 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
         d = episode_digest(ep, open_alerts)
         return render_clinical_report(ep, d)
 
+    @app.get("/episodes/{eid}/fhir")
+    def episode_fhir(eid: str) -> dict:
+        from core.fhir_export import export_episode_to_fhir
+        ep = _get(eid)
+        _, open_alerts = store.alerts(status="open", episode_id=eid, limit=200)
+        d = episode_digest(ep, open_alerts)
+        return export_episode_to_fhir(ep, d)
+
 
     @app.get("/episodes/{eid}/audit")
     def get_audit(eid: str) -> list[dict]:

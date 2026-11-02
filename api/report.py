@@ -189,7 +189,8 @@ def render_clinical_report(ep: Episode, digest: dict) -> str:
     <div>
         <strong>CardioPath AI — Rasmiy Klinik Xulosa</strong> (A4 format)
     </div>
-    <div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <a href="/episodes/{ep.id}/fhir" target="_blank" style="padding:6px 12px; background:#f8fafc; color:#1e40af; border:1px solid #cbd5e1; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">📥 HL7 FHIR R4 JSON</a>
         <button class="print-btn" onclick="window.print()">🖨️ Chop etish / PDF sifatida saqlash</button>
     </div>
 </div>

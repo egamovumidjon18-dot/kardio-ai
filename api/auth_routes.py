@@ -26,6 +26,7 @@ ROUTE_PERMS: dict[tuple[str, str], str] = {
     ("GET", "/episodes"): "episode.read", ("POST", "/episodes"): "episode.create",
     ("GET", "/episodes/{eid}"): "episode.read", ("GET", "/episodes/{eid}/digest"): "episode.read",
     ("GET", "/episodes/{eid}/report"): "episode.read",
+    ("GET", "/episodes/{eid}/fhir"): "episode.read",
     ("GET", "/episodes/{eid}/audit"): "episode.audit",
     ("POST", "/episodes/{eid}/transition"): "episode.transition",
     ("POST", "/episodes/{eid}/consent"): "consent.record",
