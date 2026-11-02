@@ -28,6 +28,7 @@ const ICONS = {
   chart: '<path d="M4 19V5M4 19h16"/><path d="M7 15l4-4 3 3 5-6"/>',
   doc: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>',
   printer: '<path d="M7 8V3h10v5"/><rect x="4" y="8" width="16" height="8" rx="2"/><path d="M7 14h10v7H7z"/>',
+  download: '<path d="M12 4v12M6 10l6 6 6-6"/><path d="M4 20h16"/>',
   user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
@@ -42,7 +43,7 @@ const I = {
   uz: {
     vit_spo2: "SpO₂", vit_pcg: "Yurak tovushi", vit_ef: "EF (LVEF)", vit_risk: "Xavf", notEnteredShort: "Kiritilmagan", aiAdvice: "AI maslahati", nextStep: "Keyingi qadam", noAdvice: "Hozircha muhokama talab qiladigan AI topilmasi yo'q.", heartMap: "Auskultatsiya nuqtalari", heartNote: "Yozuv olingan nuqtalar; eng yuqori shovqin ehtimoli belgilangan.", notRecorded: "Yurak tovushi yozilmagan", v_aorta: "Aorta", v_pulm: "Pulmonal", v_tric: "Trikuspid", v_mitral: "Mitral", topPoint: "eng yuqori",
     hello_m: "Xayrli tong", hello_d: "Xayrli kun", hello_e: "Xayrli kech", hello_sub: "Bugungi holat bir qarashda", chart_stages: "Bemorlar qaysi bosqichda", chart_risk: "Bemorlar xavf darajasi bo'yicha", total: "jami", quick_alerts: "Ogohlantirishlar",
-    act_glink: "Bemor havolasi (uy kuzatuvi)", glinkCopied: "Havola nusxalandi — bemorga yuboring",
+    act_glink: "Bemor havolasi (uy kuzatuvi)", act_kdigo: "KDIGO AKI", act_consent: "Yozma rozilik", glinkCopied: "Havola nusxalandi — bemorga yuboring",
     mg_eyebrow: "Modellar nazorati", mg_title: "AI modellarini boshqarish", mg_sub: "Versiyalar, litsenziyalar, qabul mezonlari, klinik tasdiq va qaytarish tarixi",
     mg_need: "Kardiolog tasdig'i talab etiladi", st_live: "Faol", st_shadow: "Sinovda", st_blocked: "Bloklangan", st_off: "Ulanmagan",
     mg_metric: "Aniqlik ko'rsatkichi (AUROC)", mg_license: "Litsenziya", mg_data: "Ma'lumot", mg_version: "Versiya", mg_research: "faqat tadqiqot", mg_ok_com: "ochiq",
@@ -159,7 +160,7 @@ const I = {
   ru: {
     vit_spo2: "SpO₂", vit_pcg: "Тоны сердца", vit_ef: "ФВ (ФВЛЖ)", vit_risk: "Риск", notEnteredShort: "Не внесено", aiAdvice: "Совет ИИ", nextStep: "Следующий шаг", noAdvice: "Пока нет находок ИИ, требующих обсуждения.", heartMap: "Точки аускультации", heartNote: "Точки с записью; отмечена точка с наибольшей вероятностью шума.", notRecorded: "Тоны сердца не записаны", v_aorta: "Аорта", v_pulm: "Лёгочная", v_tric: "Трикуспидальная", v_mitral: "Митральная", topPoint: "максимум",
     hello_m: "Доброе утро", hello_d: "Добрый день", hello_e: "Добрый вечер", hello_sub: "Клиническая картина дня одним взглядом", chart_stages: "На каком этапе пациенты", chart_risk: "Пациенты по уровню риска", total: "всего", quick_alerts: "Оповещения",
-    act_glink: "Ссылка для пациента (наблюдение)", glinkCopied: "Ссылка скопирована — отправьте пациенту",
+    act_glink: "Ссылка для пациента (наблюдение)", act_kdigo: "KDIGO AKI", act_consent: "Письменное согласие", glinkCopied: "Ссылка скопирована — отправьте пациенту",
     mg_eyebrow: "Контроль моделей", mg_title: "Управление моделями ИИ", mg_sub: "Версии, лицензии, критерии приёмки, клиническое утверждение и история отката",
     mg_need: "Требуется утверждение кардиолога", st_live: "Активна", st_shadow: "На испытании", st_blocked: "Заблокирована", st_off: "Не подключена",
     mg_metric: "Точность (AUROC)", mg_license: "Лицензия", mg_data: "Данные", mg_version: "Версия", mg_research: "только исследования", mg_ok_com: "открытая",
@@ -276,7 +277,7 @@ const I = {
   en: {
     vit_spo2: "SpO₂", vit_pcg: "Heart sounds", vit_ef: "EF (LVEF)", vit_risk: "Risk", notEnteredShort: "Not entered", aiAdvice: "AI advice", nextStep: "Next step", noAdvice: "No AI finding needs discussion yet.", heartMap: "Auscultation points", heartNote: "Recorded points; the point with the highest murmur probability is marked.", notRecorded: "No heart sounds recorded", v_aorta: "Aortic", v_pulm: "Pulmonary", v_tric: "Tricuspid", v_mitral: "Mitral", topPoint: "highest",
     hello_m: "Good morning", hello_d: "Good afternoon", hello_e: "Good evening", hello_sub: "Today's clinical picture at a glance", chart_stages: "Patients by stage", chart_risk: "Risk distribution", total: "total", quick_alerts: "Alerts",
-    act_glink: "Patient link (home follow-up)", glinkCopied: "Link copied — send it to the patient",
+    act_glink: "Patient link (home follow-up)", act_kdigo: "KDIGO AKI", act_consent: "Clinical consent", glinkCopied: "Link copied — send it to the patient",
     mg_eyebrow: "Model oversight", mg_title: "AI model governance", mg_sub: "Versions, licences, acceptance gates, clinical approval and rollback history",
     mg_need: "Cardiologist approval required", st_live: "Live", st_shadow: "On trial", st_blocked: "Blocked", st_off: "Not loaded",
     mg_metric: "Accuracy (AUROC)", mg_license: "Licence", mg_data: "Dataset", mg_version: "Version", mg_research: "research only", mg_ok_com: "open",
@@ -761,7 +762,7 @@ function concChip(c) {
 }
 async function episodePage(id) {
   const [ep, d] = await Promise.all([api(`/episodes/${id}`), api(`/episodes/${id}/digest`)]);
-  const L = d.latest, es = L["risk.euroscore2"], th = L["risk.aki.rule"], ra = L["risk.rachs1"];
+  const L = d.latest, es = L["risk.euroscore2"], th = L["risk.aki.rule"], ra = L["risk.rachs1"], kd = L["risk.kdigo"], ecg_int = L["ecg.intervals"];
   const redAlert = (d.open_alerts || []).find((a) => a.level === "red") || (d.open_alerts || [])[0];
   const firstDisc = d.discussion[0];
   const urgentBox = redAlert ? `<div class="urgentbox" data-clinical-urgent>${ic("alert")}<div><b>${esc(t("whatToDo"))}: ${esc((redAlert.reasons || []).join("; ") || redAlert.source)}</b><p>${esc(ago(redAlert.created_at))} · ${esc(redAlert.source)}</p></div></div>`
@@ -801,12 +802,12 @@ async function episodePage(id) {
         <a href="#sec-disc">${ic("list")}${esc(t("sec_disc"))}</a><a href="#sec-ev">${ic("clock")}${esc(t("sec_evidence"))}</a>
         ${canProto ? `<a href="#/e/${id}/protocol">${ic("doc")}${esc(t("sec_proto"))}</a>` : ""}
         <hr style="border:0;border-top:1px solid var(--cp-border);margin:.5rem 0">
-        ${canUp ? `<a href="#/e/${id}/ecg">${ic("upload")}${esc(t("act_ecg"))}</a>` : ""}${canRisk ? `<a href="#/e/${id}/risk">${ic("chart")}${esc(t("act_risk"))}</a>` : ""}
+        ${canUp ? `<a href="#/e/${id}/ecg">${ic("upload")}${esc(t("act_ecg"))}</a>` : ""}${canRisk ? `<a href="#/e/${id}/risk">${ic("chart")}${esc(t("act_risk"))}</a>` : ""}<a href="/episodes/${id}/report" target="_blank">${ic("printer")}${esc(t("print"))}</a><a href="/episodes/${id}/fhir" target="_blank">${ic("download")}HL7 FHIR R4</a>
       </nav>
       <div class="cp-stack">
         <section class="cp-card" id="sec-risk"><div class="cp-card__header"><h2 class="cp-card__title">${esc(t("sec_risk"))}</h2>${canRisk ? `<a href="#/e/${id}/risk">${esc(t("details"))} →</a>` : ""}</div>
           <div class="scores">${scoreBox(t("euroscore"), es, (e) => e.value + "%")}${scoreBox(t("thakar"), th, (e) => e.value + " " + t("points"))}
-            ${d.episode.population === "adult" && !ra ? `<div class="score"><small>${esc(t("rachs"))}</small><b>—</b><span class="pill pill--muted">${esc(t("notApplicable"))}</span></div>` : scoreBox(t("rachs"), ra, (e) => e.value + t("category"))}</div></section>
+            ${d.episode.population === "adult" && !ra ? `<div class="score"><small>${esc(t("rachs"))}</small><b>—</b><span class="pill pill--muted">${esc(t("notApplicable"))}</span></div>` : scoreBox(t("rachs"), ra, (e) => e.value + t("category"))}${kd ? scoreBox("KDIGO AKI", kd, (e) => (typeof e.value === "object" && e.value.stage != null ? "Stage " + e.value.stage : "AKI")) : ""}${ecg_int ? scoreBox("QTc (Bazett)", ecg_int, (e) => (e.value && e.value.qtc_bazett_ms ? Math.round(e.value.qtc_bazett_ms) + " ms" : "—")) : ""}</div></section>
         ${pcg || d.episode.population === "pediatric" ? `<section class="cp-card"><h2 class="cp-card__title" style="margin-bottom:.5rem">${esc(t("heartMap"))}</h2>${heartMap(pcg)}
           <p class="cp-meta" style="text-align:center;margin:.25rem 0 0">${esc(pcg ? t("heartNote") : t("notRecorded"))}</p></section>` : ""}
         <section class="cp-card" id="sec-ai"><div class="cp-card__header"><h2 class="cp-card__title">${esc(t("sec_ai"))}</h2>${canUp ? `<a href="#/e/${id}/ecg">${esc(t("act_ecg"))} →</a>` : ""}</div>
@@ -817,7 +818,7 @@ async function episodePage(id) {
           ${d.open_questions.length ? `<h3 style="font-size:var(--cp-text-sm);margin:1rem 0 .3rem">${esc(t("openQuestions"))}</h3><ul class="cp-meta">${d.open_questions.map((q) => `<li>${esc(q)}</li>`).join("")}</ul>` : ""}
           <div class="actions" style="margin-top:1rem">${canUp ? `<a class="cp-btn cp-btn--secondary" href="#/e/${id}/ecg">${ic("upload")}${esc(t("act_ecg"))}</a>` : ""}
             ${canRisk ? `<a class="cp-btn cp-btn--secondary" href="#/e/${id}/risk">${ic("chart")}${esc(t("act_risk"))}</a>` : ""}
-            ${canProto ? `<a class="cp-btn cp-btn--secondary" href="#/e/${id}/protocol">${ic("doc")}${esc(t("act_proto"))}</a>` : ""}
+            ${canProto ? `<a class="cp-btn cp-btn--secondary" href="#/e/${id}/protocol">${ic("doc")}${esc(t("act_proto"))}</a>` : ""}<button class="cp-btn cp-btn--secondary" type="button" id="csBtn">${ic("doc")}${esc(t("act_consent"))}</button>${["icu", "discharge", "guardian_30d"].includes(d.episode.stage) && canRisk ? `<button class="cp-btn cp-btn--secondary" type="button" id="kdBtn">${ic("chart")}${esc(t("act_kdigo"))}</button>` : ""}<a class="cp-btn cp-btn--secondary" href="/episodes/${id}/report" target="_blank">${ic("printer")}${esc(t("print"))}</a><a class="cp-btn cp-btn--secondary" href="/episodes/${id}/fhir" target="_blank">${ic("download")}FHIR R4</a>
             ${d.episode.stage === "screening" && can("screening.run") ? `<a class="cp-btn cp-btn--secondary" href="#/e/${id}/screening">${ic("steth")}${esc(t("act_screen"))}</a>` : ""}
             ${d.episode.stage === "guardian_30d" ? `<button class="cp-btn cp-btn--secondary" type="button" id="gLink">${ic("heart")}${esc(t("act_glink"))}</button>` : ""}</div></section>
       </div>
@@ -830,6 +831,8 @@ async function episodePage(id) {
       </div>
     </div>`;
   if ($("trBtn")) $("trBtn").onclick = () => transitionDialog(d);
+  if ($("csBtn")) $("csBtn").onclick = () => consentDialog(d);
+  if ($("kdBtn")) $("kdBtn").onclick = () => kdigoDialog(d);
   if ($("gLink")) $("gLink").onclick = () => dialog(`<h2 class="cp-dialog__title">${esc(t("act_glink"))}</h2>
       <div class="cp-field"><label class="cp-field__label" for="gInr">${esc(t("gl_inr"))}</label><select class="cp-select" id="gInr" name="inr">
         ${["", "mechanical_aortic", "mechanical_aortic_risk", "mechanical_mitral", "bioprosthetic", "af"].map((v) => `<option value="${v}">${esc(t("ind_" + (v || "none")))}</option>`).join("")}</select>
@@ -839,6 +842,59 @@ async function episodePage(id) {
       const url = `${location.origin}/guardian?e=${d.episode.id}${fd.get("inr") ? "&inr=" + fd.get("inr") : ""}`;
       try { await navigator.clipboard.writeText(url); toast(t("glinkCopied")); } catch (e) { window.prompt(t("act_glink"), url); }
     });
+}
+function consentDialog(d) {
+  if (!requireActor()) return;
+  dialog(`<h2 class="cp-dialog__title">Bemor Yozma Klinik Roziligi</h2>
+    <div class="cp-field"><label class="cp-field__label" for="csDoc">Shifokor (F.I.Sh.)</label><input class="cp-input" id="csDoc" name="clinician" required maxlength="120" value="${esc(actor())}"></div>
+    <div class="cp-field" style="margin-top:.8rem"><label class="cp-field__label" for="csRef">Qog'oz blank raqami / formasi</label><input class="cp-input" id="csRef" name="paper_ref" required maxlength="60" placeholder="ROZ-2026/012"></div>
+    <div class="cp-field" style="margin-top:.8rem"><label class="cp-field__label" for="csType">Rozilik turi</label><select class="cp-select" id="csType" name="consent_type">
+      <option value="treatment_and_ai">Davolash va Sun'iy intellekt tahlili</option>
+      <option value="surgery_and_ai">Jarrohlik amaliyoti va AI tahlili</option>
+      <option value="telemedicine_guardian">Masofaviy monitoring (Guardian)</option>
+    </select></div>
+    <div class="cp-field" style="margin-top:.8rem"><label class="cp-field__label" for="csNote">Qo'shimcha izohlar</label><textarea class="cp-textarea" id="csNote" name="notes" maxlength="500"></textarea></div>
+    <p class="cp-field__error" role="alert"></p>
+    <div class="cp-dialog__actions"><button class="cp-btn cp-btn--secondary" value="cancel" formnovalidate>${esc(t("cancel"))}</button><button class="cp-btn" type="submit">Rasmiylashtirish</button></div>`,
+  async (fd) => {
+    await api(`/episodes/${d.episode.id}/consent`, {
+      method: "POST",
+      json: {
+        actor: actor(),
+        clinician: fd.get("clinician").trim(),
+        paper_ref: fd.get("paper_ref").trim(),
+        consent_type: fd.get("consent_type"),
+        notes: fd.get("notes") ? fd.get("notes").trim() : null,
+      }
+    });
+    toast("Yozma rozilik muhrlandi");
+    route();
+  });
+}
+function kdigoDialog(d) {
+  if (!requireActor()) return;
+  dialog(`<h2 class="cp-dialog__title">KDIGO 2012 AKI Baholash</h2>
+    <div class="cp-field"><label class="cp-field__label" for="kdBase">Boshlang'ich kreatinin (mkmol/l)</label><input class="cp-input" type="number" step="0.1" id="kdBase" name="baseline" required min="10" max="1500" value="80"></div>
+    <div class="cp-field" style="margin-top:.8rem"><label class="cp-field__label" for="kdCurr">Hozirgi kreatinin (mkmol/l)</label><input class="cp-input" type="number" step="0.1" id="kdCurr" name="current" required min="10" max="1500" value="120"></div>
+    <div class="cp-field" style="margin-top:.8rem"><label class="cp-field__label" for="kdRise">48 soatlik o'sish (mkmol/l, ixtiyoriy)</label><input class="cp-input" type="number" step="0.1" id="kdRise" name="rise_48h" min="0" max="500"></div>
+    <div class="cp-field" style="margin-top:.8rem"><label class="cp-field__label" for="kdDiurez">Soatlik diurez (ml/kg/soat, ixtiyoriy)</label><input class="cp-input" type="number" step="0.05" id="kdDiurez" name="urine_rate" min="0" max="10"></div>
+    <div class="cp-field" style="margin-top:.8rem"><label class="cp-field__label"><input type="checkbox" name="rrt" value="true"> O'tkir gemodializ (RRT) o'tkazilmoqda</label></div>
+    <p class="cp-field__error" role="alert"></p>
+    <div class="cp-dialog__actions"><button class="cp-btn cp-btn--secondary" value="cancel" formnovalidate>${esc(t("cancel"))}</button><button class="cp-btn" type="submit">Baholash</button></div>`,
+  async (fd) => {
+    const payload = {
+      actor: actor(),
+      baseline_creatinine: parseFloat(fd.get("baseline")),
+      current_creatinine: parseFloat(fd.get("current")),
+      creatinine_48h_rise: fd.get("rise_48h") ? parseFloat(fd.get("rise_48h")) : null,
+      urine_output_ml_kg_h: fd.get("urine_rate") ? parseFloat(fd.get("urine_rate")) : null,
+      urine_hours: 6.0,
+      rrt: fd.get("rrt") === "true",
+    };
+    await api(`/episodes/${d.episode.id}/kdigo`, { method: "POST", json: payload });
+    toast("KDIGO AKI baholandi");
+    route();
+  });
 }
 function transitionDialog(d) {
   if (!requireActor()) return;

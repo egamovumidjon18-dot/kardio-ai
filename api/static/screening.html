@@ -502,14 +502,40 @@ function paintLoc(c) {
   w.hidden = false;
   const bars = s && s.bars ? `<svg class="bars" viewBox="0 0 64 20" preserveAspectRatio="none" aria-hidden="true">${s.bars.map((v, i) => `<rect x="${i}" y="${10 - v * 10}" width=".62" height="${Math.max(.7, v * 20)}"/>`).join("")}</svg>` : "";
   const dur = s && s.dur != null ? `<span class="dur">${fmt(s.dur)}</span>` : "";
-  const state = short ? `<span class="warn-chip">⚠ ${esc(t("tooShort"))}</span>` : `<span class="ok-chip">✓ ${esc(t("uploaded"))} · ${esc(t("ready"))}</span>`;
+  let state = short ? `<span class="warn-chip">⚠ ${esc(t("tooShort"))}</span>` : `<span class="ok-chip">✓ ${esc(t("uploaded"))} · ${esc(t("ready"))}</span>`;
+  if (s && s.preflight) {
+    if (!s.preflight.usable) {
+      const tip = (s.preflight.recommendations && s.preflight.recommendations[0]) || "Shovqin yuqori";
+      state = `<span class="warn-chip" title="SNR: ${s.preflight.snr_db} dB">⚠ ${esc(tip)}</span>`;
+    } else {
+      state = `<span class="ok-chip" title="SNR: ${s.preflight.snr_db} dB">✓ Preflight a'lo (${s.preflight.snr_db} dB)</span>`;
+    }
+  }
   w.innerHTML = `<div class="fname">${esc(f.name)}</div><div class="wrow">${bars}${dur}</div>${state}`;
 }
 LOCS.forEach((c) => {
   const inp = $("f_" + c);
   inp.addEventListener("change", async () => {
     const f = inp.files[0]; locState[c] = null; paintLoc(c);
-    if (f) { const r = await analyzeAudio(f); if (inp.files[0] === f) { locState[c] = r; paintLoc(c); } }
+    if (f) {
+      const r = await analyzeAudio(f);
+      if (inp.files[0] === f) {
+        locState[c] = r;
+        paintLoc(c);
+        try {
+          const pfd = new FormData();
+          pfd.append("audio", f, f.name);
+          const pr = await fetch("/screening/preflight", { method: "POST", body: pfd });
+          if (pr.ok) {
+            const pf = await pr.json();
+            if (inp.files[0] === f && locState[c]) {
+              locState[c].preflight = pf;
+              paintLoc(c);
+            }
+          }
+        } catch (err) {}
+      }
+    }
   });
   $("x_" + c).addEventListener("click", () => { inp.value = ""; locState[c] = null; paintLoc(c); });
   $("p_" + c).addEventListener("click", () => inp.click());
