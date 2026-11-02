@@ -762,7 +762,7 @@ function concChip(c) {
 }
 async function episodePage(id) {
   const [ep, d] = await Promise.all([api(`/episodes/${id}`), api(`/episodes/${id}/digest`)]);
-  const L = d.latest, es = L["risk.euroscore2"], th = L["risk.aki.rule"], ra = L["risk.rachs1"], kd = L["risk.kdigo"], ecg_int = L["ecg.intervals"];
+  const L = d.latest, es = L["risk.euroscore2"], th = L["risk.aki.rule"], ra = L["risk.rachs1"], kd = L["risk.kdigo"], ecg_int = L["ecg.intervals"], cxr_ev = L["cxr.findings"], bio_ev = L["lab.biomarkers"];
   const redAlert = (d.open_alerts || []).find((a) => a.level === "red") || (d.open_alerts || [])[0];
   const firstDisc = d.discussion[0];
   const urgentBox = redAlert ? `<div class="urgentbox" data-clinical-urgent>${ic("alert")}<div><b>${esc(t("whatToDo"))}: ${esc((redAlert.reasons || []).join("; ") || redAlert.source)}</b><p>${esc(ago(redAlert.created_at))} · ${esc(redAlert.source)}</p></div></div>`
@@ -807,7 +807,7 @@ async function episodePage(id) {
       <div class="cp-stack">
         <section class="cp-card" id="sec-risk"><div class="cp-card__header"><h2 class="cp-card__title">${esc(t("sec_risk"))}</h2>${canRisk ? `<a href="#/e/${id}/risk">${esc(t("details"))} →</a>` : ""}</div>
           <div class="scores">${scoreBox(t("euroscore"), es, (e) => e.value + "%")}${scoreBox(t("thakar"), th, (e) => e.value + " " + t("points"))}
-            ${d.episode.population === "adult" && !ra ? `<div class="score"><small>${esc(t("rachs"))}</small><b>—</b><span class="pill pill--muted">${esc(t("notApplicable"))}</span></div>` : scoreBox(t("rachs"), ra, (e) => e.value + t("category"))}${kd ? scoreBox("KDIGO AKI", kd, (e) => (typeof e.value === "object" && e.value.stage != null ? "Stage " + e.value.stage : "AKI")) : ""}${ecg_int ? scoreBox("QTc (Bazett)", ecg_int, (e) => (e.value && e.value.qtc_bazett_ms ? Math.round(e.value.qtc_bazett_ms) + " ms" : "—")) : ""}</div></section>
+            ${d.episode.population === "adult" && !ra ? `<div class="score"><small>${esc(t("rachs"))}</small><b>—</b><span class="pill pill--muted">${esc(t("notApplicable"))}</span></div>` : scoreBox(t("rachs"), ra, (e) => e.value + t("category"))}${kd ? scoreBox("KDIGO AKI", kd, (e) => (typeof e.value === "object" && e.value.stage != null ? "Stage " + e.value.stage : "AKI")) : ""}${ecg_int ? scoreBox("QTc (Bazett)", ecg_int, (e) => (e.value && e.value.qtc_bazett_ms ? Math.round(e.value.qtc_bazett_ms) + " ms" : "—")) : ""}${cxr_ev ? scoreBox("CXR (CTR)", cxr_ev, (e) => (e.value && e.value.ctr_ratio != null ? e.value.ctr_ratio.toFixed(2) : "—")) : ""}${bio_ev ? scoreBox("Biomarkerlar", bio_ev, (e) => (e.value && e.value.overall_biomarker_risk ? e.value.overall_biomarker_risk.toUpperCase() : "—")) : ""}</div></section>
         ${pcg || d.episode.population === "pediatric" ? `<section class="cp-card"><h2 class="cp-card__title" style="margin-bottom:.5rem">${esc(t("heartMap"))}</h2>${heartMap(pcg)}
           <p class="cp-meta" style="text-align:center;margin:.25rem 0 0">${esc(pcg ? t("heartNote") : t("notRecorded"))}</p></section>` : ""}
         <section class="cp-card" id="sec-ai"><div class="cp-card__header"><h2 class="cp-card__title">${esc(t("sec_ai"))}</h2>${canUp ? `<a href="#/e/${id}/ecg">${esc(t("act_ecg"))} →</a>` : ""}</div>
@@ -818,7 +818,7 @@ async function episodePage(id) {
           ${d.open_questions.length ? `<h3 style="font-size:var(--cp-text-sm);margin:1rem 0 .3rem">${esc(t("openQuestions"))}</h3><ul class="cp-meta">${d.open_questions.map((q) => `<li>${esc(q)}</li>`).join("")}</ul>` : ""}
           <div class="actions" style="margin-top:1rem">${canUp ? `<a class="cp-btn cp-btn--secondary" href="#/e/${id}/ecg">${ic("upload")}${esc(t("act_ecg"))}</a>` : ""}
             ${canRisk ? `<a class="cp-btn cp-btn--secondary" href="#/e/${id}/risk">${ic("chart")}${esc(t("act_risk"))}</a>` : ""}
-            ${canProto ? `<a class="cp-btn cp-btn--secondary" href="#/e/${id}/protocol">${ic("doc")}${esc(t("act_proto"))}</a>` : ""}<button class="cp-btn cp-btn--secondary" type="button" id="csBtn">${ic("doc")}${esc(t("act_consent"))}</button>${["icu", "discharge", "guardian_30d"].includes(d.episode.stage) && canRisk ? `<button class="cp-btn cp-btn--secondary" type="button" id="kdBtn">${ic("chart")}${esc(t("act_kdigo"))}</button>` : ""}<a class="cp-btn cp-btn--secondary" href="/episodes/${id}/report" target="_blank">${ic("printer")}${esc(t("print"))}</a><a class="cp-btn cp-btn--secondary" href="/episodes/${id}/fhir" target="_blank">${ic("download")}FHIR R4</a>
+            ${canProto ? `<a class="cp-btn cp-btn--secondary" href="#/e/${id}/protocol">${ic("doc")}${esc(t("act_proto"))}</a>` : ""}${canUp ? `<button class="cp-btn cp-btn--secondary" type="button" id="cxrBtn">${ic("upload")}CXR Rentgen</button>` : ""}${canRisk ? `<button class="cp-btn cp-btn--secondary" type="button" id="bioBtn">${ic("chart")}Biomarkerlar</button>` : ""}<button class="cp-btn cp-btn--secondary" type="button" id="csBtn">${ic("doc")}${esc(t("act_consent"))}</button>${["icu", "discharge", "guardian_30d"].includes(d.episode.stage) && canRisk ? `<button class="cp-btn cp-btn--secondary" type="button" id="kdBtn">${ic("chart")}${esc(t("act_kdigo"))}</button>` : ""}<a class="cp-btn cp-btn--secondary" href="/episodes/${id}/report" target="_blank">${ic("printer")}${esc(t("print"))}</a><a class="cp-btn cp-btn--secondary" href="/episodes/${id}/fhir" target="_blank">${ic("download")}FHIR R4</a>
             ${d.episode.stage === "screening" && can("screening.run") ? `<a class="cp-btn cp-btn--secondary" href="#/e/${id}/screening">${ic("steth")}${esc(t("act_screen"))}</a>` : ""}
             ${d.episode.stage === "guardian_30d" ? `<button class="cp-btn cp-btn--secondary" type="button" id="gLink">${ic("heart")}${esc(t("act_glink"))}</button>` : ""}</div></section>
       </div>
@@ -833,6 +833,8 @@ async function episodePage(id) {
   if ($("trBtn")) $("trBtn").onclick = () => transitionDialog(d);
   if ($("csBtn")) $("csBtn").onclick = () => consentDialog(d);
   if ($("kdBtn")) $("kdBtn").onclick = () => kdigoDialog(d);
+  if ($("cxrBtn")) $("cxrBtn").onclick = () => cxrDialog(d);
+  if ($("bioBtn")) $("bioBtn").onclick = () => biomarkersDialog(d);
   if ($("gLink")) $("gLink").onclick = () => dialog(`<h2 class="cp-dialog__title">${esc(t("act_glink"))}</h2>
       <div class="cp-field"><label class="cp-field__label" for="gInr">${esc(t("gl_inr"))}</label><select class="cp-select" id="gInr" name="inr">
         ${["", "mechanical_aortic", "mechanical_aortic_risk", "mechanical_mitral", "bioprosthetic", "af"].map((v) => `<option value="${v}">${esc(t("ind_" + (v || "none")))}</option>`).join("")}</select>
@@ -842,6 +844,45 @@ async function episodePage(id) {
       const url = `${location.origin}/guardian?e=${d.episode.id}${fd.get("inr") ? "&inr=" + fd.get("inr") : ""}`;
       try { await navigator.clipboard.writeText(url); toast(t("glinkCopied")); } catch (e) { window.prompt(t("act_glink"), url); }
     });
+}
+function cxrDialog(d) {
+  if (!requireActor()) return;
+  dialog(`<h2 class="cp-dialog__title">Ko'krak qafasi rentgenogrammasi (CXR)</h2>
+    <div class="cp-field"><label class="cp-field__label" for="cxrFile">Frontal rentgenogramma fayli (PNG / JPG)</label><input class="cp-input" type="file" id="cxrFile" name="file" accept="image/*" required></div>
+    <div class="cp-field" style="margin-top:.8rem"><label class="cp-field__label" for="cxrView">Proyeksiya</label><select class="cp-select" id="cxrView" name="view"><option value="PA">PA (Postero-anterior, standart)</option><option value="AP">AP (Antero-posterior, yotgan bemor)</option></select></div>
+    <p class="cp-field__error" role="alert"></p>
+    <div class="cp-dialog__actions"><button class="cp-btn cp-btn--secondary" value="cancel" formnovalidate>${esc(t("cancel"))}</button><button class="cp-btn" type="submit">AI Tahlil</button></div>`,
+  async (fd) => {
+    const file = $("cxrFile").files[0];
+    if (!file) return;
+    const body = new FormData();
+    body.append("actor", actor());
+    body.append("view_position", fd.get("view"));
+    body.append("file", file);
+    await fetch(`/episodes/${d.episode.id}/cxr`, { method: "POST", body });
+    toast("CXR tahlil qilindi");
+    route();
+  });
+}
+function biomarkersDialog(d) {
+  if (!requireActor()) return;
+  dialog(`<h2 class="cp-dialog__title">Troponin va NT-proBNP Dinamikasi</h2>
+    <div class="cp-field"><label class="cp-field__label" for="bioTrop0">hs-cTnI 0-soat (ng/L)</label><input class="cp-input" type="number" step="0.1" id="bioTrop0" name="trop0" placeholder="Masalan: 14.5"></div>
+    <div class="cp-field" style="margin-top:.8rem"><label class="cp-field__label" for="bioTrop1">hs-cTnI 1-soat dinamikasi (ng/L, ixtiyoriy)</label><input class="cp-input" type="number" step="0.1" id="bioTrop1" name="trop1" placeholder="Masalan: 22.0"></div>
+    <div class="cp-field" style="margin-top:.8rem"><label class="cp-field__label" for="bioBnp">NT-proBNP (pg/mL, ixtiyoriy)</label><input class="cp-input" type="number" step="1" id="bioBnp" name="bnp" placeholder="Masalan: 850"></div>
+    <p class="cp-field__error" role="alert"></p>
+    <div class="cp-dialog__actions"><button class="cp-btn cp-btn--secondary" value="cancel" formnovalidate>${esc(t("cancel"))}</button><button class="cp-btn" type="submit">Baholash</button></div>`,
+  async (fd) => {
+    const payload = {
+      actor: actor(),
+      troponin_0h_ng_l: fd.get("trop0") ? parseFloat(fd.get("trop0")) : null,
+      troponin_1h_ng_l: fd.get("trop1") ? parseFloat(fd.get("trop1")) : null,
+      nt_probnp_pg_ml: fd.get("bnp") ? parseFloat(fd.get("bnp")) : null,
+    };
+    await api(`/episodes/${d.episode.id}/biomarkers`, { method: "POST", json: payload });
+    toast("Biomarkerlar baholandi");
+    route();
+  });
 }
 function consentDialog(d) {
   if (!requireActor()) return;

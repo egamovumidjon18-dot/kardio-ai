@@ -116,6 +116,34 @@ def export_episode_to_fhir(ep: Episode, digest: Optional[dict] = None) -> dict[s
             code_coding.append({"system": LOINC_SYSTEM, "code": "10230-1", "display": "Left ventricular Ejection fraction"})
             value_data["valueQuantity"] = {"value": float(ev.value), "unit": "%"}
 
+        elif ev.kind == "cxr.findings" and isinstance(ev.value, dict):
+            code_coding.append({"system": LOINC_SYSTEM, "code": "36572-6", "display": "Chest X-ray view"})
+            comps = []
+            if "ctr_ratio" in ev.value:
+                comps.append({
+                    "code": {"coding": [{"system": LOINC_SYSTEM, "code": "72271-0", "display": "Cardiothoracic ratio"}]},
+                    "valueQuantity": {"value": float(ev.value["ctr_ratio"]), "unit": "ratio"}
+                })
+            value_data["component"] = comps
+            value_data["valueString"] = f"CTR: {ev.value.get('ctr_ratio')}; Kardiomegaliya: {ev.value.get('cardiomegaly')}; O'pka dimlanishi: {ev.value.get('pulmonary_congestion')}"
+
+        elif ev.kind == "lab.biomarkers" and isinstance(ev.value, dict):
+            comps = []
+            if ev.value.get("troponin_0h_ng_l") is not None:
+                code_coding.append({"system": LOINC_SYSTEM, "code": "49563-0", "display": "Cardiac troponin I in Serum or Plasma"})
+                comps.append({
+                    "code": {"coding": [{"system": LOINC_SYSTEM, "code": "49563-0", "display": "hs-cTnI 0h"}]},
+                    "valueQuantity": {"value": float(ev.value["troponin_0h_ng_l"]), "unit": "ng/L"}
+                })
+            if ev.value.get("nt_probnp_pg_ml") is not None:
+                code_coding.append({"system": LOINC_SYSTEM, "code": "33762-6", "display": "NT-proBNP in Serum or Plasma"})
+                comps.append({
+                    "code": {"coding": [{"system": LOINC_SYSTEM, "code": "33762-6", "display": "NT-proBNP"}]},
+                    "valueQuantity": {"value": float(ev.value["nt_probnp_pg_ml"]), "unit": "pg/mL"}
+                })
+            value_data["component"] = comps
+            value_data["valueString"] = f"Troponin: {ev.value.get('troponin_decision')}; NT-proBNP: {ev.value.get('nt_probnp_decision')}" 
+
         else:
             value_data["valueString"] = str(ev.value) if ev.value is not None else "—"
 

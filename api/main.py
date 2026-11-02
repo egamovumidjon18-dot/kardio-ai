@@ -42,6 +42,7 @@ from adapters.echo_ef import EchoEFAdapter
 from angio.model import AngioModel
 from ecg.low_ef import LowEFFromECG
 from ecg.model import ECGModel
+from cxr.model import CXRModel
 from core.shadow import ShadowRhythmModel, ShadowStore
 from ecg.shd import StructuralFromECG
 from guardian.ocr import Engine
@@ -101,7 +102,7 @@ class EchoIn(BaseModel):
 
 def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional[AKIModel] = None,
                notifier: Optional[Notifier] = None, recordings_dir: Optional[Path] = None,
-               ecg_model: Optional[ECGModel] = None, angio_model: Optional[AngioModel] = None,
+               ecg_model: Optional[ECGModel] = None, angio_model: Optional[AngioModel] = None, cxr_model: Optional[CXRModel] = None,
                ef_model: Optional[EchoEFAdapter] = None, ocr_engine: Optional[Engine] = None,
                models_dir: Optional[Path] = None, running_version: str = "baseline",
                auth: Optional[AuthService] = None, low_ef_model: Optional[LowEFFromECG] = None,
@@ -268,7 +269,7 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
     notifier = notifier or LogNotifier()
     guardian_routes.register(app, store, _get, notifier)
     ai_routes.register(app, store, _get, notifier, ecg_model, angio_model, ef_model, ocr_engine, low_ef=low_ef_model, shd=shd_model,
-                       shadow_models=shadow_models, shadow_store=shadow_store)
+                       shadow_models=shadow_models, shadow_store=shadow_store, cxr=cxr_model)
     if shadow_store is not None:
         shadow_routes.register(app, shadow_store, [m.key for m in shadow_models or []])
     alerts_api.register(app, store, _get, notifier)
@@ -347,6 +348,7 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
             "angio": angio_model is not None,
             "aki": aki_model is not None,
             "echo_ef": ef_model is not None,
+            "cxr": cxr_model is not None,
         }
 
         from fastapi.responses import JSONResponse
@@ -630,6 +632,7 @@ def default_app() -> FastAPI:
                       Path(rec_dir) if rec_dir else None, models_dir=models_dir, running_version=running,
                       ecg_model=ECGModel.from_dir(os.environ.get("CARDIOPATH_ECG_WEIGHTS", "weights/ecg")),
                       angio_model=AngioModel.from_dir(os.environ.get("CARDIOPATH_ANGIO_WEIGHTS", "weights/angio")),
+                      cxr_model=CXRModel.from_dir(os.environ.get("CARDIOPATH_CXR_WEIGHTS", "weights/cxr")),
                       ef_model=_load_ef(), auth=auth, low_ef_model=_load_low_ef(), shd_model=_load_shd(),
                       shadow_models=_load_shadow(), shadow_store=ShadowStore(db_path), delivery_retry_s=60,
                       learning_runner=runner, learning_every_h=every_h,

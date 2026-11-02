@@ -239,9 +239,31 @@ def _intervals(e: Evidence, L: str) -> dict:
         return _out(L, "yellow", f"Intervallarda o'zgarish (HR: {hr}, QTc: {qtc} ms)", findings_str, title, findings_str)
     return _out(L, "green", f"Intervallar me'yorda (HR: {hr}, QTc: {qtc} ms)", findings_str, title, findings_str)
 
-_BY_KIND = {"ecg.afib": _ecg, "ecg.low_ef": _lowef, "ecg.shd": _shd, "angio.stenosis_assist": _angio, "guardian.inr": _inr, "echo.ef": _ef, "ecg.intervals": _intervals}
+def _cxr(ev: Evidence, L: str) -> dict:
+    title = {"uz": "Ko'krak qafasi rentgenogrammasi (CXR)", "ru": "Рентгенография грудной клетки (ОГК)", "en": "Chest X-Ray (CXR)"}[L]
+    if ev.abstained:
+        return _out(L, "gray", "Tasvir tahlil qilinmadi (abstain)", "; ".join(ev.explanation), title, "")
+    v = ev.value if isinstance(ev.value, dict) else {}
+    ctr = v.get("ctr_ratio", 0.0)
+    has_cardio = v.get("cardiomegaly", False)
+    has_congest = v.get("pulmonary_congestion", False)
+    color = "red" if ev.risk in (RiskLevel.HIGH, RiskLevel.VERY_HIGH) else "green"
+    desc = f"CTR: {ctr:.2f}"
+    if has_cardio:
+        desc += " (Kardiomegaliya)"
+    if has_congest:
+        desc += " (O'pka dimlanishi)"
+    headline = "; ".join(ev.explanation) if ev.explanation else desc
+    return _out(L, color, headline, desc, title, desc)
+
+_BY_KIND = {"ecg.afib": _ecg, "ecg.low_ef": _lowef, "ecg.shd": _shd, "angio.stenosis_assist": _angio, "guardian.inr": _inr, "echo.ef": _ef, "ecg.intervals": _intervals, "cxr.findings": _cxr}
 
 
 def plain_ai(ev: Evidence, lang: str = "uz") -> dict:
     L = lang_of(lang)
-    return _BY_KIND[ev.kind](ev, L)
+    handler = _BY_KIND.get(ev.kind)
+    if handler is None:
+        title = ev.kind
+        desc = str(ev.value)
+        return _out(L, "gray" if ev.abstained else "green", "; ".join(ev.explanation) or desc, desc, title, desc)
+    return handler(ev, L)

@@ -60,6 +60,18 @@ class KDIGOIn(BaseModel):
     urine_hours: Optional[float] = Field(None, ge=0, le=168)
     rrt: bool = False
 
+
+class BiomarkersIn(BaseModel):
+    actor: str
+    troponin_0h_ng_l: Optional[float] = Field(None, ge=0, le=100000, description="hs-cTn 0h (ng/L)")
+    troponin_1h_ng_l: Optional[float] = Field(None, ge=0, le=100000, description="hs-cTn 1h (ng/L)")
+    troponin_3h_ng_l: Optional[float] = Field(None, ge=0, le=100000, description="hs-cTn 3h (ng/L)")
+    nt_probnp_pg_ml: Optional[float] = Field(None, ge=0, le=100000, description="NT-proBNP (pg/mL)")
+    bnp_pg_ml: Optional[float] = Field(None, ge=0, le=100000, description="BNP (pg/mL)")
+    age_years: float = Field(60.0, ge=0, le=130)
+    symptoms_onset_hours: float = Field(3.0, ge=0, le=720)
+    creatinine_umol_l: Optional[float] = Field(None, ge=0, le=2000)
+
 def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], aki_model: Optional[AKIModel]) -> None:
     @app.post("/episodes/{eid}/risk")
     async def assess_risk(eid: str, body: RiskIn, request: Request) -> dict:
@@ -149,6 +161,30 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], a
             raise HTTPException(422, "; ".join(ev.explanation))
         ep.add(ev)
         store.save(ep, body.actor, "risk.kdigo", {"stage": ev.value["stage"], "risk": ev.risk.value})
+        return {"evidence": ev.to_dict()}
+
+    @app.post("/episodes/{eid}/biomarkers")
+    def biomarkers_endpoint(eid: str, body: BiomarkersIn) -> dict:
+        ep = get(eid)
+        from risk.biomarkers import BiomarkersInput, assess_biomarkers
+        ev = assess_biomarkers(BiomarkersInput(
+            troponin_0h_ng_l=body.troponin_0h_ng_l,
+            troponin_1h_ng_l=body.troponin_1h_ng_l,
+            troponin_3h_ng_l=body.troponin_3h_ng_l,
+            nt_probnp_pg_ml=body.nt_probnp_pg_ml,
+            bnp_pg_ml=body.bnp_pg_ml,
+            age_years=body.age_years,
+            symptoms_onset_hours=body.symptoms_onset_hours,
+            creatinine_umol_l=body.creatinine_umol_l,
+        ))
+        if ev.abstained:
+            raise HTTPException(422, "; ".join(ev.explanation))
+        ep.add(ev)
+        store.save(ep, body.actor, "risk.biomarkers", {
+            "risk": ev.risk.value,
+            "troponin": ev.value.get("troponin_decision"),
+            "nt_probnp": ev.value.get("nt_probnp_decision")
+        })
         return {"evidence": ev.to_dict()}
 
     @app.get("/episodes/{eid}/heart-team-protocol", response_class=PlainTextResponse)

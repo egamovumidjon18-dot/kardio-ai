@@ -25,6 +25,7 @@ from core.shadow import ShadowRhythmModel, ShadowStore, input_hash
 from core.store import EpisodeStore
 from ecg.low_ef import LowEFFromECG
 from ecg.model import ECGModel
+from cxr.model import CXRModel
 from ecg.shd import StructuralFromECG
 from ecg.signal import read_csv
 from guardian.escalation import Alert, Notifier, escalate
@@ -55,7 +56,7 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
              ecg: Optional[ECGModel], angio: Optional[AngioModel], ef: Optional[EchoEFAdapter],
              ocr_engine: Optional[Engine] = None, low_ef: Optional[LowEFFromECG] = None,
              shd: Optional[StructuralFromECG] = None, shadow_models: Optional[list[ShadowRhythmModel]] = None,
-             shadow_store: Optional[ShadowStore] = None) -> None:
+             shadow_store: Optional[ShadowStore] = None, cxr: Optional[CXRModel] = None) -> None:
     def _need(model, name: str) -> None:
         if model is None:
             raise HTTPException(503, f"{name} moduli ulanmagan (og'irliklar yo'q) — qoidalar ishlashda davom etadi")
@@ -196,6 +197,30 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
             "evidence": saved_ev,
             "plain": plain_ai(ev, lang),
             "anatomy": anatomy_ev.to_dict() if anatomy_ev else None,
+        }
+
+    @app.post("/episodes/{eid}/cxr")
+    async def cxr_endpoint(
+        eid: str,
+        actor: str = Form(...),
+        lang: str = Form("uz", pattern="^(uz|ru|en)$"),
+        view_position: str = Form("PA"),
+        file: UploadFile = File(..., description="Frontal ko'krak qafasi rentgenogrammasi (PA/AP)")
+    ) -> dict:
+        ep = get(eid)
+        _need(cxr, "CXR")
+        try:
+            data = await _read(file, MAX_UPLOAD)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+        ev = await anyio.to_thread.run_sync(
+            partial(guarded_inference, cxr, "cxr.findings", partial(cxr.predict, data, view_position=view_position)),
+            limiter=app.state.inference_limiter
+        )
+        saved_ev = _save(ep, actor, "cxr.analyze", ev)
+        return {
+            "evidence": saved_ev,
+            "plain": plain_ai(ev, lang),
         }
 
     @app.post("/episodes/{eid}/guardian/inr-read")
