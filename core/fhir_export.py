@@ -127,6 +127,21 @@ def export_episode_to_fhir(ep: Episode, digest: Optional[dict] = None) -> dict[s
             value_data["component"] = comps
             value_data["valueString"] = f"CTR: {ev.value.get('ctr_ratio')}; Kardiomegaliya: {ev.value.get('cardiomegaly')}; O'pka dimlanishi: {ev.value.get('pulmonary_congestion')}"
 
+        elif ev.kind == "echo.valves" and isinstance(ev.value, dict):
+            code_coding.append({"system": LOINC_SYSTEM, "code": "883-9", "display": "Echocardiogram study"})
+            comps = []
+            val = ev.value
+            as_info = val.get("aortic_stenosis", {})
+            mr_info = val.get("mitral_regurgitation", {})
+            ph_info = val.get("pulmonary_hypertension", {})
+            if ph_info.get("spap_mmhg") is not None:
+                comps.append({
+                    "code": {"coding": [{"system": LOINC_SYSTEM, "code": "20230-9", "display": "Systolic pulmonary artery pressure"}]},
+                    "valueQuantity": {"value": float(ph_info["spap_mmhg"]), "unit": "mmHg"}
+                })
+            value_data["component"] = comps
+            value_data["valueString"] = f"AS: {as_info.get('grade')}; MR: {mr_info.get('grade')}; sPAP: {ph_info.get('spap_mmhg')} mmHg"
+
         elif ev.kind == "lab.biomarkers" and isinstance(ev.value, dict):
             comps = []
             if ev.value.get("troponin_0h_ng_l") is not None:

@@ -2,7 +2,7 @@
 
 **Hujjat sanasi:** 2026-11-02  
 **Maqsad:** CardioPath AI platformasini tadqiqot prototipidan to‘liq sertifikatlangan, yirik shifoxona va viloyat tibbiyot markazlarida 24/7 rejimida xatosiz ishlaydigan mukammal kardiologik AI-CDSS (Klinik qarorlarni qo‘llab-quvvatlash tizimi) darajasiga yetkazish.  
-**Joriy baza:** 410/410 test yashil (100%), 0 ogohlantirish.
+**Joriy baza:** 422/422 test yashil (100%), 0 ogohlantirish.
 
 ---
 
@@ -59,4 +59,8 @@
    - CXR tasvir sifati va proyeksiyasi tekshiruvi (Abstain-First: faqat frontal proyeksiyalar qabul qilinadi, past kontrast va haddan tashqari ekspozitsiya rad etiladi).
    - ESC 2023 0h/1h/3h hs-cTn (yuqori sezgir troponin) algoritmi va ICON NT-proBNP/BNP yoshga mos yurak yetishmovchiligi mezonlari (`risk/biomarkers.py`, `POST /episodes/{eid}/biomarkers`).
    - HL7 FHIR R4 LOINC kodlari bilan to'liq integratsiya (`36572-6`, `72271-0`, `49563-0`, `33762-6`).
-   - Test qamrovi: **410/410 test yashil (100%), 0 nosozlik**.
+7. **7-Bosqich (DICOM PACS Standarti, ExoKG Klapanlar Gemodinamikasi va Multimodal Sintez) — [BAJARILDI ✅]:**
+   - Sof Python DICOM Part 10 parseri (`cxr/dicom.py`): 16-bitli rentgenogrammalarni avtomatik kontrastlash (Window Center/Width) va proyeksiyani aniqlash.
+   - ExoKG Klapanlar va Gemodinamika (`echo/valves.py`, `POST /episodes/{eid}/echo/valves`): Aortal stenoz (AS, shu jumladan past oqimli past gradientli LFLG-AS), Mitral regürgitatsiya (MR), va Triksupid regürgitatsiyasi orqali sPAP hisoblash (Bernulli tenglamasi).
+   - Multimodal sintez va kross-modal klinik ziddiyatlar (`integration/digest.py`, `risk/protocol.py`): Troponin vs sokin EKG, CXR dimlanish vs saqlangan EF, LMS stenozi va xavfli QTc eskalatsiyasi.
+   - Test qamrovi: **422/422 test yashil (100%), 0 nosozlik**.

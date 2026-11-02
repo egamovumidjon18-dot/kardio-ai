@@ -50,10 +50,15 @@ flowchart TD
   * $QTc \ge 500$ ms bo'lsa — hayot uchun xavfli aritmiya xavfi (Qizil signal).
   * $PR > 210$ ms — AV-blokada darajasi.
   * $QRS \ge 120$ ms — qorincha ichi o'tkazuvchanligi buzilishi.
-* **Ko'krak qafasi rentgenogrammasi (CXR AI — Chest X-Ray):**
+* **Ko'krak qafasi rentgenogrammasi (CXR AI — Chest X-Ray va DICOM):**
+  * **DICOM (.dcm) va PACS integratsiyasi:** Tizim kasalxona PACS tizimidan keluvchi to'g'ridan-to'g'ri Part 10 DICOM fayllarini qabul qiladi, 16-bitli piksel massivini avtomatik kontrastlaydi (Window Center/Width) va frontal proyeksiyani tekshiradi.
   * **Kardiomegaliya va CTR (Kardio-torakal indeks):** AI modeli yurak va ko'krak qafasi o'lchamlari nisbatini hisoblaydi ($CTR > 0.50$ — kardiomegaliya, $CTR \ge 0.60$ — og'ir darajadagi kardiomegaliya va `VERY_HIGH` xavf).
   * **O'pka dimlanishi va shishi (Pulmonary congestion / edema):** Yengil, o'rtacha yoki og'ir dimlanish holatlari aniqlanadi.
   * **Sifat tekshiruvi (Abstain-First):** Faqat frontal (PA/AP) proyeksiyalar qabul qilinadi; past kontrastli yoki yorug'lik buzilgan rentgenogrammalar avtomatik rad etiladi (`ABSTAIN`).
+* **ExoKG Klapanlar va Gemodinamika (ESC/EACTS 2021):**
+  * **Aortal stenoz (AS):** $V_{max} \ge 4.0$ m/s, Mean Gradient $\ge 40$ mmHg yoki $AVA \le 1.0\ cm^2$ bo'lganda og'ir daraja; past oqimli past gradientli ($LFLG\text{-}AS$, $EF < 50\%$) shakllarini aniqlash.
+  * **Mitral yetishmovchilik (MR):** Birlamchi ($EROA \ge 40\ mm^2$) va ikkilamchi ($EROA \ge 20\ mm^2$, $RegVol \ge 30\ ml$) og'ir yetishmovchilik.
+  * **Triksupid regürgitatsiyasi va sPAP:** Modifikatsiyalangan Bernulli formulasi ($sPAP = 4 \cdot V_{TR}^2 + RAP$) bo'yicha o'pka gipertenziyasi ($sPAP > 50$ mmHg — og'ir operatsion xavf).
 * **Troponin va NT-proBNP Biokimyoviy Dinamikasi:**
   * **O'tkir koronar sindrom (ESC 2023 0h/1h/3h hs-cTn protokoli):** Boshlang'ich va dinamik troponin miqdoriga qarab `rule-out` (xavfsiz chiqarish), `observe` (monitoring) yoki `rule-in` (shoshilinch koronarografiya) xulosasi chiqariladi.
   * **Yurak yetishmovchiligi (ICON va ESC cutoffs):** Yoshi bo'yicha moslashtirilgan $NT-proBNP$ (masalan, >75 yoshda $\ge 1800$ pg/ml, 50-75 yoshda $\ge 900$ pg/ml, <50 yoshda $\ge 450$ pg/ml) o'tkir dekompensatsiyani tasdiqlaydi.

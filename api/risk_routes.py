@@ -61,6 +61,23 @@ class KDIGOIn(BaseModel):
     rrt: bool = False
 
 
+class ValvularEchoIn(BaseModel):
+    actor: str
+    as_vmax: Optional[float] = Field(None, ge=0.5, le=8.0, description="Aortal Vmax (m/s)")
+    as_mean_gradient: Optional[float] = Field(None, ge=0.0, le=160.0, description="Aortal o'rtacha gradient (mmHg)")
+    as_ava: Optional[float] = Field(None, ge=0.1, le=6.0, description="Aortal qopqoq maydoni AVA (cm²)")
+    mr_eroa: Optional[float] = Field(None, ge=0.0, le=200.0, description="Mitral EROA (mm²)")
+    mr_reg_vol: Optional[float] = Field(None, ge=0.0, le=300.0, description="Mitral regürgitatsiya hajmi (ml)")
+    mr_vena_contracta: Optional[float] = Field(None, ge=0.0, le=30.0, description="Mitral vena contracta (mm)")
+    mr_etiology: str = Field("primary", pattern="^(primary|secondary)$")
+    ar_pht: Optional[float] = Field(None, ge=50.0, le=1500.0, description="Aortal PHT (ms)")
+    ar_vena_contracta: Optional[float] = Field(None, ge=0.0, le=30.0, description="Aortal vena contracta (mm)")
+    ar_holodiastolic_reversal: bool = False
+    tr_vmax: Optional[float] = Field(None, ge=0.5, le=6.5, description="Triksupid Vmax (m/s)")
+    rap: float = Field(5.0, ge=0.0, le=30.0, description="O'ng bo'lmacha bosimi RAP (mmHg)")
+    lvef: Optional[float] = Field(None, ge=5.0, le=95.0, description="LVEF (%)")
+
+
 class BiomarkersIn(BaseModel):
     actor: str
     troponin_0h_ng_l: Optional[float] = Field(None, ge=0, le=100000, description="hs-cTn 0h (ng/L)")
@@ -184,6 +201,36 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], a
             "risk": ev.risk.value,
             "troponin": ev.value.get("troponin_decision"),
             "nt_probnp": ev.value.get("nt_probnp_decision")
+        })
+        return {"evidence": ev.to_dict()}
+
+    @app.post("/episodes/{eid}/echo/valves")
+    def echo_valves_endpoint(eid: str, body: ValvularEchoIn) -> dict:
+        ep = get(eid)
+        from echo.valves import ValvularEchoInput, evaluate_valvular_echo
+        ev = evaluate_valvular_echo(ValvularEchoInput(
+            as_vmax=body.as_vmax,
+            as_mean_gradient=body.as_mean_gradient,
+            as_ava=body.as_ava,
+            mr_eroa=body.mr_eroa,
+            mr_reg_vol=body.mr_reg_vol,
+            mr_vena_contracta=body.mr_vena_contracta,
+            mr_etiology=body.mr_etiology,
+            ar_pht=body.ar_pht,
+            ar_vena_contracta=body.ar_vena_contracta,
+            ar_holodiastolic_reversal=body.ar_holodiastolic_reversal,
+            tr_vmax=body.tr_vmax,
+            rap=body.rap,
+            lvef=body.lvef,
+        ))
+        if ev.abstained:
+            raise HTTPException(422, "; ".join(ev.explanation))
+        ep.add(ev)
+        store.save(ep, body.actor, "echo.valves", {
+            "risk": ev.risk.value,
+            "as": ev.value.get("aortic_stenosis", {}).get("grade"),
+            "mr": ev.value.get("mitral_regurgitation", {}).get("grade"),
+            "spap": ev.value.get("pulmonary_hypertension", {}).get("spap_mmhg"),
         })
         return {"evidence": ev.to_dict()}
 

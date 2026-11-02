@@ -14,11 +14,14 @@ from typing import Optional, Union
 import numpy as np
 from PIL import Image
 
+from cxr.dicom import is_dicom, parse_dicom
+
 TARGET_SIZE = 224
 
 
 def load_cxr_gray(source: Union[bytes, str, Path, np.ndarray, Image.Image]) -> np.ndarray:
-    """Ixtiyoriy manbadan rentgenogrammani o'qiydi va [224, 224] float32 [0.0, 1.0] massiviga keltiradi."""
+    """Ixtiyoriy manbadan (DICOM .dcm, PNG, JPEG, TIFF, NumPy massivi) rentgenogrammani o'qiydi
+    va [224, 224] float32 [0.0, 1.0] massiviga keltiradi."""
     if isinstance(source, np.ndarray):
         arr = source.astype(np.float32)
         if arr.ndim == 3:
@@ -29,6 +32,10 @@ def load_cxr_gray(source: Union[bytes, str, Path, np.ndarray, Image.Image]) -> n
         im = Image.fromarray((arr * 255).astype(np.uint8), mode="L")
     elif isinstance(source, Image.Image):
         im = source.convert("L")
+    elif is_dicom(source):
+        # Tibbiy DICOM Part 10 formati (.dcm)
+        raw_pixels, _ = parse_dicom(source)
+        im = Image.fromarray(raw_pixels, mode="L")
     elif isinstance(source, bytes):
         im = Image.open(io.BytesIO(source)).convert("L")
     else:

@@ -14,6 +14,7 @@ from PIL import Image
 
 from core.evidence import Evidence, Provenance, RiskLevel, Source
 from core.registry import ModelCard, check_license
+from cxr.dicom import is_dicom, parse_dicom
 from cxr.image import assess_cxr_quality, load_cxr_gray, to_model_input
 
 Backend = Callable[[np.ndarray], np.ndarray]
@@ -71,6 +72,14 @@ class CXRModel:
 
         # Proyeksiya tekshiruvi: lateral (yon) yoki qiyshiq bo'lsa abstain
         norm_view = (view_position or "PA").strip().upper()
+        if is_dicom(source):
+            try:
+                _, dcm_meta = parse_dicom(source)
+                if dcm_meta.get("view_position"):
+                    norm_view = dcm_meta["view_position"].strip().upper()
+            except Exception:
+                pass
+
         if norm_view not in ("PA", "AP"):
             return Evidence.abstain(
                 kind="cxr.findings",

@@ -34,7 +34,7 @@ ROUTE_PERMS: dict[tuple[str, str], str] = {
     ("POST", "/episodes/{eid}/echo-diagnosis"): "echo.diagnosis",
     ("POST", "/episodes/{eid}/risk"): "risk.assess", ("GET", "/episodes/{eid}/heart-team-protocol"): "protocol.read",
     ("POST", "/episodes/{eid}/rachs1"): "risk.assess", ("GET", "/rachs1/procedures"): _ANY,
-    ("POST", "/episodes/{eid}/kdigo"): "risk.assess", ("POST", "/episodes/{eid}/biomarkers"): "risk.assess",
+    ("POST", "/episodes/{eid}/kdigo"): "risk.assess", ("POST", "/episodes/{eid}/biomarkers"): "risk.assess", ("POST", "/episodes/{eid}/echo/valves"): "risk.assess",
     ("POST", "/episodes/{eid}/ecg"): "ai.upload", ("POST", "/episodes/{eid}/angio"): "ai.upload",
     ("POST", "/episodes/{eid}/echo-ef"): "ai.upload", ("POST", "/episodes/{eid}/cxr"): "ai.upload",
     ("POST", "/episodes/{eid}/guardian/checkin"): "guardian.submit", ("POST", "/episodes/{eid}/guardian/inr"): "guardian.submit",

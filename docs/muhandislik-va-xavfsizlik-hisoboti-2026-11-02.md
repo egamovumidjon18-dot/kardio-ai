@@ -2,7 +2,7 @@
 
 **Sana:** 2026-11-02  
 **Hujjat maqsadi:** Kelajakda ushbu loyiha bilan ishlovchi boshqa AI tizimlari, muhandis agentlar va dasturchilar uchun to‘liq texnik kontekst, kiritilgan himoyalar, arxitektura tamoyillari va regressiya cheklovlarini yetkazish.  
-**Tizim holati:** 410 passed, 0 warnings, 0 failed (barcha testlar 100% muvaffaqiyatli o‘tgan).
+**Tizim holati:** 422 passed, 0 warnings, 0 failed (barcha testlar 100% muvaffaqiyatli o‘tgan).
 
 ---
 
@@ -111,6 +111,13 @@
   3. **Troponin va NT-proBNP Biokimyoviy Dinamikasi (`risk/biomarkers.py`):** ESC 2023 0h/1h/3h hs-cTn protokoli (rule-out, observe, rule-in) va ICON konsensusining yoshga moslashtirilgan NT-proBNP (450 / 900 / 1800 pg/ml) hamda BNP mezonlari deterministik tarzda kiritildi.
   4. **API, FHIR R4 va UI Integratsiyasi:** `POST /episodes/{eid}/cxr` va `POST /episodes/{eid}/biomarkers` so'nggi nuqtalari qo'shildi. `core/fhir_export.py` da yangi LOINC kodlari (`36572-6`, `72271-0`, `49563-0`, `33762-6`) ulandi. Veb-interfeysda CXR Rentgen va Biokimyo dialoglari joylashtirildi.
 
+### T. DICOM Part 10 Standarti, ExoKG Klapanlar Gemodinamikasi va Multimodal Sintez (`cxr/dicom.py`, `echo/valves.py`, `integration/digest.py`) — [P1 to‘liq bajarildi]
+* **Qilingan o‘zgarishlar:**
+  1. **DICOM Part 10 Nativ Parseri (`cxr/dicom.py`):** Kasalxona PACS tizimlari bilan to'g'ridan-to'g'ri integratsiya qilish uchun sof Python/NumPy DICOM o'quvchisi yaratildi. 16-bitli tasvirlar Window Center/Width bo'yicha kontrastlanadi, `MONOCHROME1` va `MONOCHROME2` fotometrik interpretatsiyasi to'g'rilanadi va `view_position` avtomatik aniqlanadi.
+  2. **ExoKG Klapanlar Patologiyasi va O'pka Gipertenziyasi (`echo/valves.py`, `POST /episodes/{eid}/echo/valves`):** ESC/EACTS 2021 va ASE 2020 ko'rsatmalari asosida Aortal stenoz (AS, past oqimli past gradientli LFLG-AS bilan), Mitral regürgitatsiya (birlamchi va ikkilamchi MR), hamda Triksupid regürgitatsiyasi tezligidan Bernulli tenglamasi orqali $sPAP = 4 \cdot V_{TR}^2 + RAP$ hisoblash moduli joriy qilindi.
+  3. **Multimodal Ziddiyatlar va Konsilium Sintezi (`integration/digest.py`, `risk/protocol.py`):** Kross-modal ziddiyatlar (Troponin Rule-In vs sokin EKG, CXR dimlanishi vs saqlangan LVEF), LMS stenozi, xavfli QTc uzayishi va og'ir klapan yetishmovchiligi Heart Team konsiliumining majburiy muhokama punktlariga chiqarildi.
+  4. **HL7 FHIR R4 va UI:** ExoKG klapanlari uchun LOINC kodlari (`883-9`, `20230-9`) ulandi. Shifokor interfeysida «ExoKG Klapanlar» dialogi (`#valvesBtn`) qo'shildi.
+
 ---
 
 ## 3. Test Qamrovi va Sinov Holati
@@ -123,5 +130,6 @@ Barcha o‘zgarishlardan so‘ng loyihadagi barcha testlar to‘liq ishga tushir
 * **Milestone 4 dan so‘ng:** 404 ta
 * **Milestone 5 dan so‘ng:** 406 ta
 * **Milestone 6 (CXR & Biomarkers) dan so‘ng:** 410 ta
-* **Holat:** 410 passed, 0 warnings, 0 failed (100% muvaffaqiyatli)
-* **Ishlash tezligi:** ~75 soniya.
+* **Milestone 7 (DICOM, Valves & Multimodal) dan so‘ng:** 422 ta
+* **Holat:** 422 passed, 0 warnings, 0 failed (100% muvaffaqiyatli)
+* **Ishlash tezligi:** ~71 soniya.

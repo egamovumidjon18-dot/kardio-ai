@@ -15,7 +15,7 @@ from integration.concordances import aki_concordance, ecg_lvef_concordance, ef_c
 
 # AI modullari: ichki nom → Evidence turi
 AI_KINDS = {"pcg": "screening.pcg", "ecg": "ecg.afib", "ecg_low_ef": "ecg.low_ef", "ecg_shd": "ecg.shd",
-            "angio": "angio.stenosis_assist", "echo_ef": "echo.ef"}
+            "angio": "angio.stenosis_assist", "echo_ef": "echo.ef", "cxr": "cxr.findings"}
 
 
 def brief(ev: Evidence) -> dict:
@@ -116,6 +116,77 @@ def episode_digest(ep: Episode, alerts: Optional[list[dict]] = None) -> dict:
         add_discussion("shd_echo", "Yurak tuzilishi",
                        "AI-EKG ehtimoli: " + ", ".join(shd.value.get("positive_names") or shd.value["positive"])
                        + " — ExoKG'da klapanlar va o'ng qorincha baholansin (EKG darajani aniqlamaydi).", [shd.id])
+
+    # CXR Rentgen topilmalari
+    cxr = latest.get("cxr.findings")
+    if cxr is not None and not cxr.abstained and isinstance(cxr.value, dict):
+        ctr = cxr.value.get("ctr_ratio", 0)
+        if ctr >= 0.60:
+            add_discussion("cxr_severe_cardio", "Rentgen (CXR)",
+                           f"Og'ir kardiomegaliya (CTR={ctr:.2f} >= 0.60) — yurak bo'shliqlari kengayishi yoki gidroperikard.", [cxr.id])
+        congest = cxr.value.get("pulmonary_congestion")
+        if congest in ("moderate", "severe"):
+            add_discussion("cxr_congestion", "Rentgen (CXR)",
+                           f"O'pka dimlanishi ({congest}) — dekompensatsiyalangan yurak yetishmovchiligi belgilari.", [cxr.id])
+
+    # Biomarkerlar (Troponin / NT-proBNP)
+    bio = latest.get("lab.biomarkers")
+    if bio is not None and not bio.abstained and isinstance(bio.value, dict):
+        if bio.value.get("troponin_decision") == "rule_in":
+            add_discussion("bio_acs_rule_in", "Biomarkerlar (O'KS)",
+                           "hs-cTnI o'tkir dinamikasi (Rule-In) — o'tkir koronar sindrom / infarkt shubhasi, shoshilinch KShSh/koronarografiya.", [bio.id])
+        if bio.value.get("nt_probnp_decision") in ("decompensation_very_likely", "decompensation_likely"):
+            add_discussion("bio_hf_decomp", "Biomarkerlar (YuYe)",
+                           "NT-proBNP / BNP yuqori — yurak yetishmovchiligi dekompensatsiyasi laborator tasdiqlangan.", [bio.id])
+
+    # ExoKG Klapanlar va sPAP
+    valves = latest.get("echo.valves")
+    if valves is not None and not valves.abstained and isinstance(valves.value, dict):
+        as_info = valves.value.get("aortic_stenosis", {})
+        if as_info.get("severe"):
+            add_discussion("echo_severe_as", "ExoKG Klapanlar",
+                           "Og'ir aortal stenoz — Heart Team konsiliumida SAVR yoki TAVI ko'rib chiqilsin.", [valves.id])
+        mr_info = valves.value.get("mitral_regurgitation", {})
+        if mr_info.get("severe"):
+            add_discussion("echo_severe_mr", "ExoKG Klapanlar",
+                           "Og'ir mitral yetishmovchilik — mitral qopqoq rekonstruksiyasi yoki protezlash ko'rsatmasi.", [valves.id])
+        ph_info = valves.value.get("pulmonary_hypertension", {})
+        if ph_info.get("severe"):
+            add_discussion("echo_severe_ph", "O'pka Gipertenziyasi",
+                           f"Og'ir o'pka gipertenziyasi (sPAP={ph_info.get('spap_mmhg')} mmHg) — yuqori jarrohlik xavfi omili.", [valves.id])
+
+    # Koronar tomirlar va LMS
+    vessels = latest.get("angio.vessels")
+    if vessels is not None and not vessels.abstained and isinstance(vessels.value, dict):
+        if vessels.value.get("lms_stenosis_pct", 0) >= 50:
+            add_discussion("angio_lms_stenosis", "Koronarografiya (LMS)",
+                           f"Chap asosiy poya (LMS) {vessels.value.get('lms_stenosis_pct')}% stenozi — shoshilinch jarrohlik (KShSh) konsiliumi.", [vessels.id])
+
+    # EKG intervallari (QTc)
+    intervals = latest.get("ecg.intervals")
+    if intervals is not None and not intervals.abstained and isinstance(intervals.value, dict):
+        qtc = intervals.value.get("qtc_bazett_ms", 0)
+        if qtc >= 500:
+            add_discussion("ecg_long_qtc", "EKG Intervallari",
+                           f"Xavfli QTc uzayishi ({qtc} ms >= 500 ms) — torsades de pointes va to'satdan aritmik o'lim xavfi.", [intervals.id])
+
+    # Kross-modal klinik ziddiyatlar (Cross-modality discordance)
+    if bio is not None and not bio.abstained and isinstance(bio.value, dict) and bio.value.get("troponin_decision") == "rule_in":
+        afib_ev = latest.get("ecg.afib")
+        if afib_ev is not None and not afib_ev.abstained and afib_ev.risk.value == "low":
+            add_discussion("bio_ecg_discordance", "Klinik Ziddiyat",
+                           "Troponin bo'yicha o'tkir miokard shikastlanishi (Rule-In), lekin EKG ritmi sokin — og'riqsiz O'KS yoki mikrotomirlar patologiyasi shubhasi.", [bio.id, afib_ev.id])
+
+    if cxr is not None and not cxr.abstained and isinstance(cxr.value, dict) and (cxr.value.get("ctr_ratio", 0) >= 0.60 or cxr.value.get("pulmonary_congestion") in ("moderate", "severe")):
+        ef_val = None
+        if valid_lvef("clinician.lvef"):
+            ef_val = latest["clinician.lvef"].value
+        elif valid_lvef("echo.ef"):
+            ef_val = latest["echo.ef"].value
+        if ef_val is not None and ef_val >= 50:
+            add_discussion("cxr_echo_discordance", "Klinik Ziddiyat",
+                           f"Rentgenda kardiomegaliya yoki o'pka dimlanishi, lekin LVEF saqlangan ({ef_val:.0f}%) — HFpEF (diastolik yetishmovchilik) yoki gidroperikard istisno qilinsin.", [cxr.id])
+
     angio = latest.get("angio.stenosis_assist")
     if angio is not None and not angio.abstained and isinstance(angio.value, dict) and angio.value.get("n_candidates"):
         add_discussion("angio_candidates", "Angiografiya",
