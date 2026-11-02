@@ -70,6 +70,11 @@ class ConsentIn(BaseModel):
     notes: Optional[str] = Field(None, max_length=2000)
 
 
+class ArchiveIn(BaseModel):
+    actor: str = 'admin'
+    older_than_days: int = Field(30, ge=1, le=3650)
+
+
 class TransitionIn(BaseModel):
     from_stage: str
     to_stage: str
@@ -394,6 +399,12 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
         _get(eid)
         return store.audit(eid)
 
+    @app.post("/episodes/archive")
+    def archive_episodes(body: ArchiveIn) -> dict:
+        from core.retention import archive_closed_episodes
+        archived = archive_closed_episodes(store, effective_actor(body.actor), older_than_days=body.older_than_days)
+        return {"archived_count": len(archived), "episode_ids": archived}
+
     @app.post("/episodes/{eid}/consent")
     def register_consent(eid: str, body: ConsentIn) -> dict:
         from core.consent import ConsentInput, record_clinical_consent
@@ -433,6 +444,13 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
     def list_red_flags(lang: str = "uz") -> dict:
         L = lang_of(lang)
         return {code: {"name": flag_name(code, L), "major": major} for code, (_, major) in RED_FLAGS.items()}
+
+    @app.post("/screening/preflight")
+    async def screening_preflight(file: UploadFile = File(...)) -> dict:
+        from screening.preflight import check_audio_preflight
+        data = await file.read()
+        rep = check_audio_preflight(data)
+        return rep.to_dict()
 
     @app.post("/episodes/{eid}/screening")
     async def screening(

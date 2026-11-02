@@ -164,7 +164,15 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
         return out
 
     @app.post("/episodes/{eid}/angio")
-    async def angio_endpoint(eid: str, actor: str = Form(...), lang: str = Form("uz", pattern="^(uz|ru|en)$"), file: UploadFile = File(...)) -> dict:
+    async def angio_endpoint(
+        eid: str,
+        actor: str = Form(...),
+        lang: str = Form("uz", pattern="^(uz|ru|en)$"),
+        vessel_segment: Optional[str] = Form(None),
+        stenosis_percent: Optional[float] = Form(None),
+        is_bifurcation: bool = Form(False),
+        file: UploadFile = File(...),
+    ) -> dict:
         ep = get(eid)
         _need(angio, "Angiografiya")
         try:
@@ -174,7 +182,21 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
             raise HTTPException(422, str(exc)) from None
         ev = await anyio.to_thread.run_sync(partial(guarded_inference, angio, "angio.stenosis_assist",
                                                    partial(angio.analyze, gray)), limiter=app.state.inference_limiter)
-        return {"evidence": _save(ep, actor, "angio.analyze", ev), "plain": plain_ai(ev, lang)}
+        saved_ev = _save(ep, actor, "angio.analyze", ev)
+
+        anatomy_ev = None
+        if vessel_segment and stenosis_percent is not None:
+            from angio.vessels import CoronaryLesion, assess_coronary_anatomy
+            cands_count = len(ev.value.get("candidates", [])) if (ev and isinstance(ev.value, dict)) else 0
+            lesion = CoronaryLesion(vessel=vessel_segment.strip(), stenosis_percent=stenosis_percent, is_bifurcation=is_bifurcation)
+            anatomy_ev = assess_coronary_anatomy([lesion], ai_candidate_count=cands_count)
+            _save(ep, actor, "angio.anatomy", anatomy_ev)
+
+        return {
+            "evidence": saved_ev,
+            "plain": plain_ai(ev, lang),
+            "anatomy": anatomy_ev.to_dict() if anatomy_ev else None,
+        }
 
     @app.post("/episodes/{eid}/guardian/inr-read")
     async def inr_read(eid: str, file: UploadFile = File(...)) -> dict:

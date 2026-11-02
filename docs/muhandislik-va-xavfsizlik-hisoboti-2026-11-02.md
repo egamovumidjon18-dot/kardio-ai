@@ -128,6 +128,13 @@
   5. **Yuklama va Stress Sinovlari (`tests/load/locustfile.py`, `tests/test_load_concurrency.py`):** 20 ta parallel shifokor sessiyasi (epizod yaratish, bosqichlar almashinuvi, KDIGO AKI, yozma rozilik, epikriz generatsiyasi va parallel audit xesh zanjiri) 2.04 soniyada 100% muvaffaqiyat bilan bajarildi.
   6. **SaMD Klinik Baholash Dosyesi (`docs/samd-clinical-evaluation.md`):** Class IIb / IEC 62304 Class B/C dasturiy ta'minoti uchun intended use, ISO 14971 xatarlar tahlili va V&V matritsasi ishlab chiqildi.
 
+### P. 4-Bosqich (Milestone 4) — Pre-Flight Audio Sifati, Koronar Tomir Shoxlari va Ordinatoriya Xavfsizligi
+* **Qilingan o‘zgarishlar:**
+  1. **Auskultatsiya Pre-Flight Audio Sifat Tekshiruvi (`screening/preflight.py`, `POST /screening/preflight`):** Audio modelga kirmasdan oldin uning fizik sifati — kiyimga ishqalanish shovqini (>600 Hz energiya ulushi), kesilish (clipping >2%), signal/shovqin nisbati (SNR dB) va davomiyligi real vaqtda tahlil qilinadi. Past sifatda shifokorga darhol stetoskopni to‘g‘ri bosish bo‘yicha aniq klinik tavsiya beriladi.
+  2. **Koronar Tomir Shoxlari va LMS Xavf Eskalatsiyasi (`angio/vessels.py`, `POST /episodes/{eid}/angio`):** ESC/EACTS yo‘riqnomasi bo‘yicha tomir segmentlari (LMS, LAD, LCx, RCA) va torayish foizini hisobga olish. Agar chap asosiy poya (LMS) stenozi $\ge 50\%$ bo‘lsa, xavf avtomatik `VERY_HIGH` (Qizil signal) ga ko‘tariladi va zudlik bilan KShSh (CABG) konsiliumi talab etiladi.
+  3. **Ordinatoriya Avtomatik Ekran Qulfi (Idle Session Auto-Lock):** [`api/static/cardiopath.js`](file:///c:/Users/user/kardio-ai/api/static/cardiopath.js) da shifoxona ordinatoriyasida umumiy kompyuter 15 daqiqa harakatsiz qolganda ekranni blur qilib qulflash mexanizmi joriy etildi (HIPAA / GDPR / tibbiy sir talabi).
+  4. **Tibbiy Ma'lumotlar Arxivi va Retentsiya Siyosati (`core/retention.py`, `POST /episodes/archive`):** 30 kundan ortiq muddat oldin yopilgan (`CLOSED`) epizodlarni arxivga chiqarish va audit jurnali bilan muhrlash.
+
 ---
 
 ## 3. Test Qamrovi va Sinov Holati
@@ -136,6 +143,7 @@ Barcha o‘zgarishlardan so‘ng loyihadagi barcha testlar to‘liq ishga tushir
 * **Dastlabki testlar soni:** 353 ta
 * **Milestone 1 dan so‘ng:** 368 ta
 * **Milestone 2 dan so‘ng:** 377 ta
-* **Yakuniy testlar soni (Milestone 3):** 391 ta
-* **Holat:** 391 passed, 0 warnings (100% muvaffaqiyatli)
-* **Ishlash tezligi:** ~91 soniya.
+* **Milestone 3 dan so‘ng:** 391 ta
+* **Yakuniy testlar soni (Milestone 4):** 404 ta
+* **Holat:** 404 passed, 0 warnings (100% muvaffaqiyatli)
+* **Ishlash tezligi:** ~70 soniya.

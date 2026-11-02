@@ -131,5 +131,43 @@
     else updateNetworkStatus();
   }
 
+  
+  // Ordinatoriya xavfsizlik qulfi (15 daqiqa harakatsizlik)
+  const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
+  let idleTimer = null;
+
+  function showIdleLock() {
+    let overlay = document.getElementById('cp-idle-lock');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'cp-idle-lock';
+      overlay.style.cssText = 'position:fixed; inset:0; z-index:999999; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; color:#fff; font-family:sans-serif; text-align:center; padding:20px;';
+      overlay.innerHTML = `
+        <div style="background:#1e293b; border:1px solid #334155; border-radius:12px; padding:28px 36px; max-width:440px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);">
+          <div style="font-size:40px; margin-bottom:12px;">🔒</div>
+          <h3 style="margin:0 0 8px; font-size:18px; font-weight:700;">Ordinatoriya Xavfsizlik Qulfi</h3>
+          <p style="margin:0 0 20px; font-size:13px; color:#94a3b8; line-height:1.5;">Bemor ma\'lumotlari xavfsizligi uchun tizim 15 daqiqa harakatsizlikdan so\'ng vaqtincha qulflandi.</p>
+          <button id="cp-unlock-btn" style="background:#2563eb; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:600; cursor:pointer; font-size:14px; width:100%;">Seansni davom ettirish</button>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      const btn = document.getElementById('cp-unlock-btn');
+      if (btn) btn.addEventListener('click', () => {
+        overlay.remove();
+        resetIdleTimer();
+      });
+    }
+  }
+
+  function resetIdleTimer() {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(showIdleLock, IDLE_TIMEOUT_MS);
+  }
+
+  ['mousemove', 'keydown', 'pointerdown', 'touchstart', 'scroll'].forEach(evt => {
+    window.addEventListener(evt, resetIdleTimer, { passive: true });
+  });
+  resetIdleTimer();
+
   window.CardioPathUI = Object.freeze({ setTheme, toast });
 })();

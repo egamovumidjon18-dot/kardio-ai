@@ -17,7 +17,7 @@ from core.identity import current_user
 from core.store import EpisodeStore
 
 # ochiq yo'llar: kirishsiz ham (sahifaning o'zi, holat, kirish)
-PUBLIC = {("GET", "/"), ("GET", "/screening"), ("GET", "/guardian"), ("GET", "/models-ui"), ("GET", "/shadow-ui"), ("GET", "/health"), ("GET", "/health/deep"), ("GET", "/auth/status"), ("POST", "/auth/login")}
+PUBLIC = {("GET", "/"), ("GET", "/screening"), ("GET", "/guardian"), ("GET", "/models-ui"), ("GET", "/shadow-ui"), ("GET", "/health"), ("GET", "/health/deep"), ("GET", "/auth/status"), ("POST", "/auth/login"), ("POST", "/screening/preflight")}
 
 _ANY = "auth.any"          # istalgan kirgan foydalanuvchi
 ROUTE_PERMS: dict[tuple[str, str], str] = {
@@ -48,6 +48,7 @@ ROUTE_PERMS: dict[tuple[str, str], str] = {
     ("GET", "/audit/security"): "users.manage", ("GET", "/audit/verify"): "users.manage",
     ("GET", "/backups"): "users.manage", ("POST", "/backups"): "users.manage",
     ("POST", "/backups/restore-drill"): "users.manage",
+    ("POST", "/episodes/archive"): "users.manage",
     ("GET", "/shadow/pending"): "shadow.label", ("POST", "/shadow/{run_id}/label"): "shadow.label",
     ("GET", "/shadow/report"): "shadow.report",
 }

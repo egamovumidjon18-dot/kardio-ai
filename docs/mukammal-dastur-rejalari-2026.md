@@ -106,3 +106,8 @@
    - Oflayn PWA rejimi (`sw.js`, `manifest.webmanifest`, `cardiopath.js`).
    - ISO/IEC SaMD klinik baholash hujjatlari to‘plami (`docs/samd-clinical-evaluation.md`).
    - Yuklama va stress testlari (`tests/load/locustfile.py`, `tests/test_load_concurrency.py`).
+4. **4-Bosqich (Klinik Pre-Flight, Tomir Shoxlari va Ordinatoriya Xavfsizligi) — [BAJARILDI ✅]:**
+   - Auskultatsiya audio pre-flight tahlili (`screening/preflight.py`, `POST /screening/preflight`).
+   - Koronar tomir shoxlari va chap asosiy poya (LMS) xavf eskalatsiyasi (`angio/vessels.py`, `POST /episodes/{eid}/angio`).
+   - Ordinatoriya 15 daqiqalik avtomatik ekran qulfi (`api/static/cardiopath.js`).
+   - Tibbiy ma'lumotlar arxivi va retentsiya siyosati (`core/retention.py`, `POST /episodes/archive`).
