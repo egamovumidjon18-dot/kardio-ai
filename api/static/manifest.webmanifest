@@ -1,0 +1,25 @@
+{
+  "name": "CardioPath-AI — Kardiologiya va Yurak Jarrohligi",
+  "short_name": "CardioPath",
+  "description": "Kardiologiya va bolalar/kattalar yurak jarrohligi uchun AI klinik qarorlarni qo'llab-quvvatlash platformasi",
+  "start_url": "/screening",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#1e40af",
+  "icons": [
+    {
+      "src": "/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["medical", "health", "productivity"]
+}

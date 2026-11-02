@@ -59,6 +59,17 @@ class EpisodeIn(BaseModel):
     actor: str = "unknown"
 
 
+class ConsentIn(BaseModel):
+    actor: str
+    clinician: str = Field(min_length=2, max_length=200)
+    paper_ref: str = Field(min_length=1, max_length=100)
+    consent_type: str = Field("treatment_and_ai", max_length=100)
+    consented_at: Optional[str] = None
+    patient_or_guardian: str = Field("patient", max_length=50)
+    guardian_relation: Optional[str] = Field(None, max_length=100)
+    notes: Optional[str] = Field(None, max_length=2000)
+
+
 class TransitionIn(BaseModel):
     from_stage: str
     to_stage: str
@@ -270,6 +281,15 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
             return {"dir": str(backup_dir), "every_h": backup_every_h, "keep": backup_keep,
                     "items": [{k: v for k, v in b.items() if k != "path"} for b in backup_mod.list_backups(backup_dir)]}
 
+        @app.post("/backups/restore-drill")
+        def backup_restore_drill() -> dict:
+            from core.restore_drill import run_restore_drill
+            rep = run_restore_drill(backup_dir)
+            store.log_event(effective_actor("admin"), "backup.restore_drill", {"success": rep.success, "backup": rep.backup_path})
+            if not rep.success:
+                raise HTTPException(500, f"Zaxira tiklash mashqi muvaffaqiyatsiz: {rep.error}")
+            return rep.to_dict()
+
         @app.post("/backups", status_code=201)
         def backup_now() -> dict:
             path = backup_mod.create_backup(backup_db, backup_dir, backup_keep)
@@ -312,7 +332,7 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
             from core import backup as b_mod
             b_list = b_mod.list_backups(backup_dir)
             checks["backups"] = {"status": "ok", "count": len(b_list),
-                                 "latest": b_list[0]["created_at"] if b_list else None}
+                                 "latest": b_list[0]["created_at"] if b_list else None, "restore_drill_capable": True}
         else:
             checks["backups"] = {"status": "not_configured"}
 
@@ -373,6 +393,30 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
     def get_audit(eid: str) -> list[dict]:
         _get(eid)
         return store.audit(eid)
+
+    @app.post("/episodes/{eid}/consent")
+    def register_consent(eid: str, body: ConsentIn) -> dict:
+        from core.consent import ConsentInput, record_clinical_consent
+        ep = _get(eid)
+        try:
+            ev = record_clinical_consent(
+                ep,
+                ConsentInput(
+                    clinician=body.clinician,
+                    paper_ref=body.paper_ref,
+                    consent_type=body.consent_type,
+                    consented_at=body.consented_at,
+                    patient_or_guardian=body.patient_or_guardian,
+                    guardian_relation=body.guardian_relation,
+                    notes=body.notes,
+                ),
+                actor=effective_actor(body.actor),
+            )
+        except ValueError as exc:
+            raise HTTPException(422, str(exc))
+        ep.add(ev)
+        store.save(ep, body.actor, "consent.record", {"paper_ref": body.paper_ref, "clinician": body.clinician})
+        return {"evidence": ev.to_dict()}
 
     @app.post("/episodes/{eid}/transition")
     def transition(eid: str, body: TransitionIn) -> dict:

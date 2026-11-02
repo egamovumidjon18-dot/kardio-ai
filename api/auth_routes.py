@@ -28,6 +28,7 @@ ROUTE_PERMS: dict[tuple[str, str], str] = {
     ("GET", "/episodes/{eid}/report"): "episode.read",
     ("GET", "/episodes/{eid}/audit"): "episode.audit",
     ("POST", "/episodes/{eid}/transition"): "episode.transition",
+    ("POST", "/episodes/{eid}/consent"): "consent.record",
     ("POST", "/episodes/{eid}/screening"): "screening.run",
     ("POST", "/episodes/{eid}/echo-diagnosis"): "echo.diagnosis",
     ("POST", "/episodes/{eid}/risk"): "risk.assess", ("GET", "/episodes/{eid}/heart-team-protocol"): "protocol.read",
@@ -37,19 +38,22 @@ ROUTE_PERMS: dict[tuple[str, str], str] = {
     ("POST", "/episodes/{eid}/echo-ef"): "ai.upload",
     ("POST", "/episodes/{eid}/guardian/checkin"): "guardian.submit", ("POST", "/episodes/{eid}/guardian/inr"): "guardian.submit",
     ("POST", "/episodes/{eid}/guardian/inr-image"): "guardian.submit", ("POST", "/episodes/{eid}/guardian/inr-read"): "guardian.submit",
+    ("POST", "/episodes/{eid}/guardian/wound-protocol"): "guardian.submit",
     ("GET", "/alerts"): "alerts.read", ("GET", "/episodes/{eid}/alerts"): "alerts.read", ("POST", "/alerts/{alert_id}/ack"): "alerts.ack", ("POST", "/alerts/{alert_id}/resend"): "alerts.read",
     ("GET", "/learning/status"): "learning.read",
     ("POST", "/learning/promote"): "learning.approve", ("POST", "/learning/rollback"): "learning.approve",
     ("GET", "/users"): "users.manage", ("POST", "/users"): "users.manage",
     ("POST", "/users/{username}/disable"): "users.manage", ("POST", "/users/{username}/enable"): "users.manage",
     ("POST", "/users/{username}/role"): "users.manage", ("POST", "/users/{username}/password"): "users.manage",
-    ("GET", "/audit/security"): "users.manage", ("GET", "/audit/verify"): "users.manage", ("GET", "/backups"): "users.manage", ("POST", "/backups"): "users.manage",
+    ("GET", "/audit/security"): "users.manage", ("GET", "/audit/verify"): "users.manage",
+    ("GET", "/backups"): "users.manage", ("POST", "/backups"): "users.manage",
+    ("POST", "/backups/restore-drill"): "users.manage",
     ("GET", "/shadow/pending"): "shadow.label", ("POST", "/shadow/{run_id}/label"): "shadow.label",
     ("GET", "/shadow/report"): "shadow.report",
 }
 
 _CLINICIAN = {"episode.create", "episode.read", "screening.run", "echo.diagnosis", "episode.transition", "ai.upload",
-              "guardian.submit", "alerts.read"}
+              "guardian.submit", "alerts.read", "consent.record"}
 _CARDIOLOGIST = _CLINICIAN | {"risk.assess", "protocol.read", "episode.audit", "learning.read", "learning.approve",
                              "shadow.label", "shadow.report"}
 ROLE_PERMS: dict[str, set[str]] = {
@@ -57,7 +61,7 @@ ROLE_PERMS: dict[str, set[str]] = {
     "clinician": _CLINICIAN | {_ANY},
     "cardiologist": _CARDIOLOGIST | {_ANY},
     "surgeon": _CARDIOLOGIST | {"alerts.ack", _ANY},
-    "icu": {_ANY, "episode.read", "episode.transition", "risk.assess", "protocol.read", "ai.upload", "guardian.submit", "alerts.read"},
+    "icu": {_ANY, "episode.read", "episode.transition", "risk.assess", "protocol.read", "ai.upload", "guardian.submit", "alerts.read", "consent.record"},
     "patient": {_ANY, "guardian.submit"},       # faqat O'Z epizodiga uy-nazorat ma'lumoti
 }
 assert set(ROLE_PERMS) == set(ROLES)

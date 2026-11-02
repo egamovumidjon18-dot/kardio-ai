@@ -11,7 +11,12 @@ from api.alerts import record_alert
 from core.episode import Episode, Stage
 from core.evidence import Evidence
 from core.store import EpisodeStore
-from guardian.checkin import vitals_and_symptoms, weight_trend, wound
+from guardian.checkin import (
+    assess_wound_protocol,
+    vitals_and_symptoms,
+    weight_trend,
+    wound,
+)
 from guardian.escalation import Alert, Notifier, escalate
 from guardian.inr import Indication, assess_inr, parse_inr_text
 
@@ -37,6 +42,20 @@ class CheckinIn(BaseModel):
     fever: bool = False
     photo_ref: Optional[str] = None
     questionnaire: bool = Field(False, description="bemor to'liq so'rovnomani to'ldirdi — «hamma javob yo'q» ham qayd etiladi")
+
+
+class WoundProtocolIn(BaseModel):
+    actor: str
+    erythema: str = Field("none", description="none | mild_under_2cm | spreading_over_2cm")
+    edema: str = Field("none", description="none | mild | severe")
+    discharge: str = Field("none", description="none | serous | purulent")
+    pain: str = Field("mild_expected", description="mild_expected | increasing | severe")
+    warmth: str = Field("normal", description="normal | elevated")
+    dehiscence: str = Field("none", description="none | superficial | deep_separation")
+    sternal_instability: bool = False
+    fever: bool = False
+    photo_ref: Optional[str] = None
+    notes: Optional[str] = Field(None, max_length=2000)
 
 
 def _aware(dt: datetime) -> datetime:
@@ -95,3 +114,20 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
         if not items:
             raise HTTPException(422, "check-in bo'sh — kamida bitta ko'rsatkich kiriting")
         return _finish(ep, body.actor, "guardian.checkin", items, at)
+
+    @app.post("/episodes/{eid}/guardian/wound-protocol")
+    def wound_protocol_endpoint(eid: str, body: WoundProtocolIn) -> dict:
+        ep = _guardian(eid)
+        ev = assess_wound_protocol(
+            erythema=body.erythema,
+            edema=body.edema,
+            discharge=body.discharge,
+            pain=body.pain,
+            warmth=body.warmth,
+            dehiscence=body.dehiscence,
+            sternal_instability=body.sternal_instability,
+            fever=body.fever,
+            photo_ref=body.photo_ref,
+            notes=body.notes,
+        )
+        return _finish(ep, body.actor, "guardian.wound_protocol", [ev], datetime.now(timezone.utc))

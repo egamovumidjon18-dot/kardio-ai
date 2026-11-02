@@ -13,6 +13,7 @@ import html
 from datetime import datetime, timezone
 from typing import Optional
 
+from core.consent import get_clinical_consent
 from core.episode import Episode
 from core.evidence import DISCLAIMER
 
@@ -71,6 +72,26 @@ def render_clinical_report(ep: Episode, digest: dict) -> str:
         </div>
         """)
     handoffs_html = "".join(handoff_rows) if handoff_rows else '<p style="font-size:12px; color:#6b7280;">Boshlang‘ich bosqichda.</p>'
+
+    # Klinik rozilik holati
+    c_info = get_clinical_consent(ep)
+    if c_info:
+        p_ref = html.escape(str(c_info.get("paper_ref", "—")))
+        c_doc = html.escape(str(c_info.get("clinician", "shifokor")))
+        c_dt = html.escape(str(c_info.get("consented_at", ""))[:10])
+        consent_box = (
+            f'<div style="margin-top:6px; padding:6px 12px; background:#ecfdf5; border:1px solid #a7f3d0; border-radius:6px; font-size:11px; color:#065f46;">'
+            f'<strong>✅ Rasmiy yozma rozilik:</strong> Blank № {p_ref} '
+            f'(Oluvchi shifokor: {c_doc}, Sana: {c_dt})'
+            f'</div>'
+        )
+    else:
+        consent_box = (
+            f'<div style="margin-top:6px; padding:6px 12px; background:#fff7ed; border:1px solid #fed7aa; border-radius:6px; font-size:11px; color:#9a3412;">'
+            "<strong>⚠️ Yozma rozilik:</strong> Qog&#x27;oz blank qayd etilmagan (Qonun 24-moddasi talabi)"
+            f'</div>'
+        )
+
 
     return f"""<!DOCTYPE html>
 <html lang="uz">
@@ -185,6 +206,8 @@ def render_clinical_report(ep: Episode, digest: dict) -> str:
         </span>
     </div>
 </div>
+
+{consent_box}
 
 <div class="meta-box">
     <div><strong>Bemor kodi (ID):</strong> {html.escape(ep.patient_ref)}</div>

@@ -90,16 +90,19 @@
 
 ## 3. Ketma-ketlik va Amalga Oshirish Bosqichlari (Milestones)
 
-1. **1-Bosqich (Darhol bajariladigan — Yuqori samarali P0/P1):**
+1. **1-Bosqich (Darhol bajariladigan — Yuqori samarali P0/P1) — [BAJARILDI ✅]:**
    - Rasmiy chop etish va PDF eksport (`@media print` va klinik epikriz formati).
    - EKG interval hisoblagichi ($PR$, $QRS$, $QTc$).
    - Deterministik KDIGO AKI baholash moduli.
    - Chuqurlashtirilgan sog‘lomlik tekshiruvi (`/health/deep`).
-2. **2-Bosqich (Enterprise & Integratsiya):**
+2. **2-Bosqich (Enterprise & Integratsiya) — [BAJARILDI ✅]:**
    - PostgreSQL adapteri (`PostgresEpisodeStore`).
    - Kasalxona favqulodda SMS shlyuzi (`SmsNotifier`).
    - Audit jurnali xesh zanjiri (Tamper-evident log).
-3. **3-Bosqich (Sertifikatsiya va Dalada Qo‘llash):**
-   - Offline PWA rejimi.
-   - ISO/IEC SaMD klinik baholash hujjatlari to‘plami.
-   - Yuklama va stress testlari (k6).
+3. **3-Bosqich (Sertifikatsiya va Dalada Qo‘llash) — [BAJARILDI ✅]:**
+   - Bemorning rasmiy yozma klinik roziligi registri (`core/consent.py`, `POST /episodes/{eid}/consent`).
+   - Sternotomiya yarasi standart 5 o‘qli ASEPSIS protokoli (`guardian/checkin.py`, `POST /episodes/{eid}/guardian/wound-protocol`).
+   - Avtomatik zaxira tiklash mashqi (`core/restore_drill.py`, `POST /backups/restore-drill`).
+   - Oflayn PWA rejimi (`sw.js`, `manifest.webmanifest`, `cardiopath.js`).
+   - ISO/IEC SaMD klinik baholash hujjatlari to‘plami (`docs/samd-clinical-evaluation.md`).
+   - Yuklama va stress testlari (`tests/load/locustfile.py`, `tests/test_load_concurrency.py`).

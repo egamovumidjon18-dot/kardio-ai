@@ -12,6 +12,7 @@ from core.evidence import Evidence, Provenance, RiskLevel, Source, risk_rank
 
 HF_REF = "ESC 2021 HF guideline bemor tavsiyalari (3 kunda >2 kg vazn ortishi) + operatsiyadan keyingi konservativ chegaralar"
 WOUND_REF = "Sternal SSI belgilari (CDC/NHSN chuqur SSI mezonlari asosida so'rovnoma)"
+WOUND_PROTOCOL_REF = "CDC NHSN Jarrohlik yarasi infeksiyalari (SSI) mezonlari va ASEPSIS yara baholash shkalasi"
 
 HF_SYMPTOMS = {
     "dyspnea_rest": ("tinch holatda hansirash", RiskLevel.HIGH),
@@ -116,3 +117,103 @@ def wound(signs: list[str], fever: bool = False, photo_ref: Optional[str] = None
     return Evidence(kind="guardian.wound", value={"signs": signs, "fever": fever, "photo_ref": photo_ref, "unsure": unsure},
                     source=Source.PATIENT, provenance=prov, risk=risk if (signs or unsure) else RiskLevel.LOW,
                     explanation=trace or ["yara belgilari yo'q"])
+
+
+def assess_wound_protocol(
+    erythema: str = "none",
+    edema: str = "none",
+    discharge: str = "none",
+    pain: str = "mild_expected",
+    warmth: str = "normal",
+    dehiscence: str = "none",
+    sternal_instability: bool = False,
+    fever: bool = False,
+    photo_ref: Optional[str] = None,
+    notes: Optional[str] = None,
+) -> Evidence:
+    """Sternotomiya yarasi standart 5 o'qli protokoli (CDC NHSN / ASEPSIS)."""
+    prov = Provenance(name="sternotomy_wound_protocol", version="1.0.0", reference=WOUND_PROTOCOL_REF)
+    levels: list[RiskLevel] = []
+    trace: list[str] = []
+
+    # 1. Qizarish (Erythema)
+    if erythema == "spreading_over_2cm":
+        levels.append(RiskLevel.MODERATE)
+        trace.append("qizarish chok atrofida >2 sm kengaygan")
+    elif erythema == "mild_under_2cm":
+        trace.append("yengil chegaralangan qizarish (≤2 sm)")
+
+    # 2. Shish (Edema)
+    if edema == "severe":
+        levels.append(RiskLevel.MODERATE)
+        trace.append("to'sh ustida yaqqol shish")
+    elif edema == "mild":
+        trace.append("biroz shish")
+
+    # 3. Ajralma (Discharge)
+    if discharge == "purulent":
+        levels.append(RiskLevel.HIGH)
+        trace.append("yiringli ajralma (kritik SSI belgisi)")
+    elif discharge == "serous":
+        levels.append(RiskLevel.MODERATE)
+        trace.append("seroz yoki qonli ajralma")
+
+    # 4. Og'riq (Pain)
+    if pain == "severe":
+        levels.append(RiskLevel.MODERATE)
+        trace.append("kuchli va kuchayuvchi ko'krak og'rig'i")
+    elif pain == "increasing":
+        levels.append(RiskLevel.MODERATE)
+        trace.append("chok sohasida kuchayuvchi og'riq")
+
+    # 5. Mahalliy harorat (Warmth)
+    if warmth == "elevated":
+        levels.append(RiskLevel.MODERATE)
+        trace.append("mahalliy harorat ko'tarilgan (giperemiya)")
+
+    # 6. Chok ochilishi (Dehiscence)
+    if dehiscence == "deep_separation":
+        levels.append(RiskLevel.HIGH)
+        trace.append("chuqur to'qimalar/fassiya ajralishi")
+    elif dehiscence == "superficial":
+        levels.append(RiskLevel.MODERATE)
+        trace.append("yuzaki teri choki ochilishi")
+
+    # 7. To'sh suyagi instabilligi (Sternal Instability)
+    if sternal_instability:
+        levels.append(RiskLevel.HIGH)
+        trace.append("to'sh suyagi qimirlashi/chiqillashi (mediastinit xavfi)")
+
+    # Isitma (Fever)
+    if fever:
+        if any(lvl in (RiskLevel.MODERATE, RiskLevel.HIGH) for lvl in levels):
+            levels.append(RiskLevel.HIGH)
+            trace.append("isitma (≥38°C) + yara belgisi → chuqur SSI gumoni")
+        else:
+            levels.append(RiskLevel.MODERATE)
+            trace.append("isitma (≥38°C)")
+
+    risk = _worst(levels)
+    if photo_ref:
+        trace.append("rasm jarroh monitorida ko'rib chiqish uchun biriktirildi")
+
+    val = {
+        "erythema": erythema,
+        "edema": edema,
+        "discharge": discharge,
+        "pain": pain,
+        "warmth": warmth,
+        "dehiscence": dehiscence,
+        "sternal_instability": sternal_instability,
+        "fever": fever,
+        "photo_ref": photo_ref,
+        "notes": notes,
+    }
+    return Evidence(
+        kind="guardian.wound_protocol",
+        value=val,
+        source=Source.PATIENT,
+        provenance=prov,
+        risk=risk if (levels or fever or sternal_instability) else RiskLevel.LOW,
+        explanation=trace or ["yara holati qoniqarli, infeksiya belgilari yo'q"],
+    )

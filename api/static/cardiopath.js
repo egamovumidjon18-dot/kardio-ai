@@ -98,5 +98,38 @@
     }
     return item;
   }
+  
+  // PWA Service Worker ro'yxatdan o'tkazish (Offline Resiliency)
+  if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/static/sw.js').catch(err => {
+        console.debug('Service Worker register skipped/failed:', err);
+      });
+    });
+  }
+
+  // Oflayn holat monitoringi va xabarnomasi
+  function updateNetworkStatus() {
+    let bar = document.getElementById('cp-offline-banner');
+    if (!navigator.onLine) {
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'cp-offline-banner';
+        bar.style.cssText = 'background:#ea580c; color:#fff; text-align:center; padding:8px 16px; font-weight:600; font-size:13px; position:sticky; top:0; z-index:99999; box-shadow:0 2px 4px rgba(0,0,0,0.2);';
+        bar.innerHTML = '⚠️ <strong>Oflayn rejim:</strong> Internet tarmog\'i uzildi. Platforma mahalliy kesh asosida ishlamoqda.';
+        document.body.prepend(bar);
+      }
+    } else if (bar) {
+      bar.remove();
+      toast('Internet aloqasi tiklandi.', { kind: 'success' });
+    }
+  }
+  window.addEventListener('online', updateNetworkStatus);
+  window.addEventListener('offline', updateNetworkStatus);
+  if (!navigator.onLine) {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', updateNetworkStatus);
+    else updateNetworkStatus();
+  }
+
   window.CardioPathUI = Object.freeze({ setTheme, toast });
 })();

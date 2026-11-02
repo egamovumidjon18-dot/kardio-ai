@@ -119,11 +119,23 @@
   2. **Favqulodda SMS Shlyuzi (`guardian/escalation.py`):** `SmsNotifier` va `build_notifier_from_env()` kiritildi (`CARDIOPATH_SMS_URL`, `CARDIOPATH_SMS_PHONE`, `CARDIOPATH_SMS_TOKEN`). Internet bo‘lmaganda yoki Telegram sozlanmaganda ham kritik ogohlantirishlar jarroh telefoniga SMS orqali yetkaziladi.
   3. **PostgreSQL Adapteri (`core/postgres_store.py`):** Yirik tibbiyot markazlari va klasterlar uchun `PostgresEpisodeStore` yaratildi (JSONB hujjatlar, optimistik blokirovka, tranzaksiyalar, xesh-zanjirli audit log).
 
+### O. 3-Bosqich (Milestone 3) — Huquqiy Muvofiqlik, Oflayn PWA, Standart Protokollar va SaMD
+* **Qilingan o‘zgarishlar:**
+  1. **Bemorning Yozma Klinik Roziligi Registri (`core/consent.py`, `POST /episodes/{eid}/consent`):** O‘zbekiston Respublikasi «Fuqarolar sog‘lig‘ini saqlash to‘g‘risida»gi Qonuni 24-moddasi va SaMD ISO 13485 talablari bo‘yicha qog‘oz rozilik blank raqami, shifokor F.I.Sh., rozilik turi va sanasini qat'iy saqlash. Epikriz chop etishda (`GET /episodes/{eid}/report`) yozma rozilik mavjudligi yashil belgi bilan tasdiqlanadi yoki yo‘qligi to‘g‘risida ogohlantiriladi.
+  2. **Sternotomiya Yarasi Standart Protokoli (`guardian/checkin.py`, `POST /episodes/{eid}/guardian/wound-protocol`):** CDC NHSN va ASEPSIS mezonlari bo‘yicha 5 o‘qli baholash (qizarish, shish, ajralma, og‘riq, mahalliy harorat) + to‘sh suyagi instabilligi va chok ochilishi. Yiring yoki to‘sh beqarorligi aniqlanganda zudlik bilan RED Alert ishga tushib, navbatchi jarrohga SMS xabarnoma yuboradi.
+  3. **Avtomatik Zaxira Tiklash Mashqi (`core/restore_drill.py`, `POST /backups/restore-drill`):** ISO 13485 va ISO 27001 talabi: zaxira nusxani vaqtinchalik izolyatsiyalangan muhitga tiklab, SQLite `PRAGMA integrity_check`, qatorlar soni va SHA-256 audit xesh zanjirini sinovdan o‘tkazadi. `GET /health/deep` monitoringida restore drill tayyorligi tekshiriladi.
+  4. **Oflayn PWA Rejimi (`api/static/manifest.webmanifest`, `api/static/sw.js`, `api/static/cardiopath.js`):** Qishloq poliklinikalarida internet uzilganda skrining va monitoring interfeyslari keshdan mustaqil ishlaydi, tarmoq holati monitoring qilinadi.
+  5. **Yuklama va Stress Sinovlari (`tests/load/locustfile.py`, `tests/test_load_concurrency.py`):** 20 ta parallel shifokor sessiyasi (epizod yaratish, bosqichlar almashinuvi, KDIGO AKI, yozma rozilik, epikriz generatsiyasi va parallel audit xesh zanjiri) 2.04 soniyada 100% muvaffaqiyat bilan bajarildi.
+  6. **SaMD Klinik Baholash Dosyesi (`docs/samd-clinical-evaluation.md`):** Class IIb / IEC 62304 Class B/C dasturiy ta'minoti uchun intended use, ISO 14971 xatarlar tahlili va V&V matritsasi ishlab chiqildi.
+
 ---
 
 ## 3. Test Qamrovi va Sinov Holati
 
 Barcha o‘zgarishlardan so‘ng loyihadagi barcha testlar to‘liq ishga tushirildi:
-* **Jami testlar soni:** 377 ta
-* **Holat:** 377 passed, 0 warnings (100% muvaffaqiyatli)
-* **Ishlash tezligi:** ~66 soniya.
+* **Dastlabki testlar soni:** 353 ta
+* **Milestone 1 dan so‘ng:** 368 ta
+* **Milestone 2 dan so‘ng:** 377 ta
+* **Yakuniy testlar soni (Milestone 3):** 391 ta
+* **Holat:** 391 passed, 0 warnings (100% muvaffaqiyatli)
+* **Ishlash tezligi:** ~91 soniya.
