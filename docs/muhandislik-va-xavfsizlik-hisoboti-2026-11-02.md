@@ -2,7 +2,7 @@
 
 **Sana:** 2026-11-02  
 **Hujjat maqsadi:** Kelajakda ushbu loyiha bilan ishlovchi boshqa AI tizimlari, muhandis agentlar va dasturchilar uchun to‘liq texnik kontekst, kiritilgan himoyalar, arxitektura tamoyillari va regressiya cheklovlarini yetkazish.  
-**Tizim holati:** 352 passed, 0 warnings, 0 failed (barcha testlar 100% muvaffaqiyatli o‘tgan).
+**Tizim holati:** 353 passed, 0 warnings, 0 failed (barcha testlar 100% muvaffaqiyatli o‘tgan).
 
 ---
 
@@ -25,7 +25,7 @@
 
 ---
 
-## 2. 2026-11-02 Sanasida Kiritilgan Barcha O‘zgarishlar va Texnik Himoyalar
+## 2. Kiritilgan Barcha O‘zgarishlar va Texnik Himoyalar
 
 2026-11-02 texnik auditi (`docs/texnik-tahlil-2026-11-02.md`) asosida tizim to‘liq mustahkamlandi:
 
@@ -92,13 +92,31 @@
   3. Pytest davomida chiqqan barcha `DeprecationWarning` lar butunlay yo‘qotildi.
 
 ### J. CI/CD Avtomatlashtirish (`.github/workflows/ci.yml`)
-* GitHub Actions avtomatlashtirilgan pipeline yaratildi. Har bir push va pull request bo‘yicha testlar to‘liq ishga tushadi.
+* GitHub Actions avtomatlashtirilgan pipeline yaratildi. Har bir push va pull request bo‘yicha Python 3.12 muhitida testlar to‘liq ishga tushadi.
+
+### K. HTTP Xavfsizlik Sarlavhalari va Muhit Shabloni (`api/main.py`, `.env.example`)
+* **Qilingan o‘zgarishlar:**
+  1. FastAPI middleware orqali barcha javoblarga quyidagi xavfsizlik sarlavhalari qo‘shildi:
+     * `X-Content-Type-Options: nosniff` (MIME sniffing himoyasi)
+     * `X-Frame-Options: SAMEORIGIN` (Clickjacking himoyasi)
+     * `Referrer-Policy: strict-origin-when-cross-origin` (Bemor yo‘llari tashqariga sizib ketmasligi uchun)
+  2. Loyihada `.env.example` shabloni yaratildi. Unda barcha tizim konfiguratsiyalari (rejim, baza, og‘irliklar, zaxira nusxalar, audio saqlash) batafsil tushuntirilgan.
+* **Yangi testlar (`tests/test_api.py`):**
+  * `test_security_headers`
 
 ---
 
 ## 3. Test Qamrovi va Sinov Holati
 
 Barcha o‘zgarishlardan so‘ng loyihadagi barcha testlar to‘liq ishga tushirildi:
-* **Jami testlar soni:** 352 ta
-* **Holat:** 352 passed, 0 warnings (100% muvaffaqiyatli)
+* **Jami testlar soni:** 353 ta
+* **Holat:** 353 passed, 0 warnings (100% muvaffaqiyatli)
 * **Ishlash tezligi:** ~68 soniya (barcha ONNX modellari va SQLite testlari bilan birga).
+
+---
+
+## 4. Kelgusi AI Agentlar Uchun Cheklovlar va Tavsiyalar (Checklist)
+
+1. **Telegram sozlamalari:** Foydalanuvchi talabiga asosan Telegram oqimi hozircha tegilmaydi. Faqat `CARDIOPATH_TG_TOKEN` va `CARDIOPATH_TG_CHAT` muhit o‘zgaruvchilari orqali faollashtiriladi.
+2. **Model og‘irliklari:** Yangi model og‘irliklari `weights/` papkasiga qo‘yilganda yoki yangi arxitektura qo‘shilganda `core/model_safety.py` dagi `guarded_inference` va `valid_probabilities` orqali o‘tkazilishi shart.
+3. **Baza sxemasi:** Baza o‘zgartirilganda `core/store.py` dagi `save_with_alert` va tranzaksion yaxlitlik buzilmasligi shart.
