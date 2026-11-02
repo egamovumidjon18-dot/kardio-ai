@@ -81,6 +81,50 @@ class TelegramNotifier:
             log.error("Telegram xabari yuborilmadi: %s", exc)
             return False
 
+class SmsNotifier:
+    is_external: bool = True
+
+    """Kasalxona favqulodda SMS shlyuzi (Eskiz / PlayMobile yoki umumiy HTTP SMS API).
+    Muhit: CARDIOPATH_SMS_URL, CARDIOPATH_SMS_PHONE, CARDIOPATH_SMS_TOKEN
+    """
+
+    def __init__(self, url: str, phone: str, token: str = "") -> None:
+        self.url = url
+        self.phone = phone
+        self.token = token
+
+    @classmethod
+    def from_env(cls) -> Optional["SmsNotifier"]:
+        url = os.environ.get("CARDIOPATH_SMS_URL")
+        phone = os.environ.get("CARDIOPATH_SMS_PHONE")
+        token = os.environ.get("CARDIOPATH_SMS_TOKEN", "")
+        if url and phone:
+            return cls(url, phone, token)
+        return None
+
+    def send(self, text: str) -> bool:
+        import httpx
+
+        headers = {"Authorization": f"Bearer {self.token}"} if self.token else {}
+        payload = {"phone": self.phone, "message": text[:160]}
+        try:
+            r = httpx.post(self.url, json=payload, headers=headers, timeout=10)
+            return r.status_code in (200, 201, 202)
+        except Exception as exc:
+            log.error("SMS yuborilmadi: %s", exc)
+            return False
+
+
+def build_notifier_from_env() -> Notifier:
+    tg = TelegramNotifier.from_env()
+    if tg is not None:
+        return tg
+    sms = SmsNotifier.from_env()
+    if sms is not None:
+        return sms
+    return LogNotifier()
+
+
 
 def escalate(patient_ref: str, day: int | None, items: list[Evidence], notifier: Notifier) -> Escalation:
     usable = [e for e in items if not e.abstained]

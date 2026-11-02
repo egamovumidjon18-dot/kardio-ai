@@ -37,7 +37,7 @@ from core.evidence import DISCLAIMER
 from core.handoff import Handoff
 from core.registry import deploy_mode
 from core.store import EpisodeConflict, EpisodeStore, SqliteEpisodeStore, episode_to_dict
-from guardian.escalation import LogNotifier, Notifier, TelegramNotifier
+from guardian.escalation import LogNotifier, Notifier, TelegramNotifier, build_notifier_from_env
 from adapters.echo_ef import EchoEFAdapter
 from angio.model import AngioModel
 from ecg.low_ef import LowEFFromECG
@@ -556,7 +556,7 @@ def default_app() -> FastAPI:
     if every_h > 0 and rec_dir and circor:
         from learning.schedule import real_runner
         runner = real_runner(store, Path(rec_dir), models_dir, Path(circor))
-    return create_app(store, pcg, aki, TelegramNotifier.from_env() or LogNotifier(),
+    return create_app(store, pcg, aki, build_notifier_from_env(),
                       Path(rec_dir) if rec_dir else None, models_dir=models_dir, running_version=running,
                       ecg_model=ECGModel.from_dir(os.environ.get("CARDIOPATH_ECG_WEIGHTS", "weights/ecg")),
                       angio_model=AngioModel.from_dir(os.environ.get("CARDIOPATH_ANGIO_WEIGHTS", "weights/angio")),

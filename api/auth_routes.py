@@ -43,7 +43,7 @@ ROUTE_PERMS: dict[tuple[str, str], str] = {
     ("GET", "/users"): "users.manage", ("POST", "/users"): "users.manage",
     ("POST", "/users/{username}/disable"): "users.manage", ("POST", "/users/{username}/enable"): "users.manage",
     ("POST", "/users/{username}/role"): "users.manage", ("POST", "/users/{username}/password"): "users.manage",
-    ("GET", "/audit/security"): "users.manage", ("GET", "/backups"): "users.manage", ("POST", "/backups"): "users.manage",
+    ("GET", "/audit/security"): "users.manage", ("GET", "/audit/verify"): "users.manage", ("GET", "/backups"): "users.manage", ("POST", "/backups"): "users.manage",
     ("GET", "/shadow/pending"): "shadow.label", ("POST", "/shadow/{run_id}/label"): "shadow.label",
     ("GET", "/shadow/report"): "shadow.report",
 }
@@ -207,3 +207,9 @@ def register(app: FastAPI, auth: AuthService, store: EpisodeStore) -> None:
     def security_log(limit: int = Query(100, ge=1, le=500)) -> list[dict]:
         """Kirish, chiqish va foydalanuvchilar boshqaruvi hodisalari (parol va tokenlar yozilmaydi)."""
         return store.security_events(limit)
+
+    @app.get("/audit/verify")
+    def verify_audit() -> dict:
+        """Kriptografik audit jurnali xesh zanjirini tekshiradi."""
+        ok, error = store.verify_audit_integrity()
+        return {"valid": ok, "error": error}

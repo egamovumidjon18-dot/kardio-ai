@@ -5,6 +5,7 @@ Postgres adapteri keyinroq shu `EpisodeStore` interfeysiga ulanadi.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
 import threading
@@ -67,6 +68,9 @@ class EpisodeStore(ABC):
     def log_event(self, actor: str, action: str, detail: Optional[dict] = None) -> None: ...
 
     @abstractmethod
+    def verify_audit_integrity(self) -> tuple[bool, Optional[str]]: ...
+
+    @abstractmethod
     def security_events(self, limit: int = 100) -> list[dict]: ...
 
     @abstractmethod
@@ -125,7 +129,12 @@ class SqliteEpisodeStore(EpisodeStore):
                 self._conn.execute("ALTER TABLE episodes ADD COLUMN rev INTEGER NOT NULL DEFAULT 0")
             self._conn.execute(
                 "CREATE TABLE IF NOT EXISTS audit_log (seq INTEGER PRIMARY KEY AUTOINCREMENT, "
-                "episode_id TEXT, actor TEXT, action TEXT, detail TEXT, at TEXT)")
+                "episode_id TEXT, actor TEXT, action TEXT, detail TEXT, at TEXT, prev_hash TEXT, hash TEXT)")
+            have_audit = {r[1] for r in self._conn.execute("PRAGMA table_info(audit_log)")}
+            if "prev_hash" not in have_audit:
+                self._conn.execute("ALTER TABLE audit_log ADD COLUMN prev_hash TEXT")
+            if "hash" not in have_audit:
+                self._conn.execute("ALTER TABLE audit_log ADD COLUMN hash TEXT")
             self._conn.execute(
                 "CREATE TABLE IF NOT EXISTS alerts (id INTEGER PRIMARY KEY AUTOINCREMENT, episode_id TEXT NOT NULL, "
                 "patient_ref TEXT, level TEXT NOT NULL, source TEXT, reasons TEXT, created_at TEXT, "
@@ -154,9 +163,7 @@ class SqliteEpisodeStore(EpisodeStore):
                                     (doc, now, ep.id, rev)).rowcount == 0:
                 raise EpisodeConflict("bemor yozuvini boshqa foydalanuvchi hozirgina o'zgartirdi — sahifani yangilab, qayta urining")
             ep._rev = (rev or 0) + 1
-            self._conn.execute(
-                "INSERT INTO audit_log (episode_id, actor, action, detail, at) VALUES (?, ?, ?, ?, ?)",
-                (ep.id, actor, action, json.dumps(detail or {}, ensure_ascii=False), now))
+            self._insert_audit_entry(ep.id, actor, action, json.dumps(detail or {}, ensure_ascii=False), now)
 
     def save_with_alert(self, ep: Episode, actor: str, action: str,
                         level: Optional[str] = None,
@@ -191,9 +198,7 @@ class SqliteEpisodeStore(EpisodeStore):
 
             detail = {"alert": level, "notified": bool(delivered),
                       "alert_id": created_alert["id"] if created_alert else None}
-            self._conn.execute(
-                "INSERT INTO audit_log (episode_id, actor, action, detail, at) VALUES (?, ?, ?, ?, ?)",
-                (ep.id, actor, action, json.dumps(detail, ensure_ascii=False), now))
+            self._insert_audit_entry(ep.id, actor, action, json.dumps(detail, ensure_ascii=False), now)
 
         return created_alert
 
@@ -222,9 +227,37 @@ class SqliteEpisodeStore(EpisodeStore):
 
     def log_event(self, actor: str, action: str, detail: Optional[dict] = None) -> None:
         with self._lock, self._conn:
-            self._conn.execute(
-                "INSERT INTO audit_log (episode_id, actor, action, detail, at) VALUES (?, ?, ?, ?, ?)",
-                (self.SYSTEM_ID, actor, action, json.dumps(detail or {}, ensure_ascii=False), utcnow()))
+            self._insert_audit_entry(self.SYSTEM_ID, actor, action, json.dumps(detail or {}, ensure_ascii=False), utcnow())
+
+    def _insert_audit_entry(self, episode_id: str, actor: str, action: str, detail_str: str, at: str) -> str:
+        last = self._conn.execute("SELECT hash FROM audit_log ORDER BY seq DESC LIMIT 1").fetchone()
+        prev_h = last[0] if (last and last[0]) else "GENESIS"
+        raw = f"{prev_h}|{episode_id}|{actor}|{action}|{detail_str}|{at}"
+        entry_h = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+        self._conn.execute(
+            "INSERT INTO audit_log (episode_id, actor, action, detail, at, prev_hash, hash) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (episode_id, actor, action, detail_str, at, prev_h, entry_h),
+        )
+        return entry_h
+
+    def verify_audit_integrity(self) -> tuple[bool, Optional[str]]:
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT seq, episode_id, actor, action, detail, at, prev_hash, hash FROM audit_log ORDER BY seq ASC"
+            ).fetchall()
+        exp = "GENESIS"
+        for seq, ep_id, actor, action, detail, at, prev_h, entry_h in rows:
+            if prev_h is None or entry_h is None:
+                continue
+            if prev_h != exp:
+                return False, f"Audit zanjiri uzilgan: seq={seq}, kutilgan={exp}, kelgan={prev_h}"
+            raw = f"{prev_h}|{ep_id}|{actor}|{action}|{detail}|{at}"
+            calc_h = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+            if calc_h != entry_h:
+                return False, f"Audit yozuvi o'zgartirilgan: seq={seq}, hisoblangan={calc_h} != saqlangan={entry_h}"
+            exp = entry_h
+        return True, None
+
 
     def security_events(self, limit: int = 100) -> list[dict]:
         with self._lock:

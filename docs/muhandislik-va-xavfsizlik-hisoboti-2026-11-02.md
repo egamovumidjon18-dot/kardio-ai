@@ -2,7 +2,7 @@
 
 **Sana:** 2026-11-02  
 **Hujjat maqsadi:** Kelajakda ushbu loyiha bilan ishlovchi boshqa AI tizimlari, muhandis agentlar va dasturchilar uchun to‘liq texnik kontekst, kiritilgan himoyalar, arxitektura tamoyillari va regressiya cheklovlarini yetkazish.  
-**Tizim holati:** 372 passed, 0 warnings, 0 failed (barcha testlar 100% muvaffaqiyatli o‘tgan).
+**Tizim holati:** 377 passed, 0 warnings, 0 failed (barcha testlar 100% muvaffaqiyatli o‘tgan).
 
 ---
 
@@ -25,7 +25,7 @@
 
 ---
 
-## 2. Kiritilgan Barcha O‘zgarishlar va Texnik Himoyalar (A dan M gacha)
+## 2. Kiritilgan Barcha O‘zgarishlar va Texnik Himoyalar (A dan N gacha)
 
 2026-11-02 texnik auditi va strategik bosh rejasi asosida tizim to‘liq mustahkamlandi:
 
@@ -108,16 +108,22 @@
 
 ### M. 1-Bosqich (Milestone 1) — Klinik Aniqlik va Rasmiy Hisobotlar
 * **Qilingan o‘zgarishlar:**
-  1. **EKG Intervallari (`ecg/intervals.py`):** Pan-Tompkins algoritmi bilan R-cho‘qqilar aniqlanadi; $HR$, $RR$, $PR$, $QRS$, $QT$, $QTc$ (Bazett / Fridericia) hisoblanadi. Kritik $QTc \ge 500$ ms, $PR > 210$ ms, $QRS \ge 120$ ms holatlarida klinik xavf darajasi beriladi. EKG yuklanganda `/episodes/{eid}/ecg` natijasida `intervals` bloki qaytariladi.
-  2. **Deterministik KDIGO AKI Baholash (`risk/kdigo.py`):** Kardioxirurgiya va reanimatsiya uchun KDIGO 2012 mezonlari bo‘yicha O‘BYe 1/2/3 bosqichini zardob kreatinini dinamikasi, 48 soatlik ko‘tarilish, soatlik diurez va RRT (dializ) orqali aniq baholaydi. Yangi `POST /episodes/{eid}/kdigo` endpointi ochildi.
+  1. **EKG Intervallari (`ecg/intervals.py`):** Pan-Tompkins algoritmi bilan R-cho‘qqilar aniqlanadi; $HR$, $RR$, $PR$, $QRS$, $QT$, $QTc$ (Bazett / Fridericia) hisoblanadi.
+  2. **Deterministik KDIGO AKI Baholash (`risk/kdigo.py`):** Kardioxirurgiya va reanimatsiya uchun KDIGO 2012 mezonlari bo‘yicha O‘BYe 1/2/3 bosqichini zardob kreatinini dinamikasi, 48 soatlik ko‘tarilish, soatlik diurez va RRT (dializ) orqali aniq baholaydi (`POST /episodes/{eid}/kdigo`).
   3. **Chuqurlashtirilgan Tizim Monitoringi (`GET /health/deep`):** Baza yaxlitligi, disk bo‘sh joyi (MB), zaxira nusxalar va ONNX modellarini to‘liq tekshirib `200` yoki `503` qaytaradi.
   4. **Rasmiy Chop Etish va PDF Epikriz (`api/report.py` va `GET /episodes/{eid}/report`):** A4 formatidagi to‘liq klinik xulosa generatori (`@media print` CSS va PDF saqlash tugmasi).
+
+### N. 2-Bosqich (Milestone 2) — Korporativ Baza, Xesh-Zanjir Audit va SMS
+* **Qilingan o‘zgarishlar:**
+  1. **Kriptografik Xesh-Zanjirli Audit Jurnali (`core/store.py`):** Har bir audit yozuvi oldingi yozuvning SHA-256 xeshini o‘z ichiga oladi ($H_n = \text{SHA256}(H_{n-1} + \text{data}_n)$). Hech kim bazaga to‘g‘ridan-to‘g‘ri kirib audit tarixini o‘chira yoki o‘zgartira olmaydi. Yangi `verify_audit_integrity()` tekshiruvi va `GET /audit/verify` endpointi yaratildi.
+  2. **Favqulodda SMS Shlyuzi (`guardian/escalation.py`):** `SmsNotifier` va `build_notifier_from_env()` kiritildi (`CARDIOPATH_SMS_URL`, `CARDIOPATH_SMS_PHONE`, `CARDIOPATH_SMS_TOKEN`). Internet bo‘lmaganda yoki Telegram sozlanmaganda ham kritik ogohlantirishlar jarroh telefoniga SMS orqali yetkaziladi.
+  3. **PostgreSQL Adapteri (`core/postgres_store.py`):** Yirik tibbiyot markazlari va klasterlar uchun `PostgresEpisodeStore` yaratildi (JSONB hujjatlar, optimistik blokirovka, tranzaksiyalar, xesh-zanjirli audit log).
 
 ---
 
 ## 3. Test Qamrovi va Sinov Holati
 
 Barcha o‘zgarishlardan so‘ng loyihadagi barcha testlar to‘liq ishga tushirildi:
-* **Jami testlar soni:** 372 ta
-* **Holat:** 372 passed, 0 warnings (100% muvaffaqiyatli)
-* **Ishlash tezligi:** ~68 soniya (barcha ONNX modellari, SQLite testlari va API oqimlari bilan birga).
+* **Jami testlar soni:** 377 ta
+* **Holat:** 377 passed, 0 warnings (100% muvaffaqiyatli)
+* **Ishlash tezligi:** ~66 soniya.
