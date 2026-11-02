@@ -2,7 +2,7 @@
 
 **Hujjat sanasi:** 2026-11-02  
 **Maqsad:** CardioPath AI platformasini tadqiqot prototipidan to‘liq sertifikatlangan, yirik shifoxona va viloyat tibbiyot markazlarida 24/7 rejimida xatosiz ishlaydigan mukammal kardiologik AI-CDSS (Klinik qarorlarni qo‘llab-quvvatlash tizimi) darajasiga yetkazish.  
-**Joriy baza:** 406/406 test yashil (100%), 0 ogohlantirish.
+**Joriy baza:** 410/410 test yashil (100%), 0 ogohlantirish.
 
 ---
 
@@ -54,4 +54,9 @@
    - Rasmiy epikriz sahifasida bir bosish bilan FHIR JSON yuklab olish imkoniyati (`api/report.py`).
    - Shifokor, jarroh va ma'murlar uchun amaliy qo'llanma (`docs/shifokor-qollanmasi.md`).
    - Ishlab chiqarish Docker Compose klasteri va PostgreSQL profili (`docker-compose.yml`, `.env.example`).
-   - Test qamrovi: 406/406 test yashil (100%), 0 nosozlik.
+6. **6-Bosqich (CXR Rentgen Chuqur Neyrotarmog'i va Troponin / NT-proBNP Biokimyoviy Dinamikasi) — [BAJARILDI ✅]:**
+   - `CXRCardioNet` ko'p vazifali chuqur neyrotarmoq arxitekturasi: Kardiomegaliya (CTR > 0.50) va O'pka dimlanishi (pulmonary congestion/edema) aniqlash. ONNX formatida eksport qilingan (`weights/cxr/cxr.onnx`), anatomik priorlar bilan kalibratsiyalangan.
+   - CXR tasvir sifati va proyeksiyasi tekshiruvi (Abstain-First: faqat frontal proyeksiyalar qabul qilinadi, past kontrast va haddan tashqari ekspozitsiya rad etiladi).
+   - ESC 2023 0h/1h/3h hs-cTn (yuqori sezgir troponin) algoritmi va ICON NT-proBNP/BNP yoshga mos yurak yetishmovchiligi mezonlari (`risk/biomarkers.py`, `POST /episodes/{eid}/biomarkers`).
+   - HL7 FHIR R4 LOINC kodlari bilan to'liq integratsiya (`36572-6`, `72271-0`, `49563-0`, `33762-6`).
+   - Test qamrovi: **410/410 test yashil (100%), 0 nosozlik**.

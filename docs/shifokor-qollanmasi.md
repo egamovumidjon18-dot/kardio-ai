@@ -35,7 +35,7 @@ O'zbekiston Qonunchiligi va tibbiy etika qoidalariga ko'ra, har qanday sun'iy in
 
 ```mermaid
 flowchart TD
-    A["1. Skrining (Poliklinika / Qabulxona)<br/>PCG Auskultatsiya + Audio Preflight + CCHD SpO2"] --> B["2. To'liq Kardiologik Tekshiruv (Workup)<br/>12-tarmoqli EKG + ExoKG Simpson EF + Koronarografiya"]
+    A["1. Skrining (Poliklinika / Qabulxona)<br/>PCG Auskultatsiya + Audio Preflight + CCHD SpO2"] --> B["2. To'liq Kardiologik Tekshiruv (Workup)<br/>12-tarmoqli EKG + CXR Rentgen AI + Troponin/NT-proBNP + ExoKG"]
     B --> C["3. Heart Team Konsiliumi<br/>EuroSCORE II / STS / RACHS-1 + Ziddiyatlar muhokamasi"]
     C --> D["4. Jarrohlik Amaliyoti va Jonlantirish (ICU)<br/>KDIGO 2012 O'tkir buyrak shikastlanishi (AKI) monitoringi"]
     D --> E["5. Jarrohlikdan Keyingi 30 Kunlik Nazorat (Guardian)<br/>CDC NHSN Sternotomiya jarohati protokoli + SMS eskalatsiya"]
@@ -50,6 +50,13 @@ flowchart TD
   * $QTc \ge 500$ ms bo'lsa — hayot uchun xavfli aritmiya xavfi (Qizil signal).
   * $PR > 210$ ms — AV-blokada darajasi.
   * $QRS \ge 120$ ms — qorincha ichi o'tkazuvchanligi buzilishi.
+* **Ko'krak qafasi rentgenogrammasi (CXR AI — Chest X-Ray):**
+  * **Kardiomegaliya va CTR (Kardio-torakal indeks):** AI modeli yurak va ko'krak qafasi o'lchamlari nisbatini hisoblaydi ($CTR > 0.50$ — kardiomegaliya, $CTR \ge 0.60$ — og'ir darajadagi kardiomegaliya va `VERY_HIGH` xavf).
+  * **O'pka dimlanishi va shishi (Pulmonary congestion / edema):** Yengil, o'rtacha yoki og'ir dimlanish holatlari aniqlanadi.
+  * **Sifat tekshiruvi (Abstain-First):** Faqat frontal (PA/AP) proyeksiyalar qabul qilinadi; past kontrastli yoki yorug'lik buzilgan rentgenogrammalar avtomatik rad etiladi (`ABSTAIN`).
+* **Troponin va NT-proBNP Biokimyoviy Dinamikasi:**
+  * **O'tkir koronar sindrom (ESC 2023 0h/1h/3h hs-cTn protokoli):** Boshlang'ich va dinamik troponin miqdoriga qarab `rule-out` (xavfsiz chiqarish), `observe` (monitoring) yoki `rule-in` (shoshilinch koronarografiya) xulosasi chiqariladi.
+  * **Yurak yetishmovchiligi (ICON va ESC cutoffs):** Yoshi bo'yicha moslashtirilgan $NT-proBNP$ (masalan, >75 yoshda $\ge 1800$ pg/ml, 50-75 yoshda $\ge 900$ pg/ml, <50 yoshda $\ge 450$ pg/ml) o'tkir dekompensatsiyani tasdiqlaydi.
 * **ExoKG Simpson EF:** Chap qorincha otib berish fraksiyasi ($EF \le 35\%$ — yuqori xavf).
 * **Koronarografiya va LMS (Chap asosiy poya) stenozi:** Agar LMS $\ge 50\%$ stenozi aniqlansa, bemor avtomatik tarzda `VERY_HIGH` xavf toifasiga o'tkaziladi va shoshilinch jarrohlik konsiliumi belgilanadi.
 
@@ -82,7 +89,14 @@ Har bir bemor uchun `GET /episodes/{eid}/report` manzili orqali tayyor rasmiy ep
 ### HL7 FHIR R4 Standartida Eksport
 Kasalxona axborot tizimlari (MIS / HIS / PACS / EHR) bilan ma'lumot almashish uchun:
 * Sahifadagi `📥 HL7 FHIR R4 JSON` tugmasi yoki API: `GET /episodes/{eid}/fhir`.
-* Standart bo'yicha `Bundle (type: document)` formatida de-identifikatsiyalangan `Composition`, `Patient`, `Consent`, `Observation` (LOINC kodlari bilan) va `RiskAssessment` resurslari taqdim etiladi.
+* Standart bo'yicha `Bundle (type: document)` formatida de-identifikatsiyalangan `Composition`, `Patient`, `Consent`, `Observation` (LOINC kodlari bilan) va `RiskAssessment` resurslari taqdim etiladi:
+  * `36572-6` — Chest X-ray view (Ko'krak qafasi rentgenogrammasi proyeksiyasi)
+  * `72271-0` — Cardiothoracic ratio (Kardio-torakal indeks CTR)
+  * `49563-0` — Troponin I.cardiac [Mass/volume] (Yuqori sezgir hs-cTnI)
+  * `33762-6` — NT-proBNP [Mass/volume] (Natriyuretik peptid)
+  * `8867-4` — Heart rate (Yurak qisqarishlar soni)
+  * `8633-0` — QTc interval (Korreksiyalangan QT)
+  * `883-9` — Simpson ejection fraction (Chap qorincha EF)
 
 ---
 

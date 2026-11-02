@@ -2,7 +2,7 @@
 
 **Sana:** 2026-11-02  
 **Hujjat maqsadi:** Kelajakda ushbu loyiha bilan ishlovchi boshqa AI tizimlari, muhandis agentlar va dasturchilar uchun to‘liq texnik kontekst, kiritilgan himoyalar, arxitektura tamoyillari va regressiya cheklovlarini yetkazish.  
-**Tizim holati:** 406 passed, 0 warnings, 0 failed (barcha testlar 100% muvaffaqiyatli o‘tgan).
+**Tizim holati:** 410 passed, 0 warnings, 0 failed (barcha testlar 100% muvaffaqiyatli o‘tgan).
 
 ---
 
@@ -104,6 +104,13 @@
   2. **Epizod Kartasida Tezkor Harakatlar (1-Click Actions):** Rasmiy A4 epikrizni chop etish (`print`), HL7 FHIR R4 JSON eksport qilish, bemorning yozma klinik roziligini rasmiylashtirish dialogi (`#csBtn`) va jonlantirish bo'limi uchun KDIGO AKI kalkulyator dialogi (`#kdBtn`) bevosita veb-interfeysga ulandi.
   3. **Klinik Ballar Paneli (Scores Panel):** EuroSCORE II va Thakar qatoriga KDIGO AKI bosqichi hamda EKG QTc (Bazett) intervallari dinamik ravishda chiqarildi.
 
+### S. CXR Rentgen Neyrotarmog'i va Troponin / NT-proBNP Biokimyoviy Dinamikasi (`cxr/`, `risk/biomarkers.py`, `scripts/build_cxr_model.py`) — [P1 to‘liq bajarildi]
+* **Qilingan o‘zgarishlar:**
+  1. **CXR Neyrotarmoq Arxitekturasi va ONNX Eksporti (`scripts/build_cxr_model.py`, `cxr/model.py`):** Ko'p vazifali `CXRCardioNet` arxitekturasi yaratildi. Model 224x224 pikselli frontal rentgenogrammalardan kardiomegaliya ehtimoli, o'pka dimlanishi (pulmonary congestion/edema) va kardio-torakal indeksni ($CTR$) hisoblaydi. Model `weights/cxr/cxr.onnx` fayliga eksport qilingan bo'lib, CPU-friendly ONNX Runtime orqali ishlaydi.
+  2. **Tasvir Sifat Tekshiruvi va Abstain-First Himoyasi (`cxr/image.py`):** Frontal bo'lmagan (masalan, LATERAL) proyeksiyalar qabul qilinmaydi. Kontrasti past ($\sigma < 0.05$) yoki ekspozitsiyasi buzilgan (to'yingan piksellar $>35\%$) tasvirlar rad etiladi (`abstained = True`).
+  3. **Troponin va NT-proBNP Biokimyoviy Dinamikasi (`risk/biomarkers.py`):** ESC 2023 0h/1h/3h hs-cTn protokoli (rule-out, observe, rule-in) va ICON konsensusining yoshga moslashtirilgan NT-proBNP (450 / 900 / 1800 pg/ml) hamda BNP mezonlari deterministik tarzda kiritildi.
+  4. **API, FHIR R4 va UI Integratsiyasi:** `POST /episodes/{eid}/cxr` va `POST /episodes/{eid}/biomarkers` so'nggi nuqtalari qo'shildi. `core/fhir_export.py` da yangi LOINC kodlari (`36572-6`, `72271-0`, `49563-0`, `33762-6`) ulandi. Veb-interfeysda CXR Rentgen va Biokimyo dialoglari joylashtirildi.
+
 ---
 
 ## 3. Test Qamrovi va Sinov Holati
@@ -115,6 +122,6 @@ Barcha o‘zgarishlardan so‘ng loyihadagi barcha testlar to‘liq ishga tushir
 * **Milestone 3 dan so‘ng:** 391 ta
 * **Milestone 4 dan so‘ng:** 404 ta
 * **Milestone 5 dan so‘ng:** 406 ta
-* **UI integratsiyasidan so‘ng:** 406 ta
-* **Holat:** 406 passed, 0 warnings, 0 failed (100% muvaffaqiyatli)
+* **Milestone 6 (CXR & Biomarkers) dan so‘ng:** 410 ta
+* **Holat:** 410 passed, 0 warnings, 0 failed (100% muvaffaqiyatli)
 * **Ishlash tezligi:** ~75 soniya.
