@@ -1581,3 +1581,4 @@ function helpPage() {
   paintChrome();
   route();
 })();
+})();
