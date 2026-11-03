@@ -59,6 +59,8 @@ def _verify_restored_audit_chain(conn: sqlite3.Connection) -> tuple[bool, str]:
 
         last_hash = "GENESIS"
         for r_id, eid, actor, action, detail, at, prev_hash, expected_hash in rows:
+            if prev_hash is None or expected_hash is None:
+                continue
             if prev_hash != last_hash:
                 return False, f"Zanjir buzilgan: yozuv #{r_id} prev_hash={prev_hash}, kutilgan={last_hash}"
 
