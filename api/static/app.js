@@ -1255,7 +1255,7 @@ async function modelsPage(params) {
     api("/learning/status").catch(() => null), can("shadow.report") || can("shadow.label") ? api("/shadow/report").catch(() => null) : null]);
   const cards = [];
   if (health_.pcg_model) cards.push({ key: "pcg", c: health_.pcg_model, st: "live", icon: "steth" });
-  [["ecg", "pulse"], ["ecg_low_ef", "heart"], ["ecg_shd", "heart"], ["angio", "chart"], ["cxr", "doc"], ["echo_ef", "heart"]].forEach(([k, icon]) => {
+  [["ecg", "pulse"], ["ecg_low_ef", "heart"], ["ecg_shd", "heart"], ["angio", "chart"], ["cxr", "doc"], ["csa_aki_ml", "chart"], ["wound_image_cv", "shield"], ["echo_ef", "heart"]].forEach(([k, icon]) => {
     if (models[k]) cards.push({ key: k, c: models[k], st: "live", icon });
   });
   (shadow && shadow.shadow_models || []).forEach((m) => cards.push({ key: "shadow:" + m, c: { name: m.split("@")[0], version: m.split("@")[1], dataset: "PTB-XL + Chapman + CPSC 2018 + Georgia", dataset_license: "CC-BY 4.0 / CC0", commercial_use: true, metrics: {} }, st: "shadow", icon: "pulse" }));

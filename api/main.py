@@ -47,6 +47,7 @@ from core.shadow import ShadowRhythmModel, ShadowStore
 from ecg.shd import StructuralFromECG
 from guardian.ocr import Engine
 from risk.aki import AKIModel
+from guardian.wound_cv import WoundImageModel
 from screening.collection import ECHO_DIAGNOSES, echo_diagnosis, save_recordings
 from screening.model import LOCATIONS, PCGModel, Recording
 from screening.plain import LANGS, flag_name, lang_of, plain_report
@@ -102,7 +103,7 @@ class EchoIn(BaseModel):
 
 def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional[AKIModel] = None,
                notifier: Optional[Notifier] = None, recordings_dir: Optional[Path] = None,
-               ecg_model: Optional[ECGModel] = None, angio_model: Optional[AngioModel] = None, cxr_model: Optional[CXRModel] = None,
+               ecg_model: Optional[ECGModel] = None, angio_model: Optional[AngioModel] = None, cxr_model: Optional[CXRModel] = None, wound_model: Optional[WoundImageModel] = None,
                ef_model: Optional[EchoEFAdapter] = None, ocr_engine: Optional[Engine] = None,
                models_dir: Optional[Path] = None, running_version: str = "baseline",
                auth: Optional[AuthService] = None, low_ef_model: Optional[LowEFFromECG] = None,
@@ -267,9 +268,9 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
 
     risk_routes.register(app, store, _get, aki_model)
     notifier = notifier or LogNotifier()
-    guardian_routes.register(app, store, _get, notifier)
+    guardian_routes.register(app, store, _get, notifier, wound_model=wound_model)
     ai_routes.register(app, store, _get, notifier, ecg_model, angio_model, ef_model, ocr_engine, low_ef=low_ef_model, shd=shd_model,
-                       shadow_models=shadow_models, shadow_store=shadow_store, cxr=cxr_model)
+                       shadow_models=shadow_models, shadow_store=shadow_store, cxr=cxr_model, aki=aki_model, wound=wound_model)
     if shadow_store is not None:
         shadow_routes.register(app, shadow_store, [m.key for m in shadow_models or []])
     alerts_api.register(app, store, _get, notifier)
@@ -621,6 +622,7 @@ def default_app() -> FastAPI:
     weights_dir, running = resolve_weights_dir("weights/pcg", models_dir, os.environ.get("CARDIOPATH_WEIGHTS"))
     pcg = PCGModel.from_dir(weights_dir)
     aki = AKIModel.from_dir(os.environ.get("CARDIOPATH_AKI_WEIGHTS", "weights/aki"))
+    wound = WoundImageModel.from_dir(os.environ.get("CARDIOPATH_WOUND_WEIGHTS", "weights/wound"))
     rec_dir = os.environ.get("CARDIOPATH_RECORDINGS")
     every_h = float(os.environ.get("CARDIOPATH_LEARNING_EVERY_H", "0") or 0)
     circor = os.environ.get("CARDIOPATH_CIRCOR_DIR")
@@ -633,6 +635,7 @@ def default_app() -> FastAPI:
                       ecg_model=ECGModel.from_dir(os.environ.get("CARDIOPATH_ECG_WEIGHTS", "weights/ecg")),
                       angio_model=AngioModel.from_dir(os.environ.get("CARDIOPATH_ANGIO_WEIGHTS", "weights/angio")),
                       cxr_model=CXRModel.from_dir(os.environ.get("CARDIOPATH_CXR_WEIGHTS", "weights/cxr")),
+                      wound_model=wound,
                       ef_model=_load_ef(), auth=auth, low_ef_model=_load_low_ef(), shd_model=_load_shd(),
                       shadow_models=_load_shadow(), shadow_store=ShadowStore(db_path), delivery_retry_s=60,
                       learning_runner=runner, learning_every_h=every_h,

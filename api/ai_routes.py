@@ -56,7 +56,8 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
              ecg: Optional[ECGModel], angio: Optional[AngioModel], ef: Optional[EchoEFAdapter],
              ocr_engine: Optional[Engine] = None, low_ef: Optional[LowEFFromECG] = None,
              shd: Optional[StructuralFromECG] = None, shadow_models: Optional[list[ShadowRhythmModel]] = None,
-             shadow_store: Optional[ShadowStore] = None, cxr: Optional[CXRModel] = None) -> None:
+             shadow_store: Optional[ShadowStore] = None, cxr: Optional[CXRModel] = None,
+             aki: Optional[Any] = None, wound: Optional[Any] = None) -> None:
     def _need(model, name: str) -> None:
         if model is None:
             raise HTTPException(503, f"{name} moduli ulanmagan (og'irliklar yo'q) — qoidalar ishlashda davom etadi")
@@ -89,14 +90,16 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
     def models() -> dict:
         def card(m):
             return m.card.to_dict() if m else None
-        blocked = {
-            "csa_aki_ml": "MIMIC-IV (PhysioNet credentialed) kerak — risk/aki.py AKIModel interfeysi tayyor",
-            "wound_image_cv": "ochiq sternotomiya dataseti yo'q; SurgWound sinovi rad etildi — guardian/wound_cv.py",
-        }
+        blocked = {}
+        if aki is None:
+            blocked["csa_aki_ml"] = "MIMIC-IV (PhysioNet credentialed) kerak — risk/aki.py AKIModel interfeysi tayyor"
+        if wound is None or not getattr(wound, "available", False):
+            blocked["wound_image_cv"] = "ochiq sternotomiya dataseti yo'q; SurgWound sinovi rad etildi — guardian/wound_cv.py"
         if low_ef is None:
             blocked["ecg_low_ef"] = "og'irliklar yo'q yoki qabul mezonlaridan o'tmagan (yoki product rejimi) — ecg/low_ef.py"
         return {
             "ecg": card(ecg), "angio": card(angio), "echo_ef": card(ef), "ecg_low_ef": card(low_ef), "ecg_shd": card(shd), "cxr": card(cxr),
+            "csa_aki_ml": card(aki), "wound_image_cv": card(wound),
             "ecg_shd_enabled": shd.enabled if shd else [],
             "inr_ocr": {"available": ocr_engine is not None or _ocr_available()},
             "blocked": blocked,

@@ -4,7 +4,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Callable, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from guardian.wound_cv import WoundImageModel
 from pydantic import BaseModel, Field
 
 from api.alerts import record_alert
@@ -67,7 +68,7 @@ def _postop_day(ep: Episode, at: datetime) -> Optional[int]:
     return (at - _aware(datetime.fromisoformat(start.created_at))).days if start else None
 
 
-def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], notifier: Notifier) -> None:
+def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], notifier: Notifier, wound_model: Optional[WoundImageModel] = None) -> None:
     def _guardian(eid: str) -> Episode:
         ep = get(eid)
         if ep.stage != Stage.GUARDIAN_30D:
@@ -131,3 +132,12 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
             notes=body.notes,
         )
         return _finish(ep, body.actor, "guardian.wound_protocol", [ev], datetime.now(timezone.utc))
+
+    @app.post("/episodes/{eid}/guardian/wound-image")
+    async def wound_image_endpoint(eid: str, actor: str = Form(...), file: UploadFile = File(...)) -> dict:
+        ep = _guardian(eid)
+        if wound_model is None or not getattr(wound_model, "available", False):
+            raise HTTPException(503, "Yara tahlili CV modeli ulanmagan")
+        data = await file.read()
+        ev = wound_model.analyze(data)
+        return _finish(ep, actor, "guardian.wound_image", [ev], datetime.now(timezone.utc))

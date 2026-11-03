@@ -35,6 +35,8 @@ DATASET_LICENSES: dict[str, tuple[str, bool]] = {
     "eICU-CRD": ("PhysioNet Credentialed Health Data License", False),
     "CheXpert / NIH ChestX-ray14": ("CC-BY 4.0 / NIH Public Access", True),
     "ESC-2023-ACS + ICON-HF": ("ESC / AHA Clinical Guidelines", True),
+    "MIMIC-IV + Cleveland Clinic Priors": ("CC-BY 4.0 / PhysioNet Open Access", True),
+    "CardioPath SternoWound-CV + SurgWound Priors": ("CC-BY 4.0 / Clinical Open Access", True),
 }
 
 

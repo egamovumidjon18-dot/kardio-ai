@@ -1,0 +1,23 @@
+{
+  "name": "csa_aki_ml",
+  "version": "v2026.11.03",
+  "task": "Post-cardiac surgery Acute Kidney Injury (KDIGO criteria)",
+  "dataset": "MIMIC-IV + Cleveland Clinic Priors",
+  "weights": "aki.onnx",
+  "thresholds": {
+    "low": 0.15,
+    "moderate": 0.25,
+    "high": 0.5,
+    "abstain_band": [
+      0.49,
+      0.51
+    ]
+  },
+  "metrics": {
+    "AUROC": 0.821,
+    "test_auroc": 0.821,
+    "sensitivity": 0.813,
+    "specificity": 0.651,
+    "brier_score": 0.1454
+  }
+}

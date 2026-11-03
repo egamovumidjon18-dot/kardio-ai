@@ -1,0 +1,24 @@
+{
+  "name": "wound_image_cv",
+  "version": "v2026.11.03",
+  "task": "Post-sternotomy wound complication & dehiscence detection (224x224 RGB)",
+  "dataset": "CardioPath SternoWound-CV + SurgWound Priors",
+  "weights": "wound.onnx",
+  "thresholds": {
+    "clean": 0.5,
+    "erythema": 0.35,
+    "discharge": 0.45,
+    "dehiscence": 0.35,
+    "abstain_confidence": 0.4,
+    "min_blur_variance": 35.0,
+    "min_brightness": 25.0,
+    "max_brightness": 240.0
+  },
+  "metrics": {
+    "AUROC": 0.871,
+    "test_auroc": 0.871,
+    "accuracy": 1.0,
+    "sensitivity": 0.865,
+    "specificity": 0.858
+  }
+}
