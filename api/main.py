@@ -25,7 +25,7 @@ from pydantic import BaseModel, Field
 
 from fastapi import Depends
 
-from api import ai_routes, auth_routes, guardian_routes, learning_routes, risk_routes, shadow_routes
+from api import ai_routes, auth_routes, fhir_routes, guardian_routes, learning_routes, pacs_routes, risk_routes, shadow_routes
 from core.auth import AuthService
 from core.identity import effective_actor
 from core.model_safety import guarded_inference
@@ -271,6 +271,8 @@ def create_app(store: EpisodeStore, pcg: Optional[PCGModel], aki_model: Optional
     guardian_routes.register(app, store, _get, notifier, wound_model=wound_model)
     ai_routes.register(app, store, _get, notifier, ecg_model, angio_model, ef_model, ocr_engine, low_ef=low_ef_model, shd=shd_model,
                        shadow_models=shadow_models, shadow_store=shadow_store, cxr=cxr_model, aki=aki_model, wound=wound_model)
+    pacs_routes.register(app, store, _get, cxr_model=cxr_model, angio_model=angio_model)
+    fhir_routes.register(app, store, _get)
     if shadow_store is not None:
         shadow_routes.register(app, shadow_store, [m.key for m in shadow_models or []])
     alerts_api.register(app, store, _get, notifier)

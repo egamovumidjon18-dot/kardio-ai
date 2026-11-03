@@ -506,6 +506,61 @@ def build_manual():
         hex_color="0A2540"
     )
 
+    # -------------------------------------------------------------
+    # 9. ENG YANGI TARAQQIYOT: PACS DICOM, HL7 FHIR VA VIRTUAL QFR
+    # -------------------------------------------------------------
+    h9 = doc.add_heading("9. Yaqinda Amalga Oshirilgan Kengaytirishlar (I-Bosqich)", level=1)
+    for r in h9.runs:
+        r.font.name = "Segoe UI"
+        r.font.color.rgb = NAVY
+
+    doc.add_paragraph(
+        "2026-yil Q4 bosqichi doirasida tizimga xalqaro shifoxona standartlari va intervension kardiologiya "
+        "uchun 3 ta muhim strategik imkoniyat muvaffaqiyatli integratsiya qilindi:"
+    )
+
+    t9 = doc.add_table(rows=1, cols=3)
+    t9.style = 'Table Grid'
+    hdr = t9.rows[0].cells
+    hdr[0].text = "Yangi Modul"
+    hdr[1].text = "Standart & Texnologiya"
+    hdr[2].text = "Klinik Ahamiyati"
+    for c in hdr:
+        shd = parse_xml(f'<w:shd {nsdecls("w")} w:fill="0A2540"/>')
+        c._tc.get_or_add_tcPr().append(shd)
+        for p in c.paragraphs:
+            for r in p.runs:
+                r.font.color.rgb = RGBColor(255, 255, 255)
+                r.font.bold = True
+                r.font.name = "Segoe UI"
+
+    new_feats = [
+        ("PACS DICOM Aqlli Routeri", "DICOM Part 10 (DX, CR, XA, US), zero-dependency parser", "Kasalxona PACS arxividan rentgen (CXR) va angiografiya (XA) tasvirlarini avtomatik qabul qilib, mos AI modeliga yo'naltiradi va epizodga biriktiradi."),
+        ("HL7 FHIR R4 Ikki Tomonlama Ingest", "HL7 FHIR R4, LOINC standartlari (49563-0, 33762-6, 2160-0, 6301-6)", "Kasalxona LIS/HIS laboratoriya tizimlaridan Troponin, NT-proBNP, kreatinin, INR va vital ko'rsatkichlarni avtomatik qabul qilib, OKS va KDIGO xavfini baholaydi."),
+        ("Virtual QFR (Gidrodinamik FFR)", "Navier-Stokes, Bernulli turbulent kengayish, FAVOR III Study", "Koronar angiografiya o'lchovlaridan invaziv bosim simisiz tomir bosim tushishi va QFR indeksini hisoblaydi. QFR <= 0.80 da stentlash/CABG ko'rsatmasini beradi."),
+    ]
+    for m, st, cl in new_feats:
+        row = t9.add_row().cells
+        row[0].text = m
+        row[1].text = st
+        row[2].text = cl
+        for i, c in enumerate(row):
+            for p in c.paragraphs:
+                for r in p.runs:
+                    r.font.name = "Segoe UI"
+                    r.font.size = Pt(9.5)
+                    if i == 0:
+                        r.font.bold = True
+                        r.font.color.rgb = TEAL
+
+    add_callout(
+        doc,
+        "Ushbu kengaytirishlar bilan dasturdagi testlar soni 437 taga yetdi va barcha testlar 100% muvaffaqiyatli "
+        "o'tdi. CardioPath AI zamonaviy shifoxona IT ekotizimiga to'liq tayyor holatga keltirildi.",
+        title="I-BOSQICH MUVAFFAQIYATLI YAKUNLANDI",
+        hex_color="0284C7"
+    )
+
     # Saqlash
     out_dir = Path("docs")
     out_dir.mkdir(parents=True, exist_ok=True)

@@ -9,6 +9,7 @@ from functools import partial
 from typing import Callable, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from pydantic import BaseModel, Field
 import anyio
 
 from adapters.echo_ef import EchoEFAdapter
@@ -31,6 +32,16 @@ from ecg.signal import read_csv
 from guardian.escalation import Alert, Notifier, escalate
 from guardian.inr import Indication, parse_inr_text
 from guardian.ocr import MIN_CONFIDENCE, Engine, assess_inr_image, rapid_engine, read_text
+
+
+class QfrIn(BaseModel):
+    actor: str
+    vessel: str = Field(..., description="LMS, LAD, LAD_PROX, LCX, RCA...")
+    reference_diameter_mm: float = Field(..., gt=0.5, lt=10.0)
+    minimal_lumen_diameter_mm: float = Field(..., gt=0.1, lt=10.0)
+    lesion_length_mm: float = Field(..., gt=1.0, lt=150.0)
+    aortic_pressure_mmhg: float = Field(90.0, gt=40.0, lt=250.0)
+    timi_frame_count: Optional[float] = None
 
 MAX_UPLOAD = 25 * 1024 * 1024
 MAX_VIDEO = 100 * 1024 * 1024
@@ -201,6 +212,22 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
             "plain": plain_ai(ev, lang),
             "anatomy": anatomy_ev.to_dict() if anatomy_ev else None,
         }
+
+    @app.post("/episodes/{eid}/angio/qfr")
+    def angio_qfr_endpoint(eid: str, body: QfrIn) -> dict:
+        ep = get(eid)
+        from angio.qfr import QfrInput, assess_qfr_evidence
+        inp = QfrInput(
+            vessel=body.vessel,
+            reference_diameter_mm=body.reference_diameter_mm,
+            minimal_lumen_diameter_mm=body.minimal_lumen_diameter_mm,
+            lesion_length_mm=body.lesion_length_mm,
+            aortic_pressure_mmhg=body.aortic_pressure_mmhg,
+            timi_frame_count=body.timi_frame_count,
+        )
+        ev = assess_qfr_evidence(inp)
+        saved_ev = _save(ep, body.actor, "angio.qfr", ev)
+        return {"evidence": saved_ev, "qfr": ev.value}
 
     @app.post("/episodes/{eid}/cxr")
     async def cxr_endpoint(
