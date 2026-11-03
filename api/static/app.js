@@ -849,7 +849,7 @@ async function episodePage(id) {
 function cxrDialog(d) {
   if (!requireActor()) return;
   dialog(`<h2 class="cp-dialog__title">Ko'krak qafasi rentgenogrammasi (CXR)</h2>
-    <div class="cp-field"><label class="cp-field__label" for="cxrFile">Frontal rentgenogramma fayli (PNG / JPG)</label><input class="cp-input" type="file" id="cxrFile" name="file" accept="image/*" required></div>
+    <div class="cp-field"><label class="cp-field__label" for="cxrFile">Frontal rentgenogramma fayli (PNG / JPG)</label><input class="cp-input" type="file" id="cxrFile" name="file" accept="image/*,.dcm,application/dicom" required></div>
     <div class="cp-field" style="margin-top:.8rem"><label class="cp-field__label" for="cxrView">Proyeksiya</label><select class="cp-select" id="cxrView" name="view"><option value="PA">PA (Postero-anterior, standart)</option><option value="AP">AP (Antero-posterior, yotgan bemor)</option></select></div>
     <p class="cp-field__error" role="alert"></p>
     <div class="cp-dialog__actions"><button class="cp-btn cp-btn--secondary" value="cancel" formnovalidate>${esc(t("cancel"))}</button><button class="cp-btn" type="submit">AI Tahlil</button></div>`,
@@ -885,6 +885,39 @@ function biomarkersDialog(d) {
     route();
   });
 }
+function valvesDialog(d) {
+  if (!requireActor()) return;
+  dialog(`<h2 class="cp-dialog__title">ExoKG Klapanlar va Gemodinamika (ESC 2021)</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+      <div class="cp-field"><label class="cp-field__label" for="asVmax">Aortal Vmax (m/s)</label><input class="cp-input" type="number" step="0.1" id="asVmax" name="as_vmax" placeholder="masalan, 4.2"></div>
+      <div class="cp-field"><label class="cp-field__label" for="asGrad">Aortal o'rtacha grad (mmHg)</label><input class="cp-input" type="number" step="1" id="asGrad" name="as_mean_gradient" placeholder="masalan, 45"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.8rem">
+      <div class="cp-field"><label class="cp-field__label" for="asAva">Aortal AVA (cm²)</label><input class="cp-input" type="number" step="0.05" id="asAva" name="as_ava" placeholder="masalan, 0.8"></div>
+      <div class="cp-field"><label class="cp-field__label" for="mrEroa">Mitral EROA (mm²)</label><input class="cp-input" type="number" step="1" id="mrEroa" name="mr_eroa" placeholder="masalan, 40"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.8rem">
+      <div class="cp-field"><label class="cp-field__label" for="mrVol">Mitral RegVol (ml)</label><input class="cp-input" type="number" step="1" id="mrVol" name="mr_reg_vol" placeholder="masalan, 60"></div>
+      <div class="cp-field"><label class="cp-field__label" for="trVmax">Triksupid Vmax (m/s)</label><input class="cp-input" type="number" step="0.1" id="trVmax" name="tr_vmax" placeholder="masalan, 3.4"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.8rem">
+      <div class="cp-field"><label class="cp-field__label" for="rap">RAP bosimi (mmHg)</label><input class="cp-input" type="number" step="1" id="rap" name="rap" value="5"></div>
+      <div class="cp-field"><label class="cp-field__label" for="lvef">LVEF (%)</label><input class="cp-input" type="number" step="1" id="lvef" name="lvef" placeholder="masalan, 55"></div>
+    </div>
+    <p class="cp-field__error" role="alert"></p>
+    <div class="cp-dialog__actions"><button class="cp-btn cp-btn--secondary" value="cancel" formnovalidate>${esc(t("cancel"))}</button><button class="cp-btn" type="submit">Baholash</button></div>`,
+  async (fd) => {
+    const payload = { actor: actor() };
+    ["as_vmax", "as_mean_gradient", "as_ava", "mr_eroa", "mr_reg_vol", "tr_vmax", "rap", "lvef"].forEach(k => {
+      const v = fd.get(k);
+      if (v !== "" && v !== null && !isNaN(parseFloat(v))) payload[k] = parseFloat(v);
+    });
+    await api(`/episodes/${d.episode.id}/echo/valves`, { method: "POST", json: payload });
+    toast("ExoKG qopqoqlari baholandi");
+    route();
+  });
+}
+
 function consentDialog(d) {
   if (!requireActor()) return;
   dialog(`<h2 class="cp-dialog__title">Bemor Yozma Klinik Roziligi</h2>
@@ -1212,7 +1245,7 @@ async function alertsPage(params) {
 function keyMetric(card) {
   const m = card.metrics || {}, test = m.test || m.external_ptbxl || {};
   const find = (o, d = 0) => { if (!o || typeof o !== "object" || d > 2) return null;
-    for (const [k, v] of Object.entries(o)) { if (/auroc/i.test(k) && typeof v === "number") return [k, v]; }
+    for (const [k, v] of Object.entries(o)) { if (/auc|auroc/i.test(k) && typeof v === "number") return [k, v]; }
     for (const v of Object.values(o)) { const r = find(v, d + 1); if (r) return r; } return null; };
   if (typeof m.val_mae_pct === "number") return ["MAE", m.val_mae_pct + "%"];
   const r = find(test) || find(m); return r ? ["AUROC", Number(r[1]).toFixed(3)] : null;
@@ -1222,7 +1255,7 @@ async function modelsPage(params) {
     api("/learning/status").catch(() => null), can("shadow.report") || can("shadow.label") ? api("/shadow/report").catch(() => null) : null]);
   const cards = [];
   if (health_.pcg_model) cards.push({ key: "pcg", c: health_.pcg_model, st: "live", icon: "steth" });
-  [["ecg", "pulse"], ["ecg_low_ef", "heart"], ["ecg_shd", "heart"], ["angio", "chart"], ["echo_ef", "heart"]].forEach(([k, icon]) => {
+  [["ecg", "pulse"], ["ecg_low_ef", "heart"], ["ecg_shd", "heart"], ["angio", "chart"], ["cxr", "doc"], ["echo_ef", "heart"]].forEach(([k, icon]) => {
     if (models[k]) cards.push({ key: k, c: models[k], st: "live", icon });
   });
   (shadow && shadow.shadow_models || []).forEach((m) => cards.push({ key: "shadow:" + m, c: { name: m.split("@")[0], version: m.split("@")[1], dataset: "PTB-XL + Chapman + CPSC 2018 + Georgia", dataset_license: "CC-BY 4.0 / CC0", commercial_use: true, metrics: {} }, st: "shadow", icon: "pulse" }));
@@ -1548,51 +1581,3 @@ function helpPage() {
   paintChrome();
   route();
 })();
-})();
-
-
-function valvesDialog(d) {
-  const id = d.episode.id;
-  dialog(`<h2 class="cp-dialog__title">ExoKG Klapanlar va Gemodinamika (ESC 2021)</h2>
-    <form id="valvesForm">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
-        <div class="cp-field"><label class="cp-field__label">Aortal Vmax (m/s)</label><input class="cp-input" type="number" step="0.1" name="as_vmax" placeholder="masalan, 4.2"></div>
-        <div class="cp-field"><label class="cp-field__label">Aortal o'rtacha grad (mmHg)</label><input class="cp-input" type="number" step="1" name="as_mean_gradient" placeholder="masalan, 45"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
-        <div class="cp-field"><label class="cp-field__label">Aortal AVA (cm²)</label><input class="cp-input" type="number" step="0.05" name="as_ava" placeholder="masalan, 0.8"></div>
-        <div class="cp-field"><label class="cp-field__label">Mitral EROA (mm²)</label><input class="cp-input" type="number" step="1" name="mr_eroa" placeholder="masalan, 40"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
-        <div class="cp-field"><label class="cp-field__label">Mitral RegVol (ml)</label><input class="cp-input" type="number" step="1" name="mr_reg_vol" placeholder="masalan, 60"></div>
-        <div class="cp-field"><label class="cp-field__label">Triksupid Vmax (m/s)</label><input class="cp-input" type="number" step="0.1" name="tr_vmax" placeholder="masalan, 3.4"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
-        <div class="cp-field"><label class="cp-field__label">RAP bosimi (mmHg)</label><input class="cp-input" type="number" step="1" name="rap" value="5"></div>
-        <div class="cp-field"><label class="cp-field__label">LVEF (%)</label><input class="cp-input" type="number" step="1" name="lvef" placeholder="masalan, 55"></div>
-      </div>
-      <p class="cp-field__error" role="alert" style="margin-top:.5rem"></p>
-      <div class="dialog__actions" style="margin-top:1rem">
-        <button class="cp-btn" type="submit">${ic("check")}Baholash</button>
-        <button class="cp-btn cp-btn--secondary" type="button" onclick="closeDialog()">${esc(t("cancel"))}</button>
-      </div>
-    </form>`);
-
-  $("valvesForm").onsubmit = async (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    const body = { actor: state.auth.user };
-    ["as_vmax", "as_mean_gradient", "as_ava", "mr_eroa", "mr_reg_vol", "tr_vmax", "rap", "lvef"].forEach(k => {
-      const v = fd.get(k);
-      if (v !== "" && v !== null && !isNaN(parseFloat(v))) body[k] = parseFloat(v);
-    });
-    try {
-      await api(`/episodes/${id}/echo/valves`, { method: "POST", body: JSON.stringify(body) });
-      closeDialog();
-      showToast("ExoKG qopqoqlari muvaffaqiyatli baholandi");
-      navigate(`#/e/${id}`);
-    } catch (err) {
-      document.querySelector(".cp-field__error").textContent = err.message || "Xatolik yuz berdi";
-    }
-  };
-}

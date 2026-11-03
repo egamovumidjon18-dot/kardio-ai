@@ -96,7 +96,7 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
         if low_ef is None:
             blocked["ecg_low_ef"] = "og'irliklar yo'q yoki qabul mezonlaridan o'tmagan (yoki product rejimi) — ecg/low_ef.py"
         return {
-            "ecg": card(ecg), "angio": card(angio), "echo_ef": card(ef), "ecg_low_ef": card(low_ef), "ecg_shd": card(shd),
+            "ecg": card(ecg), "angio": card(angio), "echo_ef": card(ef), "ecg_low_ef": card(low_ef), "ecg_shd": card(shd), "cxr": card(cxr),
             "ecg_shd_enabled": shd.enabled if shd else [],
             "inr_ocr": {"available": ocr_engine is not None or _ocr_available()},
             "blocked": blocked,

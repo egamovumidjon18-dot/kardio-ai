@@ -1,5 +1,5 @@
 // CardioPath AI — Service Worker (Oflayn PWA rejimi - Qishloq poliklinikalari barqarorligi)
-const CACHE_NAME = 'cardiopath-pwa-v1';
+const CACHE_NAME = 'cardiopath-pwa-v2';
 const STATIC_ASSETS = [
   '/screening',
   '/guardian',
