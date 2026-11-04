@@ -1,15 +1,14 @@
-"""Virtual QFR (Quantitative Flow Ratio) — Noinvaziv Koronar FFR Simulyatsiyasi.
+"""Taxminiy QFR — angiografik o'lchovlardan oddiy gidrodinamik formula (TASDIQLANMAGAN).
 
-Angiografik o'lchovlar (tomir referens diametri, minimal lümen diametri va
-stenoz uzunligi) asosida suyuqliklar gidrodinamikasi (Navier-Stokes / Poiseuille
-va Bernulli turbulent kengayish yo'qotishlari) orqali invaziv bosim simi
-kiritmasdan tomir bosim tushishi va QFR (Fractional Flow Reserve ekvivalenti)ni
-aniq hisoblovchi fizik-matematik model.
+Poiseuille + Bernulli formulasi bilan stenozdagi bosim tushishi taxmin qilinadi.
+Tomirdagi qon oqimi o'lchanmaydi — jadvaldagi o'rtacha qiymatdan olinadi.
 
-Ilmiy asos:
-  * FAVOR II China Trial (Lancet 2018; 391:233-242);
-  * FAVOR III Europe-Japan Study (Lancet 2021; 398:2149-2159);
-  * ESC/EACTS 2024 Myocardial Revascularization Guidelines.
+MUHIM: bu FAVOR II/III tadqiqotlarida tekshirilgan QFR usuli EMAS (u 3D angiografik
+qayta tiklash va kadrlardan o'lchangan oqimga asoslanadi). Bu formula invaziv FFR/iFR
+bilan solishtirilmagan. Shuning uchun:
+  * natija hech qachon «me'yor» yoki «xavfsiz» deb ko'rsatilmaydi va xavfni pasaytirmaydi;
+  * stenoz foizi (%DS) bo'yicha xavf darajasi formuladan qat'i nazar saqlanadi;
+  * davolash tavsiyasi (stent, CABG, dori) berilmaydi — qaror yurak jamoasiniki.
 """
 from __future__ import annotations
 
@@ -19,12 +18,12 @@ from typing import Optional
 
 from core.evidence import Evidence, Provenance, RiskLevel, Source
 
-QFR_REFERENCE = "FAVOR III Study (Lancet 2021) & ESC/EACTS 2024 Guidelines on Myocardial Revascularization"
+QFR_REFERENCE = "Poiseuille + Bernulli taxminiy formulasi (FAVOR QFR usuli emas; invaziv FFR bilan tekshirilmagan)"
 QFR_PROV = Provenance(
     name="virtual_qfr_hemodynamics",
     version="2026.11.03",
     reference=QFR_REFERENCE,
-    dataset_license="ESC / Clinical Open Access Guideline",
+    dataset_license="fizik formula; klinik validatsiya yo'q",
 )
 
 # Qonning fizik konstantalari (37°C haroratda)
@@ -66,7 +65,7 @@ class QfrResult:
     percent_area_stenosis: float            # Maydon bo'yicha torayish foizi (%AS)
     pressure_drop_mmhg: float               # Stenozdagi bosim yo'qotilishi (mmHg)
     is_ischemic: bool                       # Ishemiya mavjudligi (QFR <= 0.80)
-    clinical_recommendation: str            # ESC tavsiyasi (stentlash yoki medikamentoz)
+    clinical_recommendation: str            # izoh (davolash tavsiyasi EMAS)
     risk_level: RiskLevel                   # Xavf darajasi
 
     def to_dict(self) -> dict:
@@ -119,21 +118,40 @@ def calculate_virtual_qfr(inp: QfrInput) -> QfrResult:
     # 5. QFR hisoblash: QFR = 1.0 - (ΔP / Pa)
     qfr_val = max(0.10, min(1.00, 1.0 - (total_delta_p_pa / pa_pascals)))
 
-    # 6. Klinik xulosa va xavf darajasi (ESC 2024 chegaralari)
+    # 6. Xavf darajasi. Formula tasdiqlanmagan — u xavfni faqat OSHIRISHI mumkin, pasaytira olmaydi.
     is_ischemic = qfr_val <= 0.80
-
-    if qfr_val <= 0.75:
-        risk = RiskLevel.VERY_HIGH
-        rec = "Kritik gemodinamik ishemiya (QFR ≤ 0.75): Revaskulyarizatsiya (PCI/Stentlash yoki CABG) qat'iy ko'rsatilgan."
-    elif qfr_val <= 0.80:
-        risk = RiskLevel.HIGH
-        rec = "Gemodinamik ahamiyatli ishemiya (0.75 < QFR ≤ 0.80): Revaskulyarizatsiya tavsiya etiladi."
-    elif qfr_val <= 0.85:
-        risk = RiskLevel.MODERATE
-        rec = "Chegara holati (0.80 < QFR ≤ 0.85): Ishemiya noaniq, klinik belgilar yoki funktsional testlar bilan solishtiring."
+    vessel = inp.vessel.upper()
+    # Anatomik pol: stenoz foizi bo'yicha (ESC — chap asosiy poyada >=50% ahamiyatli)
+    if vessel == "LMS" and pct_ds >= 50.0:
+        floor = RiskLevel.HIGH
+    elif pct_ds >= 70.0:
+        floor = RiskLevel.HIGH
+    elif pct_ds >= 50.0:
+        floor = RiskLevel.MODERATE
     else:
-        risk = RiskLevel.NORMAL
-        rec = "Gemodinamik noahamiyatli stenoz (QFR > 0.85): Stentlash talab etilmaydi, medikamentoz terapiya xavfsiz."
+        floor = RiskLevel.UNKNOWN
+    if qfr_val <= 0.75:
+        calc = RiskLevel.VERY_HIGH
+    elif qfr_val <= 0.80:
+        calc = RiskLevel.HIGH
+    elif qfr_val <= 0.85:
+        calc = RiskLevel.MODERATE
+    else:
+        calc = RiskLevel.UNKNOWN          # formula ishemiyani istisno qila olmaydi
+    order = [RiskLevel.UNKNOWN, RiskLevel.MODERATE, RiskLevel.HIGH, RiskLevel.VERY_HIGH]
+    risk = max(floor, calc, key=order.index)
+
+    decide = ("Davolash qarori invaziv FFR/iFR yoki tasdiqlangan QFR dasturi, klinik belgilar "
+              "va yurak jamoasi (Heart Team) bilan qabul qilinadi.")
+    if risk == RiskLevel.UNKNOWN:
+        rec = ("Taxminiy hisob bosim tushishini kichik ko'rsatdi, lekin bu formula tasdiqlanmagan va "
+               "ishemiyani istisno qila OLMAYDI. " + decide)
+    elif calc in (RiskLevel.HIGH, RiskLevel.VERY_HIGH):
+        rec = "Taxminiy hisob ishemiya ehtimolini ko'rsatadi (tasdiqlanmagan formula). " + decide
+    else:
+        rec = ("Stenoz darajasi yoki taxminiy hisob e'tibor talab qiladi (tasdiqlanmagan formula). " + decide)
+    if vessel == "LMS" and pct_ds >= 50.0:
+        rec = "Chap asosiy poyada ≥50% torayish — anatomik jihatdan ahamiyatli. " + rec
 
     return QfrResult(
         qfr=qfr_val,
@@ -151,7 +169,7 @@ def assess_qfr_evidence(inp: QfrInput) -> Evidence:
     res = calculate_virtual_qfr(inp)
 
     expl = [
-        f"Virtual QFR = {res.qfr:.2f} ({'ISHEMIYA MAVJUD' if res.is_ischemic else 'Ishemiyasiz'})",
+        f"Taxminiy QFR = {res.qfr:.2f} (TASDIQLANMAGAN formula; me'yorni tasdiqlamaydi)",
         f"Stenoz darajasi: %DS={res.percent_diameter_stenosis:.1f}%, %AS={res.percent_area_stenosis:.1f}% (Bosim yo'qotilishi: ΔP={res.pressure_drop_mmhg:.1f} mmHg)",
         res.clinical_recommendation,
     ]

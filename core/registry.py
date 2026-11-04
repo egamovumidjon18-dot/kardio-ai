@@ -10,6 +10,10 @@ import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
+# Generator yasagan (haqiqiy bemor bo'lmagan) ma'lumotda o'qitilgan model kartasi shu nomni oladi.
+# Bunday model dasturga HECH QACHON avtomatik yuklanmaydi (faqat muhandislik testlarida allow_synthetic=True).
+SYNTHETIC_DATASET = "SINTETIK (generator; haqiqiy bemor ma'lumoti yo'q)"
+
 # Ma'lum datasetlar litsenziyasi (2026-10 holatiga) — model o'qitishdan oldin tekshiring.
 DATASET_LICENSES: dict[str, tuple[str, bool]] = {
     "CirCor DigiScope": ("ODC-By 1.0", True),
@@ -33,10 +37,10 @@ DATASET_LICENSES: dict[str, tuple[str, bool]] = {
     "MIMIC-IV": ("PhysioNet Credentialed Health Data License", False),
     "MIMIC-IV-ECHO": ("PhysioNet Credentialed Health Data License", False),
     "eICU-CRD": ("PhysioNet Credentialed Health Data License", False),
-    "CheXpert / NIH ChestX-ray14": ("CC-BY 4.0 / NIH Public Access", True),
+    # CheXpert — Stanford research-use agreement (tijoratga yo'q); NIH ChestX-ray14 — ochiq, atributsiya bilan.
+    "CheXpert / NIH ChestX-ray14": ("CheXpert: Stanford research-use agreement; NIH ChestX-ray14: ochiq (atributsiya)", False),
     "ESC-2023-ACS + ICON-HF": ("ESC / AHA Clinical Guidelines", True),
-    "MIMIC-IV + Cleveland Clinic Priors": ("CC-BY 4.0 / PhysioNet Open Access", True),
-    "CardioPath SternoWound-CV + SurgWound Priors": ("CC-BY 4.0 / Clinical Open Access", True),
+    SYNTHETIC_DATASET: ("sintetik ma'lumot — haqiqiy bemorda tekshirilmagan, klinik foydalanish uchun emas", False),
 }
 
 
@@ -62,9 +66,13 @@ class ModelCard:
     def commercial_use(self) -> bool:
         return DATASET_LICENSES.get(self.dataset, ("noma'lum", False))[1]
 
+    @property
+    def synthetic(self) -> bool:
+        return self.dataset.strip().upper().startswith("SINTETIK")
+
     def to_dict(self) -> dict:
         d = asdict(self)
-        d.update(dataset_license=self.dataset_license, commercial_use=self.commercial_use)
+        d.update(dataset_license=self.dataset_license, commercial_use=self.commercial_use, synthetic=self.synthetic)
         return d
 
     @classmethod
@@ -84,3 +92,13 @@ def check_license(card: ModelCard) -> None:
             f"{card.name}: '{card.dataset}' ({card.dataset_license}) — mahsulot rejimida "
             "ishlatib bo'lmaydi. Ochiq yoki mahalliy ma'lumotda qayta o'qiting."
         )
+
+
+def refuse_synthetic(card: ModelCard, allow_synthetic: bool = False) -> bool:
+    """True — model yuklanmasin: sintetik ma'lumotda o'qitilgan, haqiqiy bemorda tekshirilmagan."""
+    if card.synthetic and not allow_synthetic:
+        import logging
+        logging.getLogger(__name__).warning(
+            "%s: sintetik ma'lumotda o'qitilgan — klinik dasturga yuklanmadi", card.name)
+        return True
+    return False

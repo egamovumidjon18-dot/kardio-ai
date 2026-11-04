@@ -2,7 +2,7 @@
   "name": "csa_aki_ml",
   "version": "v2026.11.03",
   "task": "Post-cardiac surgery Acute Kidney Injury (KDIGO criteria)",
-  "dataset": "MIMIC-IV + Cleveland Clinic Priors",
+  "dataset": "SINTETIK (generator; haqiqiy bemor ma'lumoti yo'q)",
   "weights": "aki.onnx",
   "thresholds": {
     "low": 0.15,
@@ -13,11 +13,13 @@
       0.51
     ]
   },
-  "metrics": {
-    "AUROC": 0.821,
-    "test_auroc": 0.821,
-    "sensitivity": 0.813,
-    "specificity": 0.651,
-    "brier_score": 0.1454
+  "metrics": {},
+  "validation": {
+    "status": "tekshirilmagan",
+    "clinical_use": false,
+    "summary": "SINTETIK — klinik foydalanish uchun emas. Haqiqiy bemor ma'lumotida o'lchangan ko'rsatkich yo'q.",
+    "how_built": "Bemorlar ham, AKI belgisi ham bitta formuladan generator bilan yasalgan; model shu formulani qayta o'rgangan.",
+    "build_script": "scripts/build_aki_model.py",
+    "known_failure": "Tasodifiy rangli shovqin rasmiga yuqori ishonch bilan kasallik tashxisi qo'ygan (2026-11 tekshiruvi)."
   }
 }

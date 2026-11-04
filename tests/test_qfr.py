@@ -22,8 +22,10 @@ def test_qfr_non_ischemic_lesion():
     res = calculate_virtual_qfr(inp)
     assert res.qfr > 0.85
     assert res.is_ischemic is False
-    assert res.risk_level == RiskLevel.NORMAL
-    assert "talab etilmaydi" in res.clinical_recommendation
+    # tasdiqlanmagan formula hech qachon «me'yor/xavfsiz» demaydi
+    assert res.risk_level == RiskLevel.UNKNOWN
+    assert "istisno qila OLMAYDI" in res.clinical_recommendation
+    assert "xavfsiz" not in res.clinical_recommendation and "talab etilmaydi" not in res.clinical_recommendation
 
 
 def test_qfr_critical_ischemic_lesion():
@@ -39,7 +41,7 @@ def test_qfr_critical_ischemic_lesion():
     assert res.qfr <= 0.75
     assert res.is_ischemic is True
     assert res.risk_level == RiskLevel.VERY_HIGH
-    assert "PCI" in res.clinical_recommendation or "CABG" in res.clinical_recommendation
+    assert "Heart Team" in res.clinical_recommendation      # tavsiya emas, qaror jamoaga
 
 
 def test_qfr_borderline_gray_zone():
@@ -58,7 +60,7 @@ def test_qfr_borderline_gray_zone():
 
     ev = assess_qfr_evidence(inp)
     assert ev.kind == "angio.qfr"
-    assert "Virtual QFR" in ev.explanation[0]
+    assert "TASDIQLANMAGAN" in ev.explanation[0]
 
 
 def test_qfr_api_endpoint(tmp_path):
@@ -88,3 +90,18 @@ def test_qfr_api_endpoint(tmp_path):
     # Epizod audit logida qayd etilganini tekshirish
     audit_events = store.audit(eid)
     assert any(a["action"] == "angio.qfr" for a in audit_events)
+
+
+@pytest.mark.parametrize("vessel,ref,mld,expected", [
+    ("LMS", 4.0, 2.0, RiskLevel.HIGH),       # LMS 50% — formula 0.95 bersa ham yuqori
+    ("LAD", 3.2, 1.6, RiskLevel.MODERATE),   # 50%
+    ("RCA", 3.5, 1.4, RiskLevel.MODERATE),   # 60%
+    ("LAD", 3.0, 0.85, RiskLevel.VERY_HIGH),
+])
+def test_qfr_never_lowers_risk_below_anatomy(vessel, ref, mld, expected):
+    res = calculate_virtual_qfr(QfrInput(vessel=vessel, reference_diameter_mm=ref,
+                                         minimal_lumen_diameter_mm=mld, lesion_length_mm=10.0))
+    assert res.risk_level == expected
+    assert res.risk_level != RiskLevel.NORMAL
+    for bad in ("xavfsiz", "talab etilmaydi", "qat'iy ko'rsatilgan", "tavsiya etiladi"):
+        assert bad not in res.clinical_recommendation

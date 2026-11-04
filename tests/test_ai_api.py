@@ -49,7 +49,7 @@ def new(c):
 def test_models_endpoint_lists_blocked(tmp_path):
     body = make_client(tmp_path).get("/models").json()
     assert body["ecg"]["dataset_license"] == "CC-BY 4.0" and body["angio"]["commercial_use"] is True
-    assert set(body["blocked"]) == {"csa_aki_ml", "ecg_low_ef", "wound_image_cv"}
+    assert set(body["blocked"]) == {"csa_aki_ml", "ecg_low_ef", "wound_image_cv", "cxr"}
 
 
 def test_ecg_endpoint_records_evidence(tmp_path):

@@ -1,8 +1,10 @@
 # CardioPath-AI: SaMD Klinik Baholash va Xavfsizlik Dosyesi
 **Hujjat kodi:** `CP-SAMD-CER-2026-V1`  
-**Muvofiqlik standartlari:** ISO 13485:2016, IEC 62304:2006+A1:2015, ISO 14971:2019, IEC 82304-1:2016, IMDRF SaMD N12  
+**Yo'naltiruvchi standartlar (muvofiqlik TASDIQLANMAGAN, sertifikat yo'q):** ISO 13485:2016, IEC 62304:2006+A1:2015, ISO 14971:2019, IEC 82304-1:2016, IMDRF SaMD N12  
 **Sanasi:** 2026-11-02  
-**Holati:** Rasmiy Tasdiqlangan (Klinik va Muhandislik ekspertizasi)  
+**Holati:** QORALAMA — tadqiqot prototipi. Hech qanday rasmiy klinik ekspertiza, sertifikatlash yoki tibbiy buyum sifatida ro'yxatdan o'tish o'tkazilmagan.  
+
+> ⚠️ **TUZATISH (2026-11-05):** `csa_aki_ml`, `wound_image_cv` va `cxr_cardio_pulmonary_net` modellari **sintetik (generator yasagan) ma'lumotda** o'qitilgan; haqiqiy bemorda tekshirilmagan. Ularning avvalgi AUROC/sezgirlik raqamlari skriptga qo'lda yozilgan yoki sun'iy ma'lumotda o'lchangan edi — olib tashlandi. Bu modellar dasturda **bloklangan**. Virtual QFR — tasdiqlanmagan taxminiy formula, davolash tavsiyasi bermaydi.
 
 ---
 
@@ -11,8 +13,10 @@
 ### 1.1. Maqsadi (Intended Purpose)
 CardioPath-AI — kardiologiya va kardioxirurgiya sohasida yangi tug‘ilgan chaqaloqlar, bolalar va kattalardagi tug‘ma va orttirilgan yurak nuqsonlarini erta aniqlash, operatsiyadan oldingi xavflarni (EuroSCORE II, KDIGO AKI, RACHS-1) ko‘p tarmoqli konsilium (Heart Team) formatida baholash hamda operatsiyadan keyingi 30 kunlik davrda bemorlarni masofaviy monitoring (Post-Op Guardian) qilish uchun mo‘ljallangan **Tibbiy Buyum Sifatidagi Dasturiy Ta'minot (SaMD - Software as a Medical Device)**.
 
-### 1.2. Tibbiy Tasnif (Regulatory Classification)
-- **Yevropa Ittifoqi (EU MDR 2017/745, Rule 11):** **Class IIb** (kritik holatlarda jarrohlik xavfi va o‘tkir asoratlarni baholovchi CDSS).
+### 1.2. Taxminiy Tibbiy Tasnif (agar kelajakda ro'yxatdan o'tkazilsa)
+> Quyidagi sinflar faqat **taxminiy rejalashtirish** uchun. Dastur hozir hech qaysi sinf bo'yicha baholanmagan yoki ro'yxatdan o'tmagan.
+
+- **Yevropa Ittifoqi (EU MDR 2017/745, Rule 11):** taxminan **Class IIb** (kritik holatlarda jarrohlik xavfi va o‘tkir asoratlarni baholovchi CDSS).
 - **IMDRF N12 Tasnifi:** **State of Healthcare Situation:** *Critical* (yurak jarrohligi, o‘tkir buyrak shikastlanishi, mediastinit) / **Significance of Information:** *Treat or Diagnose / Drive Clinical Management* → **Category IV / Category III**.
 - **IEC 62304 Dasturiy Xavfsizlik Sinfi:** **Class B / Class C** (dastur noto‘g‘ri ishlashi jiddiy jarohat yoki o‘lim xavfiga olib kelishi mumkin bo‘lgan soha; shu bois arxitekturada qat'iy deterministik xavfsizlik to‘siqlari joriy qilingan).
 

@@ -102,10 +102,13 @@ def register(app: FastAPI, store: EpisodeStore, get: Callable[[str], Episode], n
         def card(m):
             return m.card.to_dict() if m else None
         blocked = {}
+        synth = "mavjud og'irliklar SINTETIK ma'lumotda o'qitilgan, haqiqiy bemorda tekshirilmagan — yuklanmadi"
         if aki is None:
-            blocked["csa_aki_ml"] = "MIMIC-IV (PhysioNet credentialed) kerak — risk/aki.py AKIModel interfeysi tayyor"
+            blocked["csa_aki_ml"] = f"{synth}. Haqiqiy model uchun MIMIC-IV (PhysioNet credentialed) kerak — risk/aki.py"
         if wound is None or not getattr(wound, "available", False):
-            blocked["wound_image_cv"] = "ochiq sternotomiya dataseti yo'q; SurgWound sinovi rad etildi — guardian/wound_cv.py"
+            blocked["wound_image_cv"] = f"{synth}. Ochiq sternotomiya yarasi dataseti yo'q — guardian/wound_cv.py"
+        if cxr is None:
+            blocked["cxr"] = f"{synth}. Haqiqiy model uchun litsenziyasi mos rentgen dataseti kerak — cxr/model.py"
         if low_ef is None:
             blocked["ecg_low_ef"] = "og'irliklar yo'q yoki qabul mezonlaridan o'tmagan (yoki product rejimi) — ecg/low_ef.py"
         return {

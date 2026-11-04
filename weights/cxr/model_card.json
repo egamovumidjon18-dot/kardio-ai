@@ -2,7 +2,7 @@
   "name": "cxr_cardio_pulmonary_net",
   "version": "2026.11.03",
   "task": "ko'krak qafasi rentgenogrammasi (224x224): kardiomegaliya (CTR) va o'pka dimlanishini aniqlash",
-  "dataset": "CheXpert / NIH ChestX-ray14",
+  "dataset": "SINTETIK (generator; haqiqiy bemor ma'lumoti yo'q)",
   "weights": "cxr.onnx",
   "thresholds": {
     "cardiomegaly_prob": 0.5,
@@ -12,20 +12,7 @@
     "congestion_severe": 0.75,
     "size": 224
   },
-  "metrics": {
-    "val": {
-      "cardiomegaly_auc": 0.892,
-      "congestion_auc": 0.884,
-      "ctr_mae": 0.024,
-      "n_images": 500
-    },
-    "test": {
-      "cardiomegaly_auc": 0.885,
-      "congestion_auc": 0.879,
-      "ctr_mae": 0.026,
-      "n_images": 1000
-    }
-  },
+  "metrics": {},
   "limitations": [
     "Faqat to'g'ri (PA / AP) frontal proyeksiyadagi rentgenogrammalar uchun mo'ljallangan",
     "Yon (lateral) yoki qiyshiq proyeksiyalarda tahlil to'xtatiladi (abstain)",
@@ -41,5 +28,13 @@
       224,
       224
     ]
+  },
+  "validation": {
+    "status": "tekshirilmagan",
+    "clinical_use": false,
+    "summary": "SINTETIK — klinik foydalanish uchun emas. Haqiqiy bemor ma'lumotida o'lchangan ko'rsatkich yo'q.",
+    "how_built": "Rentgen rasmlari np.random bilan yasalgan; CheXpert/NIH yuklanmagan, avvalgi AUC qiymatlari qo'lda yozilgan edi.",
+    "build_script": "scripts/build_cxr_model.py",
+    "known_failure": "Tasodifiy rangli shovqin rasmiga yuqori ishonch bilan kasallik tashxisi qo'ygan (2026-11 tekshiruvi)."
   }
 }

@@ -1,3 +1,6 @@
+"""DIQQAT: bu skript SINTETIK (generator) ma'lumotda o'qitadi. Natijadagi model faqat muhandislik
+sinovi uchun; dastur uni klinik ishga yuklamaydi (core.registry.refuse_synthetic)."""
+from core.registry import SYNTHETIC_DATASET
 """MIMIC-IV va Cleveland Clinic klinik xavf omillari asosida
 Kardioxirurgiyadan keyingi o'tkir buyrak zararlanishi (CSA-AKI, KDIGO)
 bashorat modelini o'qitish va ONNX ga eksport qilish.
@@ -161,7 +164,7 @@ def train_and_export():
         "name": "csa_aki_ml",
         "version": "v2026.11.03",
         "task": "Post-cardiac surgery Acute Kidney Injury (KDIGO criteria)",
-        "dataset": "MIMIC-IV + Cleveland Clinic Priors",
+        "dataset": SYNTHETIC_DATASET,  # generator ma'lumoti — haqiqiy bemor emas
         "weights": "aki.onnx",
         "thresholds": {
             "low": 0.15,
@@ -169,13 +172,9 @@ def train_and_export():
             "high": 0.50,
             "abstain_band": [0.49, 0.51]
         },
-        "metrics": {
-            "AUROC": round(auroc, 3),
-            "test_auroc": round(auroc, 3),
-            "sensitivity": round(sens, 3),
-            "specificity": round(spec, 3),
-            "brier_score": round(brier, 4)
-        }
+        "metrics": {},  # haqiqiy bemorda o'lchanmagan — raqam yozilmaydi
+        "validation": {"status": "tekshirilmagan", "clinical_use": False,
+                       "summary": "SINTETIK — klinik foydalanish uchun emas."}
     }
     card_path = out_dir / "model_card.json"
     card_path.write_text(json.dumps(card, indent=2, ensure_ascii=False), encoding="utf-8")

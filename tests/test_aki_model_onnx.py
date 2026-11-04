@@ -9,12 +9,13 @@ def test_aki_onnx_model_loads_and_infers():
     if not (weights_dir / "aki.onnx").exists():
         pytest.skip("weights/aki/aki.onnx mavjud emas")
 
-    model = AKIModel.from_dir(weights_dir)
+    assert AKIModel.from_dir(weights_dir) is None   # sintetik — dasturga yuklanmaydi
+    model = AKIModel.from_dir(weights_dir, allow_synthetic=True)   # faqat muhandislik sinovi
     assert model is not None
     assert model.card.name == "csa_aki_ml"
-    assert model.card.dataset == "MIMIC-IV + Cleveland Clinic Priors"
-    assert model.card.commercial_use is True
-    assert model.card.metrics.get("AUROC", 0) >= 0.80
+    assert model.card.synthetic is True
+    assert model.card.commercial_use is False
+    assert model.card.metrics == {}          # haqiqiy bemorda o'lchanmagan raqam yo'q
 
     # Past xavfli elektiv bemor (yosh, LVEF 60%, Cr 75, elektiv KShSh)
     low_x = AKIInput(

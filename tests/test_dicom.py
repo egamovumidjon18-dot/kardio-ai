@@ -104,7 +104,7 @@ def test_parse_dicom_monochrome1_inversion():
 
 
 def test_cxr_model_with_dicom():
-    model = CXRModel.from_dir("weights/cxr")
+    model = CXRModel.from_dir("weights/cxr", allow_synthetic=True)
     assert model is not None
 
     # Frontal PA DICOM -> muvaffaqiyatli xulosa

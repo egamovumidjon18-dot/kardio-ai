@@ -182,9 +182,9 @@ def build_manual():
     meta_widths = [Inches(2.1), Inches(2.1), Inches(2.2)]
     
     meta_data = [
-        ("VERSIYA & STATUS", "CardioPath AI v2.0\nBarcha 8 model Faol (100%)"),
-        ("TEST VERIFIKATSIYASI", "425 / 425 Test Muvaffaqiyatli\n0 xato, 0 ogohlantirish"),
-        ("STANDARTLAR", "ESC / AHA / KDIGO / EuroSCORE II\nMDR SaMD Class IIb")
+        ("VERSIYA & STATUS", "CardioPath AI v2.0 (tadqiqot prototipi)\n3 ta sintetik model bloklangan"),
+        ("TEST VERIFIKATSIYASI", "Avtomatik testlar o'tadi\n(kod tekshiruvi, klinik aniqlik emas)"),
+        ("STANDARTLAR", "ESC / AHA / KDIGO / EuroSCORE II\nSaMD: ro'yxatdan o'tmagan")
     ]
     for idx, (h, b) in enumerate(meta_data):
         meta_cells[idx].width = meta_widths[idx]
@@ -338,23 +338,23 @@ def build_manual():
         r.font.color.rgb = NAVY
 
     doc.add_paragraph(
-        "CardioPath AI tarkibida ishlovchi barcha 8 ta model to'liq integratsiya qilingan va faol ishlab turibdi. "
+        "Quyida har bir model va u haqiqatan o'lchangan ko'rsatkich. AKI, yara va rentgen modellari sintetik ma'lumotda o'qitilgani uchun BLOKLANGAN. "
         "Har bir model o'zining qat'iy mezonlari, kalibratsiyasi va cheklovlariga ega:"
     )
 
     # 8 ta model jadvali
     m_tbl = doc.add_table(rows=1, cols=4)
     m_widths = [Inches(1.8), Inches(1.8), Inches(1.5), Inches(1.4)]
-    m_headers = ["Model Nomi va Vazifasi", "Klinik Signali va Ma'lumot Bazasi", "Neuron Tarmoq Me'morchiligi", "Tasdiqlangan Aniqlik"]
+    m_headers = ["Model Nomi va Vazifasi", "Klinik Signali va Ma'lumot Bazasi", "Neuron Tarmoq Me'morchiligi", "O'lchangan natija (test)"]
     m_data = [
         ["1. pcg_murmur_cnn\nYurak shovqinini aniqlash", "4 ta nuqtadan audio yozuv (.wav)\nCirCor DigiScope (4000+ PCG)", "1D CNN + Mel-Spektrogramma\n(ResNet asosida)", "AUROC 0.958\nSens: 91.3%, Spec: 92.3%"],
-        ["2. ecg_cnn_ptbxl\n12-tarmoqli EKG ritm tahlili", "10 soniyalik 12 tarmoqli EKG\nPTB-XL (21,837 bemor)", "Deep 1D ResNet\n(AFIB, MI, STTC, CD, HYP)", "AUROC 0.981\nAFIB AUC: 0.992"],
-        ["3. ecg_lowef_echonext\nYashirin past LVEF detektori", "Standart 12-tarmoqli EKG\nEchoNext (PhysioNet)", "Multi-lead ConvNet\n(LVEF <= 40% oldindan sezish)", "AUROC 0.886\nSens: 84.1%, Spec: 83.5%"],
+        ["2. ecg_cnn_ptbxl\n12-tarmoqli EKG ritm tahlili", "10 soniyalik 12 tarmoqli EKG\nPTB-XL (21,837 bemor)", "Deep 1D ResNet\n(AFIB, MI, STTC, CD, HYP)", "AFIB AUROC 0.98 (test)"],
+        ["3. ecg_lowef_echonext\nYashirin past LVEF detektori", "Standart 12-tarmoqli EKG\nEchoNext (PhysioNet)", "Multi-lead ConvNet\n(LVEF <= 40% oldindan sezish)", "AUROC 0.886\nSens: 87.0%, Spec: 87.0%"],
         ["4. ecg_shd_echonext\nStrukturaviy yurak patologiyasi", "Standart 12-tarmoqli EKG\nEchoNext Multi-label", "Multi-task 1D EKG Net\n(Mitral/Aortal yetishmovchilik)", "AUROC 0.815\nQopqoq asoratlarini topish"],
-        ["5. angio_stenosis_unet\nKoronar stenoz segmentatsiyasi", "Rentgen-angiografiya kadri\nARCADE Challenge", "U-Net Segmentatsiya\n(512x512 pikselli kadr)", "AUROC 0.865\nDice koeffitsiyenti 0.82"],
-        ["6. cxr_cardio_pulmonary_net\nRentgen kardiomegaliya va dimlanish", "Frontal CXR rentgenogramma\nCheXpert + NIH ChestX-ray14", "Multi-task ConvNet (224x224)\nCTR va dimlanish boshqaruvi", "AUROC 0.885\nCTR MAE: 0.026"],
-        ["7. csa_aki_ml\nOperatsiyadan keyingi buyrak zarari", "12 ta klinik xususiyat (Cr, EF, IABP)\nMIMIC-IV + Cleveland Clinic Priors", "Kalibrlangan MLP Neyron Tarmog'i\n(KDIGO AKI kriteriylari)", "AUROC 0.821\nSens: 81.3%, Brier: 0.145"],
-        ["8. wound_image_cv\nSternotomiya yarasi asoratlari", "Yara fotosurati (224x224 RGB)\nCardioPath SternoWound-CV", "Depthwise Separable WoundNet\n(Dehissensiya, eritema, yiring)", "AUROC 0.871\nSens: 86.5%, Spec: 85.8%"]
+        ["5. angio_stenosis_unet\nKoronar stenoz segmentatsiyasi", "Rentgen-angiografiya kadri\nARCADE Challenge", "U-Net Segmentatsiya\n(512x512 pikselli kadr)", "Dice 0.54\nStenoz topish 89%"],
+        ["6. cxr_cardio_pulmonary_net\nRentgen kardiomegaliya va dimlanish", "Frontal CXR rentgenogramma\nSINTETIK rasmlar", "Multi-task ConvNet (224x224)\nCTR va dimlanish boshqaruvi", "BLOKLANGAN\nhaqiqiy rasmda o'lchanmagan"],
+        ["7. csa_aki_ml\nOperatsiyadan keyingi buyrak zarari", "12 ta klinik xususiyat (Cr, EF, IABP)\nSINTETIK bemorlar", "Kalibrlangan MLP Neyron Tarmog'i\n(KDIGO AKI kriteriylari)", "BLOKLANGAN\nhaqiqiy bemorda o'lchanmagan"],
+        ["8. wound_image_cv\nSternotomiya yarasi asoratlari", "Yara fotosurati (224x224 RGB)\nSINTETIK rasmlar", "Depthwise Separable WoundNet\n(Dehissensiya, eritema, yiring)", "BLOKLANGAN\nhaqiqiy rasmda o'lchanmagan"]
     ]
     format_table(m_tbl, m_widths, m_headers, m_data)
 
@@ -537,7 +537,7 @@ def build_manual():
     new_feats = [
         ("PACS DICOM Aqlli Routeri", "DICOM Part 10 (DX, CR, XA, US), zero-dependency parser", "Kasalxona PACS arxividan rentgen (CXR) va angiografiya (XA) tasvirlarini avtomatik qabul qilib, mos AI modeliga yo'naltiradi va epizodga biriktiradi."),
         ("HL7 FHIR R4 Ikki Tomonlama Ingest", "HL7 FHIR R4, LOINC standartlari (49563-0, 33762-6, 2160-0, 6301-6)", "Kasalxona LIS/HIS laboratoriya tizimlaridan Troponin, NT-proBNP, kreatinin, INR va vital ko'rsatkichlarni avtomatik qabul qilib, OKS va KDIGO xavfini baholaydi."),
-        ("Virtual QFR (Gidrodinamik FFR)", "Navier-Stokes, Bernulli turbulent kengayish, FAVOR III Study", "Koronar angiografiya o'lchovlaridan invaziv bosim simisiz tomir bosim tushishi va QFR indeksini hisoblaydi. QFR <= 0.80 da stentlash/CABG ko'rsatmasini beradi."),
+        ("Taxminiy QFR (tasdiqlanmagan)", "Poiseuille + Bernulli formulasi (FAVOR QFR usuli emas)", "Angiografik o'lchovlardan bosim tushishini taxmin qiladi. Invaziv FFR bilan tekshirilmagan: xavfni pasaytirmaydi, davolash tavsiyasi bermaydi."),
     ]
     for m, st, cl in new_feats:
         row = t9.add_row().cells
@@ -555,8 +555,8 @@ def build_manual():
 
     add_callout(
         doc,
-        "Ushbu kengaytirishlar bilan dasturdagi testlar soni 437 taga yetdi va barcha testlar 100% muvaffaqiyatli "
-        "o'tdi. CardioPath AI zamonaviy shifoxona IT ekotizimiga to'liq tayyor holatga keltirildi.",
+        "Ushbu kengaytirishlar dastur kodi testlaridan o'tdi. Klinik foydalanishdan oldin etika ruxsati, "
+        "prospektiv sinov va mahalliy validatsiya kerak.",
         title="I-BOSQICH MUVAFFAQIYATLI YAKUNLANDI",
         hex_color="0284C7"
     )

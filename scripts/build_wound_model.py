@@ -1,3 +1,6 @@
+"""DIQQAT: bu skript SINTETIK (generator) ma'lumotda o'qitadi. Natijadagi model faqat muhandislik
+sinovi uchun; dastur uni klinik ishga yuklamaydi (core.registry.refuse_synthetic)."""
+from core.registry import SYNTHETIC_DATASET
 """Post-sternotomiya operatsiyadan keyingi yara holatini (infeksiya / ajralish)
 tasvirdan aniqlovchi WoundNet modelini yaratish va ONNX ga eksport qilish.
 
@@ -164,7 +167,7 @@ def train_and_export():
         "name": "wound_image_cv",
         "version": "v2026.11.03",
         "task": "Post-sternotomy wound complication & dehiscence detection (224x224 RGB)",
-        "dataset": "CardioPath SternoWound-CV + SurgWound Priors",
+        "dataset": SYNTHETIC_DATASET,  # generator ma'lumoti — haqiqiy bemor emas
         "weights": "wound.onnx",
         "thresholds": {
             "clean": 0.50,
@@ -176,13 +179,9 @@ def train_and_export():
             "min_brightness": 25.0,
             "max_brightness": 240.0
         },
-        "metrics": {
-            "AUROC": 0.871,
-            "test_auroc": 0.871,
-            "accuracy": round(acc, 3),
-            "sensitivity": 0.865,
-            "specificity": 0.858
-        }
+        "metrics": {},  # haqiqiy bemorda o'lchanmagan — raqam yozilmaydi
+        "validation": {"status": "tekshirilmagan", "clinical_use": False,
+                       "summary": "SINTETIK — klinik foydalanish uchun emas."}
     }
     card_path = out_dir / "model_card.json"
     card_path.write_text(json.dumps(card, indent=2, ensure_ascii=False), encoding="utf-8")

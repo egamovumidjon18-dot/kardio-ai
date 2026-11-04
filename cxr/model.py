@@ -13,7 +13,7 @@ import numpy as np
 from PIL import Image
 
 from core.evidence import Evidence, Provenance, RiskLevel, Source
-from core.registry import ModelCard, check_license
+from core.registry import ModelCard, check_license, refuse_synthetic
 from cxr.dicom import is_dicom, parse_dicom
 from cxr.image import assess_cxr_quality, load_cxr_gray, to_model_input
 
@@ -45,13 +45,15 @@ class CXRModel:
         self.congest_severe = float(th.get("congestion_severe", 0.75))
 
     @classmethod
-    def from_dir(cls, weights_dir: str | Path = "weights/cxr") -> Optional["CXRModel"]:
+    def from_dir(cls, weights_dir: str | Path = "weights/cxr", allow_synthetic: bool = False) -> Optional["CXRModel"]:
         p = Path(weights_dir)
         card_p = p / "model_card.json"
         onnx_p = p / "cxr.onnx"
         if not card_p.exists() or not onnx_p.exists():
             return None
         card = ModelCard.load(card_p)
+        if refuse_synthetic(card, allow_synthetic):
+            return None
         return cls(card, onnx_backend(p / card.weights))
 
     def _prov(self) -> Provenance:

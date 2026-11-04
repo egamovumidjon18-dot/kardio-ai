@@ -42,7 +42,8 @@ services:
     environment:
       POSTGRES_DB: cardiopath_ai
       POSTGRES_USER: cardiopath
-      POSTGRES_PASSWORD: ${CARDIOPATH_PG_PASSWORD:-cardiopath_secure_pwd}
+      # Parol faqat .env faylidan olinadi (standart parol yo'q). Bo'sh bo'lsa Postgres ishga tushmaydi.
+      POSTGRES_PASSWORD: ${CARDIOPATH_PG_PASSWORD:-}
     ports:
       - "127.0.0.1:5432:5432"
     volumes:

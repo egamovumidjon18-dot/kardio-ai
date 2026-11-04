@@ -13,11 +13,12 @@ def test_wound_onnx_model_loads_and_validates():
     if not (weights_dir / "wound.onnx").exists():
         pytest.skip("weights/wound/wound.onnx mavjud emas")
 
-    model = WoundImageModel.from_dir(weights_dir)
+    assert WoundImageModel.from_dir(weights_dir) is None   # sintetik — dasturga yuklanmaydi
+    model = WoundImageModel.from_dir(weights_dir, allow_synthetic=True)
     assert model is not None
     assert model.available is True
     assert model.card.name == "wound_image_cv"
-    assert model.card.commercial_use is True
+    assert model.card.synthetic is True and model.card.commercial_use is False
 
     # 1. Rasm xiralik (blur) testi — silliq monoxrom rasm (dispersiya < 35)
     smooth_arr = np.ones((224, 224, 3), dtype=np.uint8) * 128

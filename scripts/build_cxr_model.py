@@ -1,3 +1,6 @@
+"""DIQQAT: bu skript SINTETIK (generator) ma'lumotda o'qitadi. Natijadagi model faqat muhandislik
+sinovi uchun; dastur uni klinik ishga yuklamaydi (core.registry.refuse_synthetic)."""
+from core.registry import SYNTHETIC_DATASET
 """Ko'krak qafasi rentgenogrammasi (CXR) neyron tarmog'ini yaratish va ONNX ga eksport qilish.
 
 Vazifasi:
@@ -141,7 +144,7 @@ def train_and_export():
         "name": "cxr_cardio_pulmonary_net",
         "version": "2026.11.03",
         "task": "ko'krak qafasi rentgenogrammasi (224x224): kardiomegaliya (CTR) va o'pka dimlanishini aniqlash",
-        "dataset": "CheXpert / NIH ChestX-ray14",
+        "dataset": SYNTHETIC_DATASET,  # generator ma'lumoti — haqiqiy bemor emas
         "weights": "cxr.onnx",
         "thresholds": {
             "cardiomegaly_prob": 0.50,
@@ -151,20 +154,9 @@ def train_and_export():
             "congestion_severe": 0.75,
             "size": 224
         },
-        "metrics": {
-            "val": {
-                "cardiomegaly_auc": 0.892,
-                "congestion_auc": 0.884,
-                "ctr_mae": 0.024,
-                "n_images": 500
-            },
-            "test": {
-                "cardiomegaly_auc": 0.885,
-                "congestion_auc": 0.879,
-                "ctr_mae": 0.026,
-                "n_images": 1000
-            }
-        },
+        "metrics": {},  # haqiqiy bemorda o'lchanmagan — raqam yozilmaydi
+        "validation": {"status": "tekshirilmagan", "clinical_use": False,
+                       "summary": "SINTETIK — klinik foydalanish uchun emas."},
         "limitations": [
             "Faqat to'g'ri (PA / AP) frontal proyeksiyadagi rentgenogrammalar uchun mo'ljallangan",
             "Yon (lateral) yoki qiyshiq proyeksiyalarda tahlil to'xtatiladi (abstain)",

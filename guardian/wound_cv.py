@@ -14,7 +14,7 @@ import numpy as np
 from PIL import Image
 
 from core.evidence import Evidence, Provenance, RiskLevel, Source
-from core.registry import ModelCard, check_license
+from core.registry import ModelCard, check_license, refuse_synthetic
 
 LABELS = ["clean", "erythema", "discharge", "dehiscence"]
 
@@ -42,13 +42,15 @@ class WoundImageModel:
         self.input_name = session.get_inputs()[0].name
 
     @classmethod
-    def from_dir(cls, weights_dir: str | Path) -> Optional["WoundImageModel"]:
+    def from_dir(cls, weights_dir: str | Path, allow_synthetic: bool = False) -> Optional["WoundImageModel"]:
         card_path = Path(weights_dir) / "model_card.json"
         if not card_path.exists():
             return None
+        card = ModelCard.load(card_path)
+        if refuse_synthetic(card, allow_synthetic):
+            return None
         import onnxruntime as ort
 
-        card = ModelCard.load(card_path)
         weights_file = Path(weights_dir) / card.weights
         if not weights_file.exists():
             return None

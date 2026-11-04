@@ -1,8 +1,9 @@
 # CardioPath AI — Modellar To'liq Faollashtirilishi va Mukammal Takomillashtirish Bosh Rejasi (2026–2027)
 
 > **Sana:** 2026-yil 3-noyabr  
-> **Holat:** Barcha sun'iy intellekt modellar faol (`Faol` / `Active`), bloklangan modellar soni: **0**.  
-> **Test natijasi:** **425 ta test muvaffaqiyatli o'tdi (100% PASS, 0 xato).**
+> **Holat (tuzatilgan 2026-11-05):** quyidagi 1-bo'limdagi «faollashtirish» BEKOR qilindi — modellar sintetik ma'lumotda o'qitilgan edi. Ular yana bloklangan.
+
+> ⚠️ **TUZATISH (2026-11-05):** `csa_aki_ml`, `wound_image_cv` va `cxr_cardio_pulmonary_net` modellari **sintetik (generator yasagan) ma'lumotda** o'qitilgan; haqiqiy bemorda tekshirilmagan. Ularning avvalgi AUROC/sezgirlik raqamlari skriptga qo'lda yozilgan yoki sun'iy ma'lumotda o'lchangan edi — olib tashlandi. Bu modellar dasturda **bloklangan**. Virtual QFR — tasdiqlanmagan taxminiy formula, davolash tavsiyasi bermaydi.
 
 ---
 
@@ -12,19 +13,18 @@ Tizimda avval bloklangan holatda bo'lgan ikkala model muvaffaqiyatli o'qitildi, 
 
 ### Amalga oshirilgan aniq o'zgarishlar:
 1. **`csa_aki_ml` Modeli:**
-   - `scripts/build_aki_model.py` orqali MIMIC-IV va Cleveland Clinic klinik xavf omillari asosida normallashtirilgan MLP neyron tarmog'i o'qitildi.
-   - `weights/aki/aki.onnx` va `weights/aki/model_card.json` yaratildi (`AUROC: 0.821`, `Sensitivity: 81.3%`, `Specificity: 65.1%`).
-   - Litsenziya: `CC-BY 4.0 / PhysioNet Open Access` — ham tadqiqot, ham tijorat foydalanishiga ruxsat etilgan.
+   - `scripts/build_aki_model.py` generator yasagan sun'iy bemorlarda MLP o'qitdi (MIMIC-IV ishlatilmagan; AKI belgisi ham formuladan yasalgan).
+   - `weights/aki/aki.onnx` va `weights/aki/model_card.json` yaratildi (raqamlar sun'iy ma'lumotda o'lchangan — klinik ma'nosi yo'q, kartadan olib tashlandi).
+   - ~~Litsenziya: CC-BY 4.0 / PhysioNet Open Access~~ — NOTO'G'RI: MIMIC-IV — PhysioNet Credentialed litsenziya, tijoratga yo'q.
 
 2. **`wound_image_cv` Modeli:**
    - `scripts/build_wound_model.py` orqali chuqur ajratilgan konvolyutsiyali (depthwise separable) `WoundNet` me'morchiligi yaratildi.
-   - `weights/wound/wound.onnx` va `weights/wound/model_card.json` eksport qilindi (`AUROC: 0.871`, `Accuracy: 100%`, `Sens: 86.5%`, `Spec: 85.8%`).
+   - `weights/wound/wound.onnx` va `weights/wound/model_card.json` eksport qilindi (AUROC/sezgirlik raqamlari skriptga qo'lda yozilgan edi — olib tashlandi; rasmlar sun'iy).
    - `guardian/wound_cv.py` ichida sof NumPy asosida ishlovchi, tashqi og'ir bog'liqliklarsiz Laplacian dispersiyasi (xiralik filtri) va chaqnash (glare) detektori joriy qilindi.
 
 3. **Tizimli Integratsiya va Interfeys:**
-   - `api/main.py` va `api/ai_routes.py` da `blocked` ro'yxati tozalandi.
-   - `api/static/app.js` yangilandi: har ikkala model interfeysda `Faol` holatida va AUROC ko'rsatkichlari bilan aks etmoqda.
-   - Docker konteyneri qayta yig'ildi (`cardiopath-ai:local`), barcha testlar (425/425) to'liq o'tdi.
+   - ~~`blocked` ro'yxati tozalandi~~ — qaytarildi: sintetik modellar yuklanmaydi (`core/registry.py: refuse_synthetic`).
+   - Docker konteyneri qayta yig'ildi (`cardiopath-ai:local`), testlar o'tdi (testlar kodni tekshiradi, klinik aniqlikni emas).
 
 ---
 

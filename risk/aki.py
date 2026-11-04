@@ -15,7 +15,7 @@ from typing import Callable, Literal, Optional
 import numpy as np
 
 from core.evidence import Evidence, Provenance, RiskLevel, Source
-from core.registry import ModelCard, check_license
+from core.registry import ModelCard, check_license, refuse_synthetic
 
 REFERENCE = "Thakar CV et al. J Am Soc Nephrol 2005;16(1):162-168"
 
@@ -89,13 +89,15 @@ class AKIModel:
         self.card, self.predict = card, predict
 
     @classmethod
-    def from_dir(cls, weights_dir: str | Path) -> Optional["AKIModel"]:
+    def from_dir(cls, weights_dir: str | Path, allow_synthetic: bool = False) -> Optional["AKIModel"]:
         card_path = Path(weights_dir) / "model_card.json"
         if not card_path.exists():
             return None
+        card = ModelCard.load(card_path)
+        if refuse_synthetic(card, allow_synthetic):
+            return None
         import onnxruntime as ort
 
-        card = ModelCard.load(card_path)
         sess = ort.InferenceSession(str(Path(weights_dir) / card.weights), providers=["CPUExecutionProvider"])
         name = sess.get_inputs()[0].name
         return cls(card, lambda x: float(np.ravel(sess.run(None, {name: x})[-1])[-1]))

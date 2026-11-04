@@ -1,5 +1,8 @@
 # CardioPath AI — Fundamental Qo'llanma: Tizimning Ishlash Mexanizmi va Klinik Ahamiyati
 
+> ⚠️ **TUZATISH (2026-11-05):** `csa_aki_ml`, `wound_image_cv` va `cxr_cardio_pulmonary_net` modellari **sintetik (generator yasagan) ma'lumotda** o'qitilgan; haqiqiy bemorda tekshirilmagan. Ularning avvalgi AUROC/sezgirlik raqamlari skriptga qo'lda yozilgan yoki sun'iy ma'lumotda o'lchangan edi — olib tashlandi. Bu modellar dasturda **bloklangan**. Virtual QFR — tasdiqlanmagan taxminiy formula, davolash tavsiyasi bermaydi.
+
+
 > **Hujjat turi:** To'liq Texnik va Klinik Qo'llanma (Architecture & Clinical Whitepaper)  
 > **Versiya:** 2.0 (2026-yil noyabr holatiga)  
 > **Mualliflik:** CardioPath AI Muhandislik va Tibbiy Konsultatsiya Guruhi  
@@ -35,7 +38,7 @@ Yurak-qon tomir kasalliklari (YQTK) butun dunyoda va xususan O'zbekistonda o'lim
 
 ## 2. CardioPath AI Falsafasi va Asosiy Qoidalar
 
-Tizim tibbiy dasturiy ta'minotning eng qat'iy standartlari (MDR Class IIb / SaMD) tamoyillari asosida qurilgan:
+Tizim tibbiy dasturiy ta'minot standartlari (MDR / SaMD) tamoyillarini yo'l-yo'riq sifatida olib qurilgan (rasmiy muvofiqlik yoki sertifikat **yo'q**, dastur tadqiqot prototipi):
 
 ### 3 ta oltin qoida:
 1. **Shifokor — Yakuniy Hakam:** AI hech qachon mustaqil yakuniy tashxis qo'ymaydi. U faqat ehtimolliklar, chegaralar va dalillarni taqdim etuvchi "raqamli kardiolog assistenti" hisoblanadi.
@@ -89,10 +92,10 @@ Barcha modellar **ONNX Runtime (CPU-optimized)** formatida bo'lib, og'ir GPU ser
 | **2** | **`ecg_cnn_ptbxl`** | 12 tarmoqli EKGdan xilpillovchi aritmiya (AFIB) va 5 ta sindrom | Chuqur 1D ResNet | PTB-XL (21,837 bemor) | **0.981** |
 | **3** | **`ecg_lowef_echonext`** | Oddiy EKG orqali past fraksiyani ($LVEF \le 40\%$) oldindan sezish | 12-tarmoqli EKG CNN | EchoNext (PhysioNet) | **0.886** |
 | **4** | **`ecg_shd_echonext`** | EKGdan qopqoq regürgitatsiyasi va o'ng qorincha disfunksiyasini topish | Multi-label EKG Net | EchoNext | **0.815** |
-| **5** | **`angio_stenosis_unet`** | Koronar angiografiyada tomir torayishi (stenoz) sohasini belgilash | U-Net Segmentatsiya (512x512) | ARCADE Challenge | **0.865** |
-| **6** | **`cxr_cardio_pulmonary_net`** | Rentgen tasviridan kardiomegaliya (CTR) va o'pka dimlanishini aniqlash | Multi-task ConvNet (224x224) | CheXpert va NIH ChestX-ray14 | **0.885** |
-| **7** | **`csa_aki_ml`** | Kardioxirurgiyadan keyin o'tkir buyrak zararlanishi (KDIGO AKI) ehtimoli | Kalibrlangan MLP Neyron Tarmog'i | MIMIC-IV va Cleveland Clinic | **0.821** |
-| **8** | **`wound_image_cv`** | Sternotomiya choki fotosuratidan ajralish, eritema va yiringni aniqlash | Depthwise Separable WoundNet | CardioPath SternoWound-CV | **0.871** |
+| **5** | **`angio_stenosis_unet`** | Koronar angiografiyada tomir torayishi (stenoz) sohasini belgilash | U-Net Segmentatsiya (512x512) | ARCADE Challenge | Dice **0.54**, stenoz topish 89% (test, 300 rasm) |
+| **6** | **`cxr_cardio_pulmonary_net`** | Rentgen tasviridan kardiomegaliya (CTR) va o'pka dimlanishini aniqlash | Multi-task ConvNet (224x224) | **SINTETIK** (haqiqiy rentgen yo'q) | ⛔ bloklangan — o'lchanmagan |
+| **7** | **`csa_aki_ml`** | Kardioxirurgiyadan keyin o'tkir buyrak zararlanishi (KDIGO AKI) ehtimoli | Kalibrlangan MLP Neyron Tarmog'i | **SINTETIK** (MIMIC-IV hali olinmagan) | ⛔ bloklangan — o'lchanmagan |
+| **8** | **`wound_image_cv`** | Sternotomiya choki fotosuratidan ajralish, eritema va yiringni aniqlash | Depthwise Separable WoundNet | **SINTETIK** (ochiq yara dataseti yo'q) | ⛔ bloklangan — o'lchanmagan |
 
 ---
 
@@ -148,6 +151,6 @@ Tizimning joriy etilishi shifoxona va bemor uchun aniq raqamlarda ifodalanadigan
 CardioPath AI — shunchaki neyron tarmoqlari to'plami emas. Bu **klinik jarayonning har bir daqiqasini xavfsiz qiluvchi yaxlit raqamli ekotizimdir**.
 
 Hozirgi kunda:
-- Barcha **8 ta AI modeli to'liq ishga tushirilgan va faol holatda**;
-- Barcha **425 ta avtomatlashtirilgan test 100% muvaffaqiyatli o'tgan**;
-- Tizim operatsion xonasi, reanimatsiya va poliklinika sinovlariga to'liq tayyor.
+- Haqiqiy ma'lumotda tekshirilgan modellar faol; **AKI, yara va rentgen modellari bloklangan** (sintetik ma'lumot);
+- Avtomatlashtirilgan testlar o'tadi (ular dastur kodini tekshiradi, klinik aniqlikni emas);
+- Klinik foydalanishdan oldin etika komissiyasi ruxsati, prospektiv sinov va mahalliy validatsiya kerak.

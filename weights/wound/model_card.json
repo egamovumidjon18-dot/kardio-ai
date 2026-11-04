@@ -2,7 +2,7 @@
   "name": "wound_image_cv",
   "version": "v2026.11.03",
   "task": "Post-sternotomy wound complication & dehiscence detection (224x224 RGB)",
-  "dataset": "CardioPath SternoWound-CV + SurgWound Priors",
+  "dataset": "SINTETIK (generator; haqiqiy bemor ma'lumoti yo'q)",
   "weights": "wound.onnx",
   "thresholds": {
     "clean": 0.5,
@@ -14,11 +14,13 @@
     "min_brightness": 25.0,
     "max_brightness": 240.0
   },
-  "metrics": {
-    "AUROC": 0.871,
-    "test_auroc": 0.871,
-    "accuracy": 1.0,
-    "sensitivity": 0.865,
-    "specificity": 0.858
+  "metrics": {},
+  "validation": {
+    "status": "tekshirilmagan",
+    "clinical_use": false,
+    "summary": "SINTETIK — klinik foydalanish uchun emas. Haqiqiy bemor ma'lumotida o'lchangan ko'rsatkich yo'q.",
+    "how_built": "Yara rasmlari dastur chizgan sun'iy shakllar; avvalgi AUROC/sezgirlik qiymatlari skriptga qo'lda yozilgan edi.",
+    "build_script": "scripts/build_wound_model.py",
+    "known_failure": "Tasodifiy rangli shovqin rasmiga yuqori ishonch bilan kasallik tashxisi qo'ygan (2026-11 tekshiruvi)."
   }
 }

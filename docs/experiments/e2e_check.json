@@ -1,5 +1,5 @@
 {
- "seconds": 119.1,
+ "seconds": 84.7,
  "models_loaded": {
   "ecg": "ecg_cnn_ptbxl",
   "angio": "angio_stenosis_unet",
@@ -8,7 +8,7 @@
   "ecg_shd": "ecg_shd_echonext"
  },
  "pcg_model": "pcg_murmur_cnn",
- "shadow_runs": 60,
+ "shadow_runs": 59,
  "results": {
   "pcg": {
    "name": "Yurak tovushi: shovqin bor/yo'q",
@@ -32,7 +32,7 @@
    "tn": 15,
    "fp": 0,
    "abstain": 1,
-   "errors": 0
+   "errors": 1
   },
   "ecg_low_ef": {
    "name": "AI-EKG: past EF (≤45%)",

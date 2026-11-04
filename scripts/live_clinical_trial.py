@@ -83,13 +83,16 @@ def make_wound_image(blurred: bool = False) -> bytes:
     return buf.getvalue()
 
 
+SYNTHETIC_BLOCKED = ("csa_aki_ml", "wound_image_cv", "cxr")
+
+
 def run_trial():
     client = httpx.Client(base_url=BASE_URL, timeout=30.0)
 
     # -------------------------------------------------------------------------
     # 1. TIZIM STATUSI VA MODELLAR RO'YXATI
     # -------------------------------------------------------------------------
-    print_step(1, "Tizim Salomatligi va Barcha 8 ta Model Holatini Tekshirish")
+    print_step(1, "Tizim Salomatligi va Modellar Holatini Tekshirish")
     res_health = client.get("/health")
     assert res_health.status_code == 200, f"Health xatosi: {res_health.text}"
     h_data = res_health.json()
@@ -101,13 +104,15 @@ def run_trial():
     print(f"✓ /models javobi: {len(m_data)} ta parametr qabul qilindi.")
     blocked = m_data.get("blocked", {})
     print(f"  • Bloklangan modellar soni: {len(blocked)} ta")
-    assert len(blocked) == 0, f"Bloklangan modellar mavjud: {blocked}"
-    print("  • Barcha AI modellar Faol holatda:")
+    # Sintetik ma'lumotda o'qitilgan modellar klinik dasturga yuklanmasligi SHART
+    for k in SYNTHETIC_BLOCKED:
+        assert k in blocked and m_data.get(k) is None, f"sintetik model bloklanmagan: {k}"
+    print(f"  • Sintetik modellar to'g'ri bloklangan: {', '.join(SYNTHETIC_BLOCKED)}")
+    print("  • Faol AI modellar:")
     for k in ["ecg", "angio", "cxr", "ecg_low_ef", "ecg_shd", "csa_aki_ml", "wound_image_cv"]:
         item = m_data.get(k)
         if item:
-            auroc_val = item['metrics'].get('AUROC') or item['metrics'].get('test', {}).get('cardiomegaly_auc') or item['metrics'].get('test_auroc') or 'N/A'
-            print(f"    - {k:15}: {item['name']:25} | Litsenziya: {item['dataset_license']} | AUROC: {auroc_val}")
+            print(f"    - {k:15}: {item['name']:25} | Ma'lumot: {item['dataset']} | Litsenziya: {item['dataset_license']}")
 
     # -------------------------------------------------------------------------
     # 2. PEDIATRIK CHAQALOQLAR TYN SKRININGI
@@ -177,11 +182,8 @@ def run_trial():
         data={"actor": "dr_radiology", "view_position": "PA", "lang": "uz"},
         files={"file": ("cxr_frontal.png", cxr_bytes, "image/png")}
     )
-    assert res_cxr.status_code == 200, f"CXR xatosi: {res_cxr.text}"
-    cxr_ev = res_cxr.json()["evidence"]
-    print(f"  ✓ CXR AI natijalari:")
-    print(f"    - Xavf darajasi: {cxr_ev['risk']}")
-    print(f"    - O'lchovlar: CTR = {cxr_ev['value']['ctr_ratio']:.2f} (Norma <=0.50) | Kardiomegaliya={cxr_ev['value']['cardiomegaly']} | O'pka dimlanishi={cxr_ev['value']['pulmonary_congestion']}")
+    assert res_cxr.status_code == 503, f"CXR sintetik modeli bloklanmagan: {res_cxr.status_code}"
+    print("  ✓ CXR moduli bloklangan (sintetik model) — 503, xulosa berilmadi")
 
     # C) Yuqori sezgir Troponin (hs-cTn 0h/1h) va NT-proBNP biomarker kinetikasi
     print("\n  [C] Biomarkerlar kinetikasi (ESC 2023 algoritmi)...")
@@ -329,32 +331,15 @@ def run_trial():
     inr_esc = res_inr.json()["escalation"]
     print(f"✓ Varfarin INR tahlili: Qiymat=1.7 | Eskalatsiya darajasi={inr_esc['alert'].upper()}")
 
-    # C) Sternotomiya yarasi fotosurati (WoundImage CV AI)
-    print("\n  [WoundNet CV Sinovi 1]: Sifatsiz (xira) rasm yuborilganda model Abstain xatti-harakati...")
-    blur_img = make_wound_image(blurred=True)
-    res_w1 = client.post(
+    # C) Sternotomiya yarasi fotosurati — model sintetik bo'lgani uchun bloklangan
+    print("\n  [Yara rasmi]: model bloklangan bo'lishi kerak (sintetik)...")
+    res_w = client.post(
         f"/episodes/{eid_adult}/guardian/wound-image",
         data={"actor": "patient"},
-        files={"file": ("wound_blur.png", blur_img, "image/png")}
+        files={"file": ("wound.png", make_wound_image(blurred=False), "image/png")}
     )
-    assert res_w1.status_code == 200
-    ev_w1 = res_w1.json()["evidence"][0]
-    print(f"  ✓ Sifatsiz rasmda AI to'xtadi (Abstained={ev_w1['abstained']}): '{ev_w1['explanation'][0]}'")
-
-    print("\n  [WoundNet CV Sinovi 2]: Sifatli yara surati tahlili va eskalatsiya...")
-    valid_img = make_wound_image(blurred=False)
-    res_w2 = client.post(
-        f"/episodes/{eid_adult}/guardian/wound-image",
-        data={"actor": "patient"},
-        files={"file": ("wound_valid.png", valid_img, "image/png")}
-    )
-    assert res_w2.status_code == 200
-    w2_json = res_w2.json()
-    ev_w2 = w2_json["evidence"][0]
-    print(f"  ✓ Sifatli rasmda AI muvaffaqiyatli xulosa berdi:")
-    print(f"    - Xavf darajasi: {ev_w2['risk']}")
-    print(f"    - Ehtimolliklar: {ev_w2['value']}")
-    print(f"    - Shifokorga eskalatsiya ogohlantirishi: {w2_json['escalation']['alert'].upper()}")
+    assert res_w.status_code == 503, f"yara sintetik modeli bloklanmagan: {res_w.status_code}"
+    print("  ✓ Yara rasmi moduli bloklangan — 503, xulosa berilmadi")
 
     # -------------------------------------------------------------------------
     # 7. ZAXIRA TIKLASH MASHQI (RESTORE DRILL) VA AUDIT LOGI

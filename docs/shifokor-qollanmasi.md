@@ -2,7 +2,7 @@
 
 **Hujjat kodi:** `DOC-CP-CLIN-2026/01`  
 **Amal qilish sohasi:** Kardiologiya bo'limi, Yurak-qon tomir jarrohligi, Qabulxona va skrining punktlari, Jonlantirish bo'limi (ICU), IT ma'muriyati.  
-**Qonuniy asos:** O'zbekiston Respublikasi «Fuqarolar sog'lig'ini saqlash to'g'risida»gi Qonuni (24-modda), ISO 13485, IEC 62304 SaMD Class IIb.
+**Qonuniy asos:** O'zbekiston Respublikasi «Fuqarolar sog'lig'ini saqlash to'g'risida»gi Qonuni (24-modda), ISO 13485 / IEC 62304 tamoyillari yo'l-yo'riq sifatida (dastur tibbiy buyum sifatida ro'yxatdan o'tmagan, tadqiqot prototipi).
 
 ---
 

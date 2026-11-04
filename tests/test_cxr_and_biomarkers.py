@@ -48,7 +48,7 @@ def test_cxr_image_quality():
 
 
 def test_cxr_model_inference():
-    model = CXRModel.from_dir("weights/cxr")
+    model = CXRModel.from_dir("weights/cxr", allow_synthetic=True)
     assert model is not None
 
     # 1. Lateral projection -> abstain
@@ -98,7 +98,7 @@ def test_biomarkers_algorithm():
 
 def test_cxr_and_biomarkers_api(tmp_path):
     store = SqliteEpisodeStore(str(tmp_path / "test_cxr.db"))
-    cxr = CXRModel.from_dir("weights/cxr")
+    cxr = CXRModel.from_dir("weights/cxr", allow_synthetic=True)
     app = create_app(store=store, pcg=None, cxr_model=cxr, auth=False)
     client = TestClient(app)
 
