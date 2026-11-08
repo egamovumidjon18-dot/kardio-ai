@@ -1,333 +1,198 @@
 # CardioPath AI
 
-Kardiologiya va kardioxirurgiya uchun yagona AI + CDSS platformasi. Bemorning skriningdan 30 kunlik uy reabilitatsiyasigacha bo'lgan butun yo'li **bitta epizod** sifatida yuritiladi.
+**A Clinical Decision Support System (CDSS) for cardiology and cardiac surgery — adult and pediatric pathways from first screening to 30-day post-operative follow-up.**
 
-> **Muhim:** har bir natija yakuniy tashxis EMAS, shifokor uchun yordamchi. Tadqiqot rejimi (research use only).
+> ⚠️ **Research prototype — not a medical device.** CardioPath AI has not been cleared or registered by any regulator, has no ethics-committee approval for clinical use, and has not been validated prospectively or on the local (Uzbek) population. Every output is decision *support*: the treating clinician makes every diagnostic and therapeutic decision. Do not use it to make decisions about real patients.
 
-## Tez boshlash (shifokor uchun)
+---
 
-**O'zbekcha:** `Start.bat` faylini ikki marta bosing. Brauzer o'zi ochiladi (oyna ochiq turishi kerak). Sahifa yuqorida tilni tanlash tugmalari bor: O'zbekcha, Русский, English. Ma'lumotlarni kiriting va «Tahlil qilish» ni bosing.
-**Русский:** дважды щёлкните `Start.bat` — браузер откроется сам (окно программы не закрывайте). Язык переключается кнопками вверху страницы.
-**English:** double-click `Start.bat`; the browser opens by itself (keep the console window open). Switch language with the buttons at the top.
+## What it does
 
-Birinchi marta ishga tushirishdan oldin Python muhitini bir marta o'rnating (`Start.bat` o'zi yo'l-yo'riq beradi).
-
-**Natijani qanday o'qish kerak:**
-- 🔴 **qizil** — shoshilinch; pastdagi «nima qilish kerak» qatorini bajaring;
-- 🟡 **sariq** — ExoKG yoki qayta o'lchash tavsiya etiladi;
-- 🟢 **yashil** — xavf belgilari aniqlanmadi;
-- ⚪ **kulrang** — ma'lumot yetarli emas yoki AI javob bermadi (sababi va nima qilish kerakligi yoziladi).
-
-AI "bilmayman" desa, bu xato emas: yozuv sifatsiz yoki natija noaniq bo'lgan, shifokor o'zi baholaydi.
-
-## Arxitektura
+CardioPath AI follows one patient through one **episode** — a single electronic record that moves through seven clinical stages:
 
 ```
 SCREENING → WORKUP → HEART_TEAM → PROCEDURE → ICU → DISCHARGE → GUARDIAN_30D → CLOSED
-                         │ har bir bosqich yozadi/o'qiydi
-                 Evidence vaqt chizig'i  (core/evidence.py)
+                         │ every stage reads/writes
+               Evidence timeline (core/evidence.py)
                          │
-            Concordance: qoida vs AI  (core/concordance.py)
+        Concordance: deterministic rule vs. AI (core/concordance.py)
 ```
 
-| Qism | Fayl | Vazifasi |
+| Stage | What the software contributes |
+|---|---|
+| Screening | Heart-sound (PCG) murmur detection, pulse-oximetry and symptom rules → "refer to cardiology" or not |
+| Workup | 12-lead ECG models (atrial fibrillation, hidden low EF, structural heart disease), ESC 0/1 h troponin algorithm, echo findings |
+| Heart Team | EuroSCORE II / RACHS-1 / Thakar computed automatically, angiography stenosis assist, printable Heart Team protocol |
+| Procedure | Procedure record (CABG, valve, PCI, congenital repair) |
+| ICU | KDIGO AKI staging from creatinine and urine output, with alerts on stage escalation |
+| Discharge | INR target range by valve/indication, enrolment in home follow-up |
+| Guardian (30 days) | Patient web page: daily symptom check-in, INR slip photo (OCR with patient confirmation), escalation to the on-call clinician with delivery tracking and retries |
+
+The clinician UI (`/`) and the patient page (`/guardian`) are available in Uzbek, Russian and English.
+
+---
+
+## 6 core clinical safety guardrails
+
+These are enforced in code and covered by tests; they cannot be switched off from the UI.
+
+1. **Doctor-in-the-loop.** AI never issues a final diagnosis or a treatment order. Every result is labelled as support, and every stage transition is a signed hand-off by a clinician (`core/handoff.py`).
+2. **Abstention — "silent when uncertain".** Poor-quality input (noisy ECG, low-SNR audio, blurred or dark image, lateral chest film, out-of-range values) or a probability inside the model's abstain band yields `Evidence.abstain(...)` with a human-readable reason, not a guess (`core/model_safety.py`).
+3. **Monotonic risk escalation.** `final_risk = max(rule_risk, ai_risk)`. A model may raise the risk set by a deterministic score but can never lower it (`core/concordance.py`). The same rule applies inside individual modules — e.g. the unvalidated QFR estimate never reports "normal", and a ≥ 50 % left-main stenosis is always HIGH.
+4. **No automated drug dosing.** The patient page never shows a warfarin (or any) dose. An out-of-range INR tells the patient to contact their clinician and alerts the clinician.
+5. **Urgent alert escalation.** Urgent results are never hidden, collapsed or animated (`data-clinical-urgent`). Alerts are delivered in-app and optionally via SMS / Telegram; undelivered alerts are retried with back-off (60 s → 30 min) and can be resent manually.
+6. **Age–model compatibility.** A model trained on one population is never applied to another: an adult-only ECG model refuses a pediatric recording, and an age that contradicts the episode population is rejected (HTTP 422).
+
+Further safeguards: a model card + dataset licence for every model (`core/registry.py`); `CARDIOPATH_MODE=product` refuses models trained on non-commercial data; **models trained on synthetic data are never loaded** (`refuse_synthetic`); pre-registered acceptance gates for every model before it may go live; shadow mode for candidate models.
+
+---
+
+## Deterministic clinical risk scores
+
+Implemented as published formulas (not machine learning), and always used as the floor for any AI output:
+
+| Score / rule | Purpose | Module |
 |---|---|---|
-| Evidence | `core/evidence.py` | Har qanday natijaning yagona shakli: qiymat, manba, xavf, abstain, provenance |
-| Episode | `core/episode.py` | Holat mashinasi. O'tish faqat `Handoff` (yo'llanma paketi) orqali |
-| Concordance | `core/concordance.py` | `AGREE` / `DISAGREE` / `AI_ABSTAINED` / `RULE_ONLY`. **AI xavfni faqat oshiradi, hech qachon pasaytirmaydi** |
-| Registry | `core/registry.py` | Model + dataset litsenziyasi. `CARDIOPATH_MODE=product` da faqat tijoratga ochiq ma'lumotda o'qitilgan modellar ishlaydi |
-| Store | `core/store.py` | sqlite3 repository + faqat qo'shiladigan audit log |
+| **EuroSCORE II** | Predicted in-hospital mortality after adult cardiac surgery | `risk/euroscore2.py` |
+| **RACHS-1** | Risk category for congenital heart surgery (pediatric) | `risk/rachs1.py` |
+| **Thakar score** (Cleveland Clinic) | Risk of dialysis-requiring acute renal failure after cardiac surgery (0–17) | `risk/aki.py` |
+| **KDIGO AKI staging** | Stage 1–3 from serum creatinine and urine output | `risk/kdigo.py` |
+| **ESC 0/1 h hs-troponin algorithm** | Rule-in / observe / rule-out in suspected NSTE-ACS | `risk/biomarkers.py` |
+| **INR target ranges** | Target by mechanical/biological valve and indication; out-of-range escalation | `guardian/inr.py` |
 
-## 1-modul: pediatrik TYN skriningi (`screening/`)
+---
 
-- **Qoida treki** (`rules.py`):
-  - AAP 2020 CCHD pulsoksimetriya algoritmi
-  - tinch holatdagi SpO₂
-  - klinik qizil bayroqlar (katta/kichik)
-- **AI treki** (`pcg.py`, `features.py`, `model.py`): PCG → 2 kHz, 25–400 Hz → 4 s oynalar → log-mel → CNN (ONNX, CPU). Bemor darajasidagi ball = nuqtalar bo'yicha maksimum.
-- **Abstain** quyidagi hollarda:
-  - sifatsiz yozuv (qisqa, kesilgan yoki bo'sh)
-  - oynalar bir-biri bilan kelishmaydi
-  - ehtimollik noaniq zonada
-- **Triaj** (`triage.py`): Concordance → yo'nalish. CCHD FAIL har doim eng yuqori darajani beradi.
+## AI models
 
-### Joriy model natijasi (CirCor test, 132 bola, hech qachon ko'rilmagan)
+All numbers below were measured on held-out **test** sets that the model never saw during training or threshold selection. They are retrospective results on foreign public datasets.
 
-| Metrika | Qiymat (bola darajasida bootstrap 95% CI) |
-|---|---|
-| AUROC | 0.958 (0.909–0.990) |
-| Sezgirlik | 0.913 (0.778–1.000) — 23 ta shovqindan 21 tasi topildi |
-| Spetsifiklik | 0.923 (0.870–0.971) |
-| NPV | 0.980 |
-| Abstain | 3.8% |
+| Model | Input | Task | Training data | Test result |
+|---|---|---|---|---|
+| `pcg_murmur_cnn` | Heart-sound audio (4 auscultation sites) | Pathological murmur present/absent | CirCor DigiScope (ODC-By 1.0) | 132 patients: AUROC 0.96, sensitivity 91 %, specificity 92 %, 4 % abstained |
+| `ecg_cnn_ptbxl` | 12-lead ECG, 10 s | Atrial fibrillation | PTB-XL (CC-BY 4.0) | 2,060 ECGs: AUROC 0.98, sensitivity 94 %, specificity 97 %; external CPSC-2018 AUROC 0.98 |
+| `ecg_lowef_echonext` | 12-lead ECG | LVEF ≤ 45 % → "order an echo" | EchoNext (PhysioNet restricted, research only) | 5,442 ECGs: AUROC 0.89, sens./spec. 87 %/87 %, NPV 97 %, 24 % abstained |
+| `ecg_shd_echonext` | 12-lead ECG | Structural heart disease signals | EchoNext (research only) | AUROC 0.82 (95 % CI 0.80–0.83) |
+| `angio_stenosis_unet` | Coronary angiography frame | Stenosis candidate localisation | ARCADE (CC-BY 4.0) | 300 frames: lesion recall 89 %, precision ~50 %, Dice 0.54 |
 
-To'liq hisobot: [weights/pcg/eval_report_test.md](weights/pcg/eval_report_test.md).
+**Blocked models.** The repository also contains interfaces for post-operative AKI prediction (`csa_aki_ml`), sternotomy wound photo analysis (`wound_image_cv`) and chest X-ray (`cxr`). Their current weights were trained on generated synthetic data, so the registry refuses to load them and `/models` lists them as blocked. They need real, properly licensed data (e.g. MIMIC-IV for AKI) before they can be trained and validated.
 
-**Yashirin-omil tekshiruvi (CirCor):** audiodan kampaniyani ajratish mumkin (AUROC 0.83), lekin kampaniya murmur bilan deyarli bog'lanmagan (0.54). Bir kampaniyada o'qitilgan model ko'rilmagan boshqasida AUROC 0.903 va 0.907 berdi (n=445 va 301), ya'ni natija kampaniya izidan emas, tovushdan. Cheklov: ikkala kampaniya bitta skrining dasturidan. Batafsil: [docs/experiments/circor_batch_check.md](docs/experiments/circor_batch_check.md).
+Not validated here: echo-video EF (`adapters/echo_ef.py`, no echo videos available) and the QFR estimate (`angio/qfr.py`, a simplified Poiseuille + Bernoulli formula, not the FAVOR QFR method and not compared with invasive FFR — it gives no treatment advice).
 
-### Tashqi validatsiya: ZCHSound (Xitoy, haqiqiy TYN tashxislari, qayta o'qitishsiz)
+Candidate models run in **shadow mode**: they process the same input, their output is never shown to anyone, and it is compared with blinded clinician labels (`core/shadow.py`).
 
-| | Toza (941 bola) | Shovqinli, faqat neonatlar (318) |
+---
+
+## Architecture
+
+| Component | Path | Role |
 |---|---|---|
-| AUROC, TYN vs normal | 0.676 (0.639–0.715) | 0.568 |
-| AUROC, PFO'siz | 0.737 (0.696–0.776) | 0.521 |
-| VSD topildi | 85% | 39% |
-| ASD topildi | 47% | 21% |
-| Sog'ga noto'g'ri "shovqin bor" | 31% | 18% |
+| Evidence | `core/evidence.py` | One shape for every result: value, source (rule / model / clinician), risk level, abstention, provenance |
+| Episode | `core/episode.py` | State machine; transitions only through a signed `Handoff` |
+| Concordance | `core/concordance.py` | `AGREE` / `DISAGREE` / `AI_ABSTAINED` / `RULE_ONLY`; monotonic risk |
+| Registry | `core/registry.py` | Model cards, dataset licences, product-mode and synthetic-data gates |
+| Store | `core/store.py` | SQLite repository with optimistic locking and a hash-chained, append-only audit log (`core/postgres_store.py` optional) |
+| Auth | `core/auth.py` | Six roles (`admin`, `clinician`, `cardiologist`, `surgeon`, `icu`, `patient`), scrypt password hashes, hashed session tokens, lockout, deny-by-default permissions |
+| Backups | `core/backup.py`, `core/restore_drill.py` | Daily SQLite backups (14 kept) with integrity check and automated restore drill |
+| Interop | `core/fhir_ingest.py`, `core/fhir_export.py`, `pacs/` | HL7 FHIR R4 (LOINC) lab ingestion/export; DICOM Part 10 parser and router |
+| Learning | `learning/` | Supervised retraining loop with pre-registered gates; promotion requires a named clinician approval and is reversible |
+| API | `api/` | FastAPI application (≈70 endpoints); vanilla-JS UI in `api/static/` (no build step) |
+| Research | `research/` | Training, external-validation and end-to-end check scripts |
 
-**Xulosa:**
-- Boshqa mamlakat va boshqa stetoskopda sifat sezilarli pasayadi (domain shift). Bu pasayishning bir qismi yozuv sharoiti farqidan bo'lishi mumkin (ZCHSound'da tashxis bloklari alohida yozilgan), shuning uchun 0.68 aniq «klinik» ko'rsatkich emas.
-- Model baland shovqinli nuqsonlarni (VSD, PDA) yaxshi topadi, yumshoq shovqinlilarni (ASD) va shovqinsizlarni (PFO) yomon topadi.
-- **Chaqaloqlarda (≤28 kun) ishlamaydi.** Shuning uchun `min_age_days=29`: undan kichiklarda AI javob bermaydi, faqat pulsoksimetriya va klinik qoidalar ishlaydi.
-- Klinikada ishlatishdan oldin **mahalliy ma'lumotda qayta kalibrlash yoki fine-tuning** majburiy.
+Inference runs on CPU with ONNX Runtime; PyTorch is needed only for training. All data stays on the host machine — nothing is sent to external services unless SMS/Telegram alerting is explicitly configured.
 
-Hisobot: [weights/pcg/external_zchsound.md](weights/pcg/external_zchsound.md). Bu hisobot yosh chegarasi qo'shilishidan oldin olingan xom natijalarni ko'rsatadi.
+---
 
-**Cheklovlar:**
-- Model shovqin bor-yo'qligini aniqlaydi, nuqson turini emas. Shovqinlarning bir qismi zararsiz (innocent) bo'ladi.
-- Ma'lumot bitta manbadan (Braziliya skrining kampaniyalari). Shuning uchun mahalliy stetoskopda validatsiya majburiy.
-- Chaqaloqlar bo'yicha kichik guruh juda kichik (n=18).
+## Installation
 
-Shifokor sahifasi: `http://localhost:8010/` (server ishga tushirilganda).
-
-### Modelni o'z klinikangizga moslashtirish
-
-> **Diqqat (tuzatish, 2026-10-30):** ilgari bu yerda «~50–100 ta mahalliy bola AUROC ni 0.75 dan 0.97 ga ko'taradi» deb yozilgan edi. **Bu xulosa bekor qilindi:** ZCHSound'da yozuvlar tashxis bo'yicha ketma-ket yig'ilgan va yozuvlarda kun/sharoit izi topildi ([docs/experiments/zchsound_adaptation.md](docs/experiments/zchsound_adaptation.md)). Kerakli mahalliy ma'lumot hajmi hozircha **noma'lum**.
->
-> Ko'p manbali (CirCor + ZCHSound) model ham sinab ko'rildi va **rad etildi** ([weights/pcg_multisite/report.md](weights/pcg_multisite/report.md)). Mahsulot modeli CirCor'da o'qitilgan model bo'lib qoladi.
-
-1. Serverni `CARDIOPATH_RECORDINGS=<papka>` bilan ishga tushiring.
-2. Sahifada "yozma roziligi olingan" belgisini qo'ying va stetoskop modelini yozing. Yozuvlar psevdonim bilan saqlanadi.
-3. ExoKG natijasini o'sha sahifada yoki `POST /episodes/{id}/echo-diagnosis` orqali kiriting.
-4. Eksport qilib, moslashtiring:
-```bash
-python -m research.export_local --db cardiopath.db --recordings <papka> --out <eksport>
-python -m research.adapt_zchsound --data-dir <eksport> --base <pcg.pt papkasi> --out docs/experiments/local
-```
-
-**Yig'ish qoidalari:**
-- TYN'li va sog' bolalar **bir xil stetoskop va xonada** yozilsin.
-- **Aralash tartibda yozing:** sog' va kasal bolalarni bir xil kunlarda, navbatma-navbat. Avval hamma sog'larni, keyin hamma kasallarni yozmang: model kasallikni emas, yozilgan kunni o'rganib oladi. `export_local` buni tekshirib, ogohlantiradi.
-- Yoshlari mos bo'lsin.
-- Test uchun keyinroq yig'ilgan alohida guruh qoldirilsin.
-
-### O'z-o'zini o'rgatish (nazorat bilan)
-
-**Jadval bilan (ixtiyoriy):** `CARDIOPATH_LEARNING_EVERY_H=168` (har hafta), `CARDIOPATH_CIRCOR_DIR` va `CARDIOPATH_RECORDINGS` berilsa, server sikl vaqtini soatiga bir marta tekshiradi va nomzodni o'zi tayyorlaydi. Nomzod baribir faqat kardiolog «Modellar» sahifasida tasdiqlaganidan keyin ishga tushadi. Docker obrazida torch yo'q, shuning uchun u yerda sikl o'tkazib yuboriladi va sababi yoziladi.
-
-
-Dastur yangi tasdiqlangan holatlardan o'zi o'rganadi, lekin **modelni o'zi almashtirmaydi**: nomzod avtomatik o'qitiladi va darvozalardan o'tkaziladi, joriy qilish esa faqat shifokor tasdig'i bilan.
+Requirements: Python 3.12 (3.11+ should work), Windows, Linux or macOS.
 
 ```bash
-python -m learning.cycle --db data/cardiopath.db --recordings data/recordings --circor-dir <CirCor papkasi>
-python -m learning.promote --list
-python -m learning.promote --version <id> --approved-by "Ismingiz" --note "sabab"
-python -m learning.promote --rollback --approved-by "Ismingiz" --note "sabab"
+git clone https://github.com/egamovumidjon18-dot/kardio-ai.git
+cd kardio-ai
+python -m venv .venv
+# Windows: .venv\Scripts\activate      Linux/macOS: source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-- **Ma'lumot darvozasi** (o'qitishdan oldin): yetarli bola, har sinfdan yetarli, yig'ish tartibi va qurilma tashxis bilan aralashib ketmagan. O'tmasa, o'qitish boshlanmaydi.
-- **Model darvozalari:** mahalliy testda ishonchli yaxshilanish, CirCor'da yomonlashmaslik, sezgirlik va «javob bermadi» ulushi yomonlashmasligi, aralashtirilgan belgilar bilan salbiy nazorat.
-- Holat: `GET /learning/status`. Tasdiqlangan versiya dastur qayta ishga tushirilgach yuklanadi.
-- Tasdiqlash: `/models-ui` sahifasi (asosiy sahifadagi «Modellar» havolasi) yoki `POST /learning/promote` / `/learning/rollback`. **Faqat kirish yoqilganda** (`CARDIOPATH_AUTH=on`) va faqat `cardiologist`/`surgeon` roli bilan; tasdiqlovchi ismi so'rovdan emas, kirgan foydalanuvchidan olinadi. Kirishsiz rejimda API 403 beradi, buyruq satri (`python -m learning.promote`) saqlangan. Batafsil: [docs/CardioPath-AI-loyiha-tavsifi.md](docs/CardioPath-AI-loyiha-tavsifi.md), 3.4.1-bo'lim.
-- Haqiqiy mahalliy bemor ma'lumotida hali sinalmagan: faqat mexanika tekshirilgan.
-
-## 2-modul: operatsiya oldi xavf (`risk/`)
-
-- **EuroSCORE II** (`euroscore2.py`): Nashef 2012 formulasi, Cockcroft-Gault (kreatinin µmol/L da). Rasmiy kalkulyatordagi namunaviy holatga (89.32%) qarshi test qilingan.
-- **AKI**: Thakar/Cleveland Clinic balli (qoida) + `AKIModel` (ONNX interfeysi; MIMIC-IV da o'qitiladi). Ular solishtirilganda `tolerance=1` ishlatiladi, chunki ikkalasi turli natijani bashorat qiladi.
-- **Heart Team protokoli** (`protocol.py`): `GET /episodes/{id}/heart-team-protocol` → Markdown. Ziddiyatlar majburiy muhokama punkti sifatida chiqadi.
-
-## 3-modul: 30 kunlik Post-Op Guardian (`guardian/`)
-
-- **MNO** (`inr.py`):
-  - OCR matnidan qiymatni ajratadi (`INR`, `MNO`, `МНО`, `MHO`, vergulli kasr)
-  - ACC/AHA 2020 maqsad oralig'i bilan solishtiradi
-  - **bemorga doza aytilmaydi**
-- **Check-in** (`checkin.py`):
-  - vazn trendi: 3 kunda ≥2 kg ortish
-  - puls, SpO₂, harorat, YE belgilari
-  - sternotomiya yarasi so'rovnomasi; rasm jarrohga yuboriladi
-- **Eskalatsiya** (`escalation.py`):
-  - darajalar: GREEN / AMBER / RED
-  - o'qib bo'lmagan ma'lumot AMBER bo'ladi, ya'ni inson ko'rib chiqadi
-  - Telegram xabarida faqat psevdonim bo'ladi
-
-## Ishga tushirish
+Run the server:
 
 ```bash
-python -m venv C:\Users\user\.venvs\cardiopath-ai     # qisqa yo'l: Windows MAX_PATH
-C:\Users\user\.venvs\cardiopath-ai\Scripts\pip install -r requirements.txt
-C:\Users\user\.venvs\cardiopath-ai\Scripts\python -m pytest -q
-C:\Users\user\.venvs\cardiopath-ai\Scripts\python -m uvicorn api.main:default_app --factory --port 8010
+python -m uvicorn api.main:default_app --factory --port 8010
 ```
 
-API hujjatlari: http://localhost:8010/docs (kirish yoqilganda `/docs` o'chiriladi).
+Open http://localhost:8010 (clinician UI) or http://localhost:8010/docs (API docs, disabled when auth is on). On Windows, `Start.bat` does the same with one double-click.
 
-### Docker bilan
-
-Python o'rnatish shart emas, faqat Docker Desktop kerak.
+### Docker
 
 ```bash
-docker compose up -d --build
+docker compose up -d --build        # http://localhost:8010
+docker compose down
 ```
 
-Keyin brauzerda http://localhost:8010 ni oching. To'xtatish: `docker compose down`.
+The image contains code only (CPU, no torch). Model weights are mounted read-only from `./weights`; the database and approved model versions live in Docker volumes. The port is bound to `127.0.0.1` only.
 
-**Nima qayerda saqlanadi:**
-- **Obraz** faqat kodni o'z ichiga oladi (CPU, torch yo'q, taxminan 1,2 GB).
-- **Model og'irliklari** `./weights` papkasidan faqat o'qish uchun ulanadi. Ular obrazga kirmaydi: EchoNext kabi tadqiqot litsenziyali og'irliklar obraz bilan birga tarqalib ketmasligi kerak.
-- **Baza va tasdiqlangan model versiyalari** Docker volume'larida saqlanadi (`cardiopath-data`, `cardiopath-models`). Konteyner qayta ishga tushganda ham yo'qolmaydi.
-- `docker compose down -v` buyrug'i bazani **o'chirib yuboradi**.
+### Configuration
 
-**Xavfsizlik:**
-- Port faqat shu kompyuterga ochiq (`127.0.0.1:8010`).
-- Boshqa kompyuterlardan ochishdan oldin kirishni yoqing:
-  1. Administrator yarating: `docker compose run --rm -it cardiopath python -m core.auth_cli create-user --username admin --role admin`.
-  2. `.env` faylida `CARDIOPATH_AUTH=on` deb yozing.
-  3. Shundan keyingina `docker-compose.yml` dagi portni o'zgartiring.
-- Telegram tokeni ham `.env` faylida turadi. Bu fayl git'ga kirmaydi.
+Copy `.env.example` to `.env` and adjust. Key variables: `CARDIOPATH_MODE` (`research` | `product`), `CARDIOPATH_AUTH` (`off` | `on`), `CARDIOPATH_DB`, `CARDIOPATH_BACKUP_*`, optional `CARDIOPATH_SMS_*` / `CARDIOPATH_TG_*`. `.env` is git-ignored.
 
-### Zaxira nusxalar
-
-- **Avtomatik:** bemorlar bazasi har 24 soatda o'zi saqlanadi va oxirgi 14 ta nusxa turadi. Shunga bemorlar, jurnal, ogohlantirishlar va foydalanuvchilar kiradi.
-- **Qayerda:** Docker'da `kardio-ai\backups` papkasida (Windows'da ko'rinadi), oddiy ishga tushirishda baza yonidagi `backups` papkasida.
-- **Qo'lda:** «Foydalanuvchilar» sahifasidagi «Hozir nusxa olish» tugmasi yoki `python -m core.backup create`.
-- **Tiklash:** avval serverni to'xtating, keyin `python -m core.backup restore backups\<fayl>.db --db <baza>`. Avvalgi baza `.before-restore-…` nomi bilan saqlanib qoladi.
-- **Muhim:** nusxalarni vaqti-vaqti bilan fleshka yoki boshqa diskka ham ko'chiring. Kompyuter buzilsa, shu diskdagi nusxalar ham yo'qoladi.
-
-### Kirish va rollar (`CARDIOPATH_AUTH`)
-
-Standart: **o'chiq** (`CARDIOPATH_AUTH=off`) — mahalliy ishlash va testlar o'zgarmaydi. Yoqish:
+To enable authentication, create an administrator first (the server refuses to start with auth on and no active admin):
 
 ```bash
-C:\Users\user\.venvs\cardiopath-ai\Scripts\python -m core.auth_cli create-user --username admin1 --role admin
-set CARDIOPATH_AUTH=on
+python -m core.auth_cli create-user --username admin1 --role admin
 ```
 
-Standart parol yo'q; parol kamida 10 belgi (so'raladi, ekranda ko'rinmaydi). Administrator bo'lmasa, kirish yoqilgan server **ishga tushmaydi** (tizim qulflanib qolmasin).
+### Model weights
 
-| Rol | Nima qila oladi |
-|---|---|
-| `admin` | Foydalanuvchilarni boshqarish, xavfsizlik jurnali (`/audit/security`), ko'rish. Klinik amal yo'q |
-| `clinician` | Epizod yaratish, skrining, ExoKG tashxisi, bosqichga o'tkazish, fayl yuklash |
-| `cardiologist` | + xavf baholash, Heart Team protokoli, epizod jurnali |
-| `surgeon` | + signalni tasdiqlash (`alerts.ack`) |
-| `icu` | Ko'rish, bosqichga o'tkazish, xavf baholash |
-| `patient` | Faqat **o'z** epizodiga uy-nazorat ma'lumotini yuboradi |
+ONNX weights are **not** in the repository (they are git-ignored), partly because some were trained on research-only data whose licence forbids redistribution. Without weights the app still runs: rule-based modules work and AI modules return HTTP 503 "module not connected". To produce weights, obtain the datasets under their own licences and run the training scripts in `research/` (e.g. `python -m research.train_pcg`, `research.train_ecg`, `research.train_angio`; GPU recommended). Each script writes an ONNX file and its `model_card.json` into `weights/<model>/`.
 
-Xavfsizlik: scrypt parol xeshi; token bazada faqat SHA-256 xeshi, 12 soat; 5 xato → 5 daqiqa bloklash (mavjud bo'lmagan nom uchun ham); oxirgi faol administratorni o'chirib bo'lmaydi; huquq jadvalida yo'q yo'l avtomatik **taqiqlanadi**; auditdagi `actor`, yo'llanma muallifi va signalni tasdiqlovchi — so'rovda yozilgan nom emas, **haqiqiy kirgan foydalanuvchi**. Boshqaruv: `python -m core.auth_cli list-users | disable | enable | set-role | reset-password`.
+---
 
-## Modelni o'qitish (CirCor, RTX 5060)
+## Validation & testing
+
+The test suite contains **446 automated tests** (57 test files) covering the clinical rules and scores, the safety guardrails (monotonic risk, abstention, age guard, no dosing, synthetic-model blocking), the API and role permissions, audit-chain integrity, concurrency, backups and restore, FHIR/DICOM parsing and alert delivery.
 
 ```bash
-# 1) ma'lumot (ODC-By 1.0, ~1.6 GB)
-wget -r -N -c -np https://physionet.org/files/circor-heart-sound/1.0.3/
-# 2) RTX 50xx (Blackwell) uchun CUDA 12.8+ build kerak
-pip install torch --index-url https://download.pytorch.org/whl/cu128
-# 3) o'qitish → weights/pcg/{pcg.onnx, model_card.json, split.json}
-python -m research.train_pcg --data-dir physionet.org/files/circor-heart-sound/1.0.3 --out weights/pcg
+python -m pytest -q          # ≈ 45 s on a laptop CPU
+python -m pytest tests/test_qfr.py -v      # a single module
 ```
 
-- Bo'linish bemor darajasida va stratifikatsiyalangan.
-- Chegaralar faqat validatsiyada tanlanadi: shovqinga sezgirlik ≥95%, sog'larga spetsifiklik ≥90%.
-- Test to'plami bir marta baholanadi.
-- Metrikalar `model_card.json` ga yoziladi.
+Tests that need real model weights are skipped automatically when the weights are absent.
 
-## 4-modul: EKG (`ecg/`) — PTB-XL, CC-BY 4.0
-
-12 tarmoqli EKG (10 s, 100 Hz) → yengil 1D-CNN (ResNet, ~0.4M parametr, ONNX). Chiqish: **bo'lmachalar fibrillyatsiyasi (AFIB)** + NORM / MI / STTC / CD / HYP ehtimolliklari. Guardian (operatsiyadan keyingi 30 kun, POAF) va umumiy EKG uchun.
-
-- **Preprocessing** (`ecg/signal.py`): qayta diskretlash → 0.5–40 Hz band-pass → har tarmoq bo'yicha standartlash. O'qitish va inference bir xil funksiyalarni ishlatadi.
-- **Abstain** (`ecg/model.py`): sifatsiz signal (qisqa, tekis chiziq, >8 mV, shovqin; 12 tarmoqdan 2 tadan ko'pi yaroqsiz), tarmoq yetishmasligi, yosh <18, AFIB noaniq zonasi.
-- AFIB topilsa xavf HIGH (Guardian'da RED eskalatsiya); aniqlanmasa, boshqa o'zgarishlar bo'lsa MODERATE.
-- Endpoint: `POST /episodes/{id}/ecg` (CSV: 1-qator tarmoq nomlari, mV; `fs`, `lang`).
+End-to-end check through the HTTP API with real weights and public test data (server must be running):
 
 ```bash
-python -m research.train_ecg --data-dir <ptb-xl-1.0.3> --out weights/ecg
+python -m research.e2e_check --data <path-to-datasets> --out docs/experiments/e2e_check.md
 ```
 
-**Test natijasi** (`strat_fold=10`, 1795 bemor, hech qachon ko'rilmagan; train 1–8, val 9; bemor bo'linishi `strat_fold` orqali, kod ichida tekshiriladi). Bootstrap 95% CI bemor darajasida:
+> Automated tests verify that the **software** behaves as specified. They are not clinical validation and say nothing about patient benefit. Model performance figures come from retrospective held-out and external public datasets only.
 
-| AFIB | Qiymat |
-|---|---|
-| AUROC | 0.981 (0.963–0.992) |
-| Sezgirlik | 0.941 (0.903–0.974) |
-| Spetsifiklik | 0.971 (0.963–0.979) |
-| PPV | 0.722 (0.652–0.785) |
-| NPV | 0.995 (0.992–0.998) |
+---
 
-Boshqa toifalar AUROC: NORM 0.953, MI 0.934, STTC 0.934, CD 0.920, HYP 0.842 (CI `weights/ecg/model_card.json` da).
+## Limitations
 
-**Cheklovlar:**
-- AFIB chegarasi validatsiyada tanlandi; sinflar yaxshi ajralgani uchun **noaniq zona (abstain oralig'i) hosil bo'lmadi** — AFIB bo'yicha model har doim qaror beradi.
-- PPV 0.72: har 100 AFIB ogohlantirishdan ~28 tasi yolg'on.
-- MI/STTC/CD/HYP chegaralari Youden bo'yicha oddiy; PTB-XL'da ~yarim yozuv patologik, shuning uchun MODERATE ko'p chiqadi.
-- Faqat kattalar, bitta ma'lumot manbai (Germaniya, 1989–96), tashqi validatsiya yo'q.
+- **No local validation.** Models were trained and tested on public datasets from Brazil, Germany, China and the USA. Performance on other devices, recording protocols and populations is unknown and may be lower.
+- **Retrospective only.** No prospective study has been performed; clinical benefit is unproven.
+- **Not approved.** Not registered as Software as a Medical Device; no CE/FDA/national clearance; no ethics approval for clinical use.
+- **Incomplete model set.** AKI, wound-image and chest X-ray models are blocked; echo-video EF and QFR are unvalidated.
+- **Known weak points.** The angiography model's marks are wrong about half the time; the low-EF model abstains on ~1 in 4 ECGs.
+- **Intended path to clinical evaluation:** ethics approval → shadow-mode study on anonymised local data with blinded expert labels → pre-registered acceptance criteria → only then any clinical use.
 
-**Tashqi tekshiruv (Chapman–Shaoxing, Xitoy, 10 646 EKG, qayta o'qitilmasdan):** AFIB AUROC 0.950 (0.946–0.954), sezgirlik 0.996, o'ziga xoslik **0.844** — oldindan qo'yilgan 0.85 mezonidan sal past, **o'tmadi**. Yolg'on musbatlarning ko'pi SVT va bo'lmachalar titrashi; shuning uchun AFIB matnida «titrash yoki SVT ham bo'lishi mumkin» deyiladi. Batafsil: [docs/experiments/ecg_chapman_external.md](docs/experiments/ecg_chapman_external.md).
-Tuzatish urinishi: Chapman'da o'qitilgan 6 sinfli ritm modeli PTB-XL'da tashqi tekshirildi. AFIB AUROC 0.988, o'ziga xoslik 0.993, titrash/SVT AFIB deb belgilangani 0.7%, lekin sezgirlik 0.843 (talab 0.85), shuning uchun **ulanmadi**. Batafsil: [docs/experiments/ecg_rhythm_chapman.md](docs/experiments/ecg_rhythm_chapman.md).
+---
 
-## 5-modul: koronar angiografiya (`angio/`) — ARCADE, CC-BY 4.0
+## Data and privacy
 
-U-Net (~1.9M parametr, 512 px, AMP) stenoz **nomzodlarini** segmentatsiya qiladi. Natija **"SYNTAX-ga yordamchi"** deb nomlanadi — **SYNTAX kalkulyatori emas** (segment nomi, okklyuziya, bifurkatsiya, kalsifikatsiya baholanmaydi).
+- Patients are identified only by a pseudonymous `patient_ref`; names, birth dates, addresses, phone numbers and ID numbers are not collected.
+- Heart-sound recordings are stored only with recorded consent (`core/consent.py`).
+- All patient data used in this repository's tests and examples is synthetic.
 
-- Abstain: kichik/kvadrat bo'lmagan/kontrastsiz/noto'g'ri ekspozitsiyali kadr; >12 nomzod (ishonchsiz).
-- Nomzod topilmasa xavf **UNKNOWN** qoladi (LOW emas): "topilmadi" ≠ "stenoz yo'q".
-- Endpoint: `POST /episodes/{id}/angio` (PNG/JPG, `lang`).
+## Datasets and third-party licences
 
-```bash
-python -m research.train_angio --data-dir <arcade> --out weights/angio
-```
+The source code is MIT-licensed (see [LICENSE](LICENSE)). **The licence does not extend to datasets or to model weights derived from them**, which remain under their own terms: CirCor DigiScope (ODC-By 1.0), PTB-XL (CC-BY 4.0), Chapman-Shaoxing (CC0), PhysioNet Challenge 2021 (CC-BY 4.0), ARCADE (CC-BY 4.0), EchoNext (PhysioNet restricted health-data licence, research only), EchoNet-Dynamic (Stanford research-use agreement), MIMIC-IV (PhysioNet credentialed licence). No dataset files are included in this repository.
 
-**Test natijasi** (ARCADE muallif bo'linishi: train 1000 / val 200 / test 300; chegara 0.3 va min. maydon 100 px faqat validatsiyada tanlangan; bootstrap kadr darajasida):
+## Documentation
 
-| Metrika | Qiymat (95% CI) |
-|---|---|
-| Piksel Dice | 0.538 (0.513–0.561) |
-| IoU | 0.396 (0.374–0.416) |
-| Lezion sezgirligi | 0.892 (0.859–0.925) — 381 ta lezionning 340 tasi topildi |
-| Lezion aniqligi | 0.497 (0.463–0.530) — 690 nomzodning yarmi yolg'on |
+Detailed documentation (mostly in Uzbek) is in [`docs/`](docs/), including the original Uzbek README ([`docs/README.uz.md`](docs/README.uz.md)), the clinician guide, per-model experiment reports in [`docs/experiments/`](docs/experiments/) and the shadow-mode protocol.
 
-**Cheklovlar:**
-- ARCADE'da **bemor ID'si yo'q**: train/test orasida bir bemorning kadrlari bo'lmaganini tekshirib bo'lmaydi, natija yuqoriroq chiqqan bo'lishi mumkin.
-- 997/1000 kadrda stenoz bor → **rasm darajasida spetsifiklik va AUROC baholanmadi** (salbiy kadrlar yo'q).
-- Lezion "topilgan" deb sanaladi, agar bashorat bilan IoU ≥ 0.1 kesishsa (yumshoq mezon); piksel Dice 0.54 chegara aniqligi o'rtacha ekanini ko'rsatadi.
-- Bitta markaz, tashqi validatsiya yo'q. Litsenziya: registry'da CC-BY 4.0, Zenodo yozuvi CC0 deb ko'rsatadi.
+## License
 
-## 6-modul: MNO qog'ozi OCR (`guardian/ocr.py`)
-
-Rasm → `rapidocr-onnxruntime` (ONNX, CPU) → `parse_inr_text` → `assess_inr`. OCR ishonchi <80%, matn yo'q, qiymat bir ma'noli emas yoki fiziologik emas (2.5 ↔ 25) bo'lsa — abstain (bemor qo'lda kiritadi). Bemorga doza aytilmaydi. Endpoint: `POST /episodes/{id}/guardian/inr-image`. Haqiqiy OCR bilan rasmga yozilgan "INR 2.5" to'g'ri o'qiladi (test mavjud); haqiqiy laboratoriya qog'ozlarida aniqlik o'lchanmagan.
-
-## 7-modul: ExoKG EF (`adapters/echo_ef.py`)
-
-NeuroSon-AI (`uttai/heart`, EchoNet-Dynamic, R(2+1)D-18) ONNX og'irligi `Evidence("echo.ef")` ga ulangan (`CARDIOPATH_EF_WEIGHTS`, standart: NeuroSon `weights/heart_echonet.onnx`). **EchoNet litsenziyasi faqat tadqiqot** → registry'da `commercial_use=False`, `CARDIOPATH_MODE=product` da modul yuklanmaydi. NeuroSon hisoboti: MAE 5.83%, R² 0.575 — bu loyihada qayta baholanmagan. Abstain: yosh <18, video o'qilmadi, EF 10–85% dan tashqari. **Cheklov:** "bu ExoKG emas" degan tekshiruv yo'q — shovqin videosiga ham EF beradi. Endpoint: `POST /episodes/{id}/echo-ef`.
-
-## 8-modul: AI-EKG past EF (`ecg/low_ef.py`) — EchoNext, faqat tadqiqot
-
-EKG'dan LVEF ≤ 45% skriningi. EchoNext (PhysioNet, shartnoma bilan) da o'qitilgan, oldindan yozilgan 5 qabul mezonidan o'tdi: test AUROC **0.886** (CI 0.874–0.899), faqat yosh/jins/intervallar bazasi 0.782, abstain 24%, sezgirlik/o'ziga xoslik 0.87/0.87, har bir bo'limda AUROC ≥ 0.86. `/episodes/{eid}/ecg` javobida `low_ef` bo'limi: musbat → «ExoKG qiling» (tashxis emas). 18 yoshdan kichik → abstain. Litsenziya tijoratga ruxsat bermaydi, product rejimida yuklanmaydi. Batafsil: [docs/experiments/ecg_lowef_echonext.md](docs/experiments/ecg_lowef_echonext.md).
-
-```bash
-python -m research.train_lowef --data-dir C:\Users\user\data\echonext --out weights/ecg_lowef
-```
-
-## 9-modul: AI-EKG tuzilmaviy kasalliklar (`ecg/shd.py`) — EchoNext
-
-Bitta ko'p yorliqli model, har bir yorliq uchun oldindan yozilgan mezonlar. **Yoqilgan (4):** o'ng qorincha disfunksiyasi (AUROC 0.874), trikuspidal regurgitatsiya (0.818), umumiy SHD (0.815), mitral regurgitatsiya (0.813). **Rad etilgan (7):** aorta stenozi (EKG yosh/jinsdan ortiq hech narsa qo'shmadi: 0.825 va 0.844), o'pka gipertenziyasi, TR tezligi, devor qalinligi, perikard suyuqligi, aorta va o'pka arteriyasi regurgitatsiyasi. `/ecg` javobida `structural` bo'limi: musbat → «ExoKG qiling». Batafsil: [docs/experiments/ecg_shd_echonext.md](docs/experiments/ecg_shd_echonext.md).
-
-## Bloklangan modellar (qurilmagan)
-
-| Model | Sabab | Qaerda |
-|---|---|---|
-| CSA-AKI ML | MIMIC-IV — PhysioNet credentialing kerak | `risk/aki.py` `AKIModel` (interfeys tayyor) |
-| Yara rasmi CV | ochiq sternotomiya dataseti yo'q; SurgWound (qorin/to'piq/yuz) bilan sinab ko'rildi va RAD ETILDI (AUROC 0.68, 90% sezgirlikda o'ziga xoslik 21%): [docs/experiments/wound_surgwound.md](docs/experiments/wound_surgwound.md) | `guardian/wound_cv.py` (doim abstain) |
-
-`GET /models` hamma modullar holatini va bloklanganlar sababini qaytaradi.
-
-## Keyingi qadamlar
-- PCG modelini haqiqiy CirCor ma'lumotida o'qitish (`research/train_pcg.py`)
-- CSA-AKI modeli: MIMIC-IV kogortasi + `weights/aki` (PhysioNet credentialing kerak)
-- Telegram Mini App (bemor) va Next.js shifokor paneli
-- MNO OCR'ni haqiqiy laboratoriya qog'ozlarida baholash; EKG/angio tashqi validatsiyasi
-- Postgres adapteri (`EpisodeStore` interfeysi orqali)
-
-Tadqiqot xaritasi va manbalar: [docs/tadqiqot-xaritasi-2026-10.md](docs/tadqiqot-xaritasi-2026-10.md)
+[MIT](LICENSE). Provided "as is", without warranty of any kind — including any warranty of fitness for clinical use.
